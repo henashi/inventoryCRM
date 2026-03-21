@@ -1,0 +1,13 @@
+package com.henashi.inventorycrm.repository;
+
+import com.henashi.inventorycrm.pojo.Gift;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+
+public interface GiftRepository extends JpaRepository<Gift, Long> {
+
+    Optional<Gift> findByCode(String code);
+
+}
