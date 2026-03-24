@@ -36,7 +36,7 @@ export const productApi = {
     }),
 
   // 更新库存
-  updateStock: (id: number, quantity: number, type: 'in' | 'out') =>
+  updateStock: (id: number, quantity: number, type: 'IN' | 'OUT') =>
     request.patch<Product>(`/products/${id}/stock`, { quantity, type }),
 
   // 导出商品

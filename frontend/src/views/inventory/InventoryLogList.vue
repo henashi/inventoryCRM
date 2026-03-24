@@ -222,7 +222,7 @@
         <a-statistic
           title="出库次数"
           :value="stats.outCount"
-          :value-style="{ color: '#cf1322' }"
+          :value-style="{ color: '#d3adf7' }"
         >
           <template #prefix>
             <arrow-down-outlined />
@@ -240,7 +240,7 @@
         <a-statistic
           title="出库总量"
           :value="stats.outQuantity"
-          :value-style="{ color: '#cf1322' }"
+          :value-style="{ color: '#d3adf7' }"
         />
       </a-col>
     </a-row>
@@ -269,8 +269,8 @@
           <template v-else-if="column.dataIndex === 'productInfo'">
             <div class="product-info">
               <div class="product-name">
-                <a-tag v-if="record.type === 'CREATE'" color="blue" size="small">
-                  新建
+                <a-tag :color="getOperationTypeColor(record.type)" size="small">
+                  {{ getSimplifyTypeText(record.type) }}
                 </a-tag>
                 {{ record.productName }}
               </div>
@@ -289,8 +289,8 @@
           <template v-else-if="column.dataIndex === 'stockChange'">
             <div class="stock-change">
               <div class="change-quantity">
-                <span :class="getChangeClass(record.quantity)">
-                  {{ formatChangeQuantity(record.quantity) }}
+                <span :class="getChangeClass(record.afterStock - record.beforeStock)">
+                  {{ formatChangeQuantity(record.afterStock - record.beforeStock) }}
                 </span>
                 <span class="unit">{{ record.productUnit }}</span>
               </div>
@@ -402,8 +402,8 @@
               {{ currentLog.beforeStock }} {{ currentLog.productUnit }}
             </a-descriptions-item>
             <a-descriptions-item label="变更数量" span="3">
-              <span :class="getChangeClass(currentLog.quantity)">
-                {{ formatChangeQuantity(currentLog.quantity) }}
+              <span :class="getChangeClass(currentLog.afterStock - currentLog.beforeStock)">
+                {{ formatChangeQuantity(currentLog.afterStock - currentLog.beforeStock) }}
               </span>
               {{ currentLog.productUnit }}
             </a-descriptions-item>
@@ -469,8 +469,8 @@ const searchForm = reactive({
 const columns = [
   {
     title: '操作时间',
-    dataIndex: 'createdAt',
-    key: 'createdAt',
+    dataIndex: 'createdTime',
+    key: 'createdTime',
     width: 100,
     sorter: true
   },
@@ -531,6 +531,7 @@ const pagination = computed(() => ({
   current: inventoryLogStore.pagination.page,
   pageSize: inventoryLogStore.pagination.size,
   total: inventoryLogStore.pagination.total,
+  pageSizeOptions: ['5', '10', '20'], // 可选的每页条数
   showSizeChanger: true,
   showQuickJumper: true,
   showTotal: (total: number) => `共 ${total} 条记录`
@@ -572,22 +573,34 @@ const getOperationTypeColor = (type: string) => {
   const colors: Record<string, string> = {
     CREATE: 'blue',
     IN: 'green',
-    OUT: 'red',
+    OUT: 'purple',
     ADJUST: 'orange',
-    TRANSFER: 'purple',
+    TRANSFER: 'pink',
     CHECK: 'cyan'
   }
   return colors[type] || 'default'
 }
 
-const getOperationTypeText = (type: string) => {
+const getSimplifyTypeText = (type: string) => {
   const texts: Record<string, string> = {
-    CREATE: '新建商品',
+    CREATE: '新建',
     IN: '入库',
     OUT: '出库',
     ADJUST: '调整',
     TRANSFER: '调拨',
     CHECK: '盘点'
+  }
+  return texts[type] || type
+}
+
+const getOperationTypeText = (type: string) => {
+  const texts: Record<string, string> = {
+    CREATE: '新建商品',
+    IN: '商品入库',
+    OUT: '商品出库',
+    ADJUST: '商品调整',
+    TRANSFER: '商品调拨',
+    CHECK: '商品盘点'
   }
   return texts[type] || type
 }
@@ -611,7 +624,7 @@ const loadLogs = async (params?: PageParams) => {
 
     const queryParams: any = {
       page: params?.page || 0,
-      size: params?.size || 20
+      size: params?.size || 5
     }
 
     // 构建查询参数
@@ -795,7 +808,7 @@ onMounted(() => {
 }
 
 .change-negative {
-  color: #ff4d4f;
+  color: #d3adf7;
 }
 
 .change-zero {

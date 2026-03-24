@@ -443,6 +443,7 @@ const pagination = computed(() => ({
   current: productStore.pagination.page,
   pageSize: productStore.pagination.size,
   total: productStore.pagination.total,
+  pageSizeOptions: ['5', '10', '20'], // 可选的每页条数
   showSizeChanger: true,
   showQuickJumper: true
 }))
@@ -463,6 +464,7 @@ const getStockClass = (product: Product) => {
 
 // 数据加载
 const loadProducts = async (params?: PageParams) => {
+  console.log('loadProducts', params)
   try {
     isLoading.value = true
     await productStore.loadProducts(params)
@@ -487,8 +489,9 @@ const handleReset = () => {
 
 // 表格分页
 const handleTableChange = (pag: any) => {
+  console.log('Page:', pag)
   loadProducts({
-    page: pag.current - 1,
+    page: pag.current! - 1,
     size: pag.pageSize
   })
 }
@@ -547,7 +550,7 @@ const showInStockModal = (record: Product) => {
     name: record.name,
     currentStock: record.currentStock,
     unit: record.unit,
-    quantity: 0,
+    quantity: 1,
     reason: ''
   })
 
@@ -563,7 +566,7 @@ const showOutStockModal = (record: Product) => {
     name: record.name,
     currentStock: record.currentStock,
     unit: record.unit,
-    quantity: 0,
+    quantity: 1,
     reason: ''
   })
 
@@ -595,7 +598,7 @@ const handleModalCancel = () => {
 const handelInStockOk = async () => {
   try {
     console.log('InStockForm:', inStockForm)
-    await productStore.updateStock(currentProduct.value!.id!, inStockForm.quantity, 'in')
+    await productStore.updateStock(currentProduct.value!.id!, inStockForm.quantity, 'IN')
     message.success('入库成功')
     inStockModalVisible.value = false
     loadProducts()
@@ -607,7 +610,7 @@ const handelInStockOk = async () => {
 const handleOutStockOk = async () => {
   try {
     console.log('InStockForm:', inStockForm)
-    await productStore.updateStock(currentProduct.value!.id!, outStockForm.quantity, 'out')
+    await productStore.updateStock(currentProduct.value!.id!, outStockForm.quantity, 'OUT')
     message.success('出库成功')
     outStockModalVisible.value = false
     loadProducts()

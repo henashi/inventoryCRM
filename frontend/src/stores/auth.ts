@@ -28,8 +28,8 @@ export const useAuthStore = defineStore('auth', () => {
       // 兼容不同后端字段命名：支持 token 或 access_token
       const tokenStr = responseData.token || responseData.access_token || responseData.accessToken
 
-        if (!tokenStr) { 
-          return { success: false, error: '未收到访问令牌' } 
+        if (!tokenStr) {
+          return { success: false, error: '未收到访问令牌' }
       }
 
       // 保存token
@@ -71,11 +71,11 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     sessionStorage.clear()
-    
+
     // 清除状态
     token.value = null
     user.value = null
-    
+
     message.success('已退出登录')
   }
 
