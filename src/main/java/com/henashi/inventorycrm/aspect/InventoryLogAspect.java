@@ -1,5 +1,6 @@
 package com.henashi.inventorycrm.aspect;
 
+import ch.qos.logback.core.util.StringUtil;
 import com.henashi.inventorycrm.dto.ProductDTO;
 import com.henashi.inventorycrm.exception.BusinessException;
 import com.henashi.inventorycrm.mapper.InventoryLogMapper;
@@ -56,7 +57,14 @@ public class InventoryLogAspect {
         Integer quantity = (Integer) params.get("quantity");
         String reason = (String) params.get("reason");
         String operator = (String) params.get("operator");
-        InventoryLog.LogType operationType = (InventoryLog.LogType) params.get("operationType");
+        Object operationTypeObject = params.get("operationType");
+        InventoryLog.LogType operationType;
+        if (operationTypeObject instanceof String) {
+            operationType = InventoryLog.LogType.valueOf((String) operationTypeObject);
+        }
+        else {
+            operationType = (InventoryLog.LogType) operationTypeObject;
+        }
 
         if (productId == null && !InventoryLog.LogType.CREATE.equals(operationType)) {
             throw new IllegalArgumentException("无法获取商品ID参数");
@@ -103,7 +111,8 @@ public class InventoryLogAspect {
                     afterStock,
                     quantity,
                     reason,
-                    operator
+                    operator,
+                    operationType
             );
 
             inventoryLogService.saveInventoryLog(inventoryLogMapper.createFromEntity(logRecord));
@@ -119,7 +128,8 @@ public class InventoryLogAspect {
                         null,
                         quantity,
                         reason,
-                        operator
+                        operator,
+                        operationType
                 );
 
                 inventoryLogService.saveInventoryLog(inventoryLogMapper.createFromEntity(logRecord));
@@ -171,7 +181,18 @@ public class InventoryLogAspect {
         params.put("operator", operator);
 
         // 提取操作类型
-        params.put("operationType", annotation.operationType());
+        if (InventoryLog.LogType.PARAM.equals(annotation.operationType())) {
+            if (StringUtil .notNullNorEmpty(annotation.reasonParam())) {
+                params.put("operationType", ReflectionUtils.getFieldValue(
+                        method, args, annotation.operationTypeParam()));
+            }
+            else {
+                throw new BusinessException("参数异常：配置参数获取库存操作类型但是未传入配置");
+            }
+        }
+        else {
+            params.put("operationType", annotation.operationType());
+        }
         return params;
     }
 
@@ -185,7 +206,8 @@ public class InventoryLogAspect {
             Integer afterStock,
             Integer quantity,
             String reason,
-            String operator
+            String operator,
+            InventoryLog.LogType type
     ) {
         InventoryLog logRecord = new InventoryLog();
         logRecord.setProduct(productRepository.findById(productId).orElseThrow(() -> new BusinessException("商品不存在")));
@@ -196,7 +218,7 @@ public class InventoryLogAspect {
         logRecord.setReason(reason != null ? reason : annotation.description());
         logRecord.setOperator(operator);
         logRecord.setCreatedTime(LocalDateTime.now());
-
+        logRecord.setType(type);
         return logRecord;
     }
 }

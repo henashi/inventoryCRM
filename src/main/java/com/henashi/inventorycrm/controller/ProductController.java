@@ -79,7 +79,16 @@ public class ProductController {
             String reason
     ) {}
 
+
     @PatchMapping("/{id}/stock")
+    @InventoryAudit(
+            operationType = InventoryLog.LogType.PARAM,
+            description = "出入库",
+            productIdParam = "id",
+            operationTypeParam = "stockOperationRequest.type",
+            quantityParam = "stockOperationRequest.quantity",
+            reasonParam = "stockOperationRequest.reason"
+    )
     public ProductDTO updateProducts(@PathVariable @NotNull @Min(1) Long id, @RequestBody StockOperationRequest stockOperationRequest) {
         return productService.updateStock(id, stockOperationRequest.type, stockOperationRequest.quantity, stockOperationRequest.reason);
 

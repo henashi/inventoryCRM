@@ -1,4 +1,11 @@
 package com.henashi.inventorycrm.dto;
 
-public record InventoryLogTypeStatsDTO() {
+import com.henashi.inventorycrm.pojo.InventoryLog;
+
+public record InventoryLogTypeStatsDTO (
+        InventoryLog.LogType type,
+        Long quantityCount,
+        Long count)
+{
 }
+

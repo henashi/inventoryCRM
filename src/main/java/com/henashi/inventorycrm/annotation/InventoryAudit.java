@@ -1,7 +1,12 @@
 package com.henashi.inventorycrm.annotation;
 
-import java.lang.annotation.*;
 import com.henashi.inventorycrm.pojo.InventoryLog.LogType;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * 库存操作日志注解
@@ -18,8 +23,14 @@ public @interface InventoryAudit {
      * out：出库
      * adjust：库存调整
      * create：创建商品
+     * param
      */
     LogType operationType();
+
+    /**
+     * 操作类型参数
+     */
+    String operationTypeParam() default "";
 
     /**
      * 操作描述

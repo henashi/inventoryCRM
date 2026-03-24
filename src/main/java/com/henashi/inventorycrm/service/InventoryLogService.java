@@ -2,6 +2,8 @@ package com.henashi.inventorycrm.service;
 
 import com.henashi.inventorycrm.dto.InventoryLogCreateDTO;
 import com.henashi.inventorycrm.dto.InventoryLogDTO;
+import com.henashi.inventorycrm.dto.InventoryLogStatsDTO;
+import com.henashi.inventorycrm.dto.InventoryLogTypeStatsDTO;
 import com.henashi.inventorycrm.exception.BusinessException;
 import com.henashi.inventorycrm.mapper.InventoryLogMapper;
 import com.henashi.inventorycrm.pojo.InventoryLog;
@@ -152,6 +154,28 @@ public class InventoryLogService {
     public Page<InventoryLogDTO> getLogsByType(String type, Pageable pageable) {
         return inventoryLogRepository.findByType(InventoryLog.LogType.valueOf(type), pageable)
                 .map(inventoryLogMapper::fromEntity);
+    }
+
+    public InventoryLogStatsDTO countStats() {
+        Long inCount = 0L;
+        Long outCount = 0L;
+        Long inQuantity = 0L;
+        Long outQuantity = 0L;
+        List<InventoryLogTypeStatsDTO> typeStatsDTOList = inventoryLogRepository.countStats();
+        if (!typeStatsDTOList.isEmpty()) {
+            for (InventoryLogTypeStatsDTO item : typeStatsDTOList) {
+                if (InventoryLog.LogType.IN.equals(item.type())
+                    || InventoryLog.LogType.CREATE.equals(item.type())) {
+                    inCount += item.count();
+                    inQuantity += item.quantityCount();
+                }
+                if (InventoryLog.LogType.OUT.equals(item.type())) {
+                    outCount = item.count();
+                    outQuantity = item.quantityCount();
+                }
+            }
+        }
+        return new InventoryLogStatsDTO(inCount, outCount, inQuantity, outQuantity);
     }
 
     private String getOperationName(String type) {

@@ -25,6 +25,7 @@ public interface InventoryLogMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     InventoryLog createToEntity(InventoryLogCreateDTO inventoryLogCreateDTO);
 
+    @Mapping(source = "product.id", target = "productId")
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     InventoryLogCreateDTO createFromEntity(InventoryLog inventoryLog);
 
