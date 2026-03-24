@@ -110,10 +110,11 @@
           </a-select>
         </a-form-item>
         <a-form-item label="发放数量" name="quantity">
-          <a-input-number v-model:value="formState.quantity" style="width: 100%" />
+          <a-input-number v-model:value="formState.quantity" style="width: 100%"
+            :disabled="formState.limitEnabled" />
         </a-form-item>
-        <a-form-item label="处理说明" name="issueNotes">
-          <a-textarea v-model:value="formState.issueNotes" placeholder="请输入处理说明" :maxlength="50" show-count/>
+        <a-form-item label="发放说明" name="issueNotes">
+          <a-textarea v-model:value="formState.issueNotes" placeholder="请输入发放说明" :maxlength="50" show-count/>
         </a-form-item>
         <!-- <a-form-item label="备注" name="remark">
           <a-textarea v-model:value="formState.remark" placeholder="请输入备注信息" :maxlength="200" show-count/>
@@ -180,6 +181,7 @@ const formState = reactive<GiftLogDTO>({
   status: 'PENDING', // 状态
   createdTime: '', // 创建时间
   updatedTime: '', // 更新时间
+  limitEnabled: false, // 是否限制
 });
 
 const rules = {
@@ -205,6 +207,7 @@ const handleIssuePendingLog = (record: GiftLogDTO) => {
   currentGiftLog.value = record;
   modelType.value = 'edit';
   modalVisible.value = true;
+  const result = findGiftLimitData(record.giftId!);
   Object.assign(formState, {
     giftId: currentGiftLog.value?.giftId || null,
     customerId: currentGiftLog.value?.customerId || null,
@@ -212,6 +215,7 @@ const handleIssuePendingLog = (record: GiftLogDTO) => {
     issueNotes: currentGiftLog.value?.issueNotes || '',
     remark: currentGiftLog.value?.remark || '',
     status: 'ISSUED',
+    limitEnabled: result.limitEnabled,
   });
 };
 
@@ -252,6 +256,14 @@ const filterGiftOption = (input: string, option: any) => {
   return (
     option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
   );
+};
+
+const findGiftLimitData = (id: number) => {
+  const response = giftStore.gifts.find(gift => gift.id === id);
+  return {
+    limitEnabled: response?.limitEnabled,
+    limitPerPerson: response?.limitPerPerson
+  }
 };
 
 const giftOptions = computed(() => {
