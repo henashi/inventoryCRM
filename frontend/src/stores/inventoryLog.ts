@@ -9,7 +9,7 @@ export const useInventoryLogStore = defineStore('inventoryLog', () => {
   const isLoading = ref(false)
   const pagination = ref({
     page: 1,
-    size: 20,
+    size: 5,
     total: 0
   })
   const stats = ref({
@@ -28,8 +28,14 @@ export const useInventoryLogStore = defineStore('inventoryLog', () => {
       logs.value = response.content
       pagination.value.total = response.totalElements
 
+      if (params?.page !== undefined) {
+        pagination.value.page = params.page + 1
+      }
+      if (params?.size !== undefined) {
+        pagination.value.size = params.size
+      }
       // 加载统计信息
-      await loadStats(params)
+      await loadStats()
 
     } finally {
       isLoading.value = false
@@ -37,8 +43,8 @@ export const useInventoryLogStore = defineStore('inventoryLog', () => {
   }
 
   // 加载统计信息
-  const loadStats = async (params?: PageParams) => {
-    const response = await inventoryLogApi.getStats(params)
+  const loadStats = async () => {
+    const response = await inventoryLogApi.getStats()
     stats.value = response
   }
 

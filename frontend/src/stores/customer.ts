@@ -12,7 +12,7 @@ export const useCustomerStore = defineStore('customer', () => {
   const total = ref(0)
   const pagination = ref({
     page: 1,
-    size: 10,
+    size: 5,
     total: 0
   })
   const searchKeyword = ref('')
@@ -167,7 +167,7 @@ export const useCustomerStore = defineStore('customer', () => {
     searchKeyword.value = ''
     pagination.value = {
       page: 1,
-      size: 10,
+      size: 5,
       total: 0
     }
   }

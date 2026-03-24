@@ -649,6 +649,7 @@ const pagination = computed(() => ({
   current: customerStore.pagination.page,
   pageSize: customerStore.pagination.size,
   total: customerStore.pagination.total,
+  pageSizeOptions: ['5', '10', '20'], // 可选的每页条数
   showSizeChanger: true,
   showQuickJumper: true,
   showTotal: (total: number) => `共 ${total} 条`

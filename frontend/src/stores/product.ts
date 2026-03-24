@@ -12,7 +12,7 @@ export const useProductStore = defineStore('product', () => {
   const total = ref(0)
   const pagination = ref({
     page: 1,
-    size: 10,
+    size: 5,
     total: 0
   })
   const searchKeyword = ref('')
@@ -56,12 +56,15 @@ export const useProductStore = defineStore('product', () => {
   const loadProducts = async (params?: PageParams) => {
     try {
       isLoading.value = true
+      console.log('params', params)
+      // Build query params: prefer explicit params passed in, fallback to store state
       const queryParams = {
-        page: params?.page || pagination.value.page - 1,
-        size: params?.size || pagination.value.size,
+        page: params?.page ?? (pagination.value.page - 1),
+        size: params?.size ?? pagination.value.size,
         keyword: params?.keyword ?? (searchKeyword.value || undefined),
         // category: selectedCategory.value || undefined
       }
+      console.log('queryParams', queryParams)
       const response: PageResult<Product> = await productApi.getProducts(queryParams)
 
       products.value = response.content
@@ -142,7 +145,7 @@ export const useProductStore = defineStore('product', () => {
     }
   }
 
-  const updateStock = async (id: number, quantity: number, type: 'in' | 'out') => {
+  const updateStock = async (id: number, quantity: number, type: 'IN' | 'OUT') => {
     console.log('updateStock', id, quantity, type)
     try {
       isLoading.value = true
@@ -182,7 +185,7 @@ export const useProductStore = defineStore('product', () => {
     selectedCategory.value = ''
     pagination.value = {
       page: 1,
-      size: 10,
+      size: 5,
       total: 0
     }
   }

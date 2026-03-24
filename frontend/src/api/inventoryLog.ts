@@ -8,7 +8,7 @@ export const inventoryLogApi = {
 
   // 获取统计信息
   getStats: (params?: any) =>
-    request.get<any>('/inventory-logs/stats', { params }),
+    request.get<any>('/inventory-logs/stats'),
 
   // 导出日志
   exportLogs: (params?: any) =>
