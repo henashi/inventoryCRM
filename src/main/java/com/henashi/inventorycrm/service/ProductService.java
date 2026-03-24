@@ -1,5 +1,6 @@
 package com.henashi.inventorycrm.service;
 
+import ch.qos.logback.core.util.StringUtil;
 import com.henashi.inventorycrm.dto.ProductCreateDTO;
 import com.henashi.inventorycrm.dto.ProductDTO;
 import com.henashi.inventorycrm.dto.ProductUpdateDTO;
@@ -96,14 +97,7 @@ public class ProductService {
                             String.format("商品(ID: %d)不存在", id));
                 });
 
-        if (product.getStatus() == 2) {
-            log.warn("该商品(ID: {})已删除", id);
-            throw new BusinessException("PRODUCT_ALREADY_DELETE",
-                    String.format("商品(ID: %d)已删除", id));
-        }
-
-        product.setStatus(2); // 下架
-        productRepository.save(product);
+        productRepository.deleteById(id);
         log.info("商品删除成功: {} ({})", product.getName(), product.getCode());
     }
 
@@ -164,8 +158,8 @@ public class ProductService {
 
     public Page<ProductDTO> findProductPage(Pageable pageable, String keyword) {
         Page<Product> products;
-        if (keyword == null) {
-            products = productRepository.findByStatusNot(2, pageable);
+        if (StringUtil.isNullOrEmpty(keyword)) {
+            products = productRepository.findAll(pageable);
         }
         else {
             products = productRepository.findByNameContainingOrCodeContainingIgnoreCaseAndStatusNot(keyword, keyword, 2, pageable);

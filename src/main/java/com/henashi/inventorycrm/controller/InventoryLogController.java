@@ -2,6 +2,7 @@ package com.henashi.inventorycrm.controller;
 
 import com.henashi.inventorycrm.dto.InventoryLogCreateDTO;
 import com.henashi.inventorycrm.dto.InventoryLogDTO;
+import com.henashi.inventorycrm.dto.InventoryLogStatsDTO;
 import com.henashi.inventorycrm.service.InventoryLogService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -65,5 +66,10 @@ public class InventoryLogController {
                         .buildAndExpand(savedLog.id())
                         .toUri();
          return ResponseEntity.created(location).body(savedLog);
+    }
+
+    @GetMapping("/stats")
+    public InventoryLogStatsDTO countStats() {
+        return inventoryLogService.countStats();
     }
 }

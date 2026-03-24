@@ -73,10 +73,11 @@ public class InventoryLog extends BaseEntity {
     // 枚举：流水类型
     @Getter
     public enum LogType {
-        IN("入库"),      // 采购入库、退货入库等
-        OUT("出库"),     // 销售出库、报损出库等
-        ADJUST("调整"),  // 库存调整
-        CREATE("新建");   // 盘点调整
+        IN("IN"),      // 采购入库、退货入库等
+        OUT("OUT"),     // 销售出库、报损出库等
+        ADJUST("ADJUST"),  // 库存调整
+        CREATE("CREATE"),
+        PARAM("PARAM");   // 盘点调整
 
         private final String description;
 
