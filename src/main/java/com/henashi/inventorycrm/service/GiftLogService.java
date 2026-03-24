@@ -3,6 +3,7 @@ package com.henashi.inventorycrm.service;
 import com.henashi.inventorycrm.dto.GiftLogCreateDTO;
 import com.henashi.inventorycrm.dto.GiftLogDTO;
 import com.henashi.inventorycrm.dto.GiftLogUpdateDTO;
+import com.henashi.inventorycrm.event.GiftLogIssueEvent;
 import com.henashi.inventorycrm.exception.BusinessException;
 import com.henashi.inventorycrm.mapper.GiftLogMapper;
 import com.henashi.inventorycrm.pojo.Customer;
@@ -14,6 +15,7 @@ import com.henashi.inventorycrm.repository.GiftRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,7 @@ public class GiftLogService {
     private final CustomerRepository customerRepository;
     private final GiftRepository giftRepository;
     private final GiftLogMapper giftLogMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     public GiftLogDTO findGiftLogDTOById(Long logId) {
         log.debug("查询礼品日志详情: id={}", logId);
@@ -110,6 +113,7 @@ public class GiftLogService {
                 .map(giftLogMapper::fromEntity);
     }
 
+    @Transactional
     public GiftLogDTO updateGiftLog(Long id, GiftLogUpdateDTO giftLogUpdateDTO) {
         if (id == null || id <= 0) {
             throw new IllegalArgumentException("id");
@@ -123,6 +127,7 @@ public class GiftLogService {
 
         if (GiftLog.GiftLogStatus.ISSUED.equals(giftLog.getStatus())) {
             giftLog.setIssueAt(LocalDateTime.now());
+            eventPublisher.publishEvent(new GiftLogIssueEvent(giftLog));
         }
 
         GiftLog saved = giftLogRepository.save(giftLog);

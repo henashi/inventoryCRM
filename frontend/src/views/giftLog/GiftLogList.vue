@@ -89,6 +89,7 @@
             show-search:value="{{ formState.giftId===null }}"
             :filter-option="filterGiftOption"
             :disabled="modelType==='edit'"
+            @-change="handleGiftChange"
           >
             <a-select-option v-for="gift in giftOptions" :key="gift.id" :value="gift.id">
               {{ gift.name }} {{ gift.code }}
@@ -110,10 +111,11 @@
           </a-select>
         </a-form-item>
         <a-form-item label="发放数量" name="quantity">
-          <a-input-number v-model:value="formState.quantity" style="width: 100%" />
+          <a-input-number v-model:value="formState.quantity" style="width: 100%"
+            :disabled="formState.limitEnabled" />
         </a-form-item>
-        <a-form-item label="处理说明" name="issueNotes">
-          <a-textarea v-model:value="formState.issueNotes" placeholder="请输入处理说明" :maxlength="50" show-count/>
+        <a-form-item label="发放说明" name="issueNotes">
+          <a-textarea v-model:value="formState.issueNotes" placeholder="请输入发放说明" :maxlength="50" show-count/>
         </a-form-item>
         <!-- <a-form-item label="备注" name="remark">
           <a-textarea v-model:value="formState.remark" placeholder="请输入备注信息" :maxlength="200" show-count/>
@@ -131,7 +133,7 @@ import { useCustomerStore } from '@/stores/customer';
 import { useGiftLogStore } from '@/stores/giftLog';
 import { message } from 'ant-design-vue';
 import type { FormInstance } from 'ant-design-vue'
-import type { GiftLogDTO, PageParams } from '@/types';
+import type { GiftLogDTO, PageParams, Gift } from '@/types';
 import { ReloadOutlined, GiftOutlined, LeftOutlined } from '@ant-design/icons-vue';
 
 const router = useRouter();
@@ -143,6 +145,7 @@ const modalVisible = ref(false);
 const formRef = ref<FormInstance>()
 const modelType = ref<'add' | 'edit'>('add');
 const currentGiftLog = ref<GiftLogDTO | null>(null);
+const currentGift = ref<Gift | null>(null);
 const dataSource = computed(() => giftLogStore.giftLogList);
 const pagination = reactive({
   ...giftLogStore.pagination, // 总条数
@@ -180,6 +183,7 @@ const formState = reactive<GiftLogDTO>({
   status: 'PENDING', // 状态
   createdTime: '', // 创建时间
   updatedTime: '', // 更新时间
+  limitEnabled: false, // 是否限制
 });
 
 const rules = {
@@ -187,7 +191,7 @@ const rules = {
   customerId: [{ required: true, message: '请选择领取人', trigger: 'change' }],
   quantity: [{ required: true, message: '请输入发放数量', trigger: 'change' }],
   issueNotes: [
-    { required: true, message: '请输入处理说明', trigger: 'blur' },
+    // { required: true, message: '请输入处理说明', trigger: 'blur' },
     { max: 50, message: '处理说明不能超过50字', trigger: 'blur' },
   ]
 };
@@ -205,6 +209,7 @@ const handleIssuePendingLog = (record: GiftLogDTO) => {
   currentGiftLog.value = record;
   modelType.value = 'edit';
   modalVisible.value = true;
+  const result = findGiftLimitData(record.giftId!);
   Object.assign(formState, {
     giftId: currentGiftLog.value?.giftId || null,
     customerId: currentGiftLog.value?.customerId || null,
@@ -212,11 +217,23 @@ const handleIssuePendingLog = (record: GiftLogDTO) => {
     issueNotes: currentGiftLog.value?.issueNotes || '',
     remark: currentGiftLog.value?.remark || '',
     status: 'ISSUED',
+    limitEnabled: result.limitEnabled,
   });
 };
 
 const handleBack = () => {
   router.push('/');
+};
+
+const handleGiftChange = (value: number) => {
+  const result = findGiftLimitData(value);
+  formState.limitEnabled = result.limitEnabled;
+  formState.quantity = result.limitPerPerson;
+  Object.assign(formState, {
+    ...formState,
+    limitEnabled: result.limitEnabled,
+    quantity: result.limitPerPerson,
+  });
 };
 
 const handleModalOk = async () => {
@@ -252,6 +269,14 @@ const filterGiftOption = (input: string, option: any) => {
   return (
     option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
   );
+};
+
+const findGiftLimitData = (id: number) => {
+  const response = giftStore.gifts.find(gift => gift.id === id);
+  return {
+    limitEnabled: response?.limitEnabled,
+    limitPerPerson: response?.limitPerPerson
+  }
 };
 
 const giftOptions = computed(() => {
