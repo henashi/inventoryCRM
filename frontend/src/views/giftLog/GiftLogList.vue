@@ -89,6 +89,7 @@
             show-search:value="{{ formState.giftId===null }}"
             :filter-option="filterGiftOption"
             :disabled="modelType==='edit'"
+            @-change="handleGiftChange"
           >
             <a-select-option v-for="gift in giftOptions" :key="gift.id" :value="gift.id">
               {{ gift.name }} {{ gift.code }}
@@ -132,7 +133,7 @@ import { useCustomerStore } from '@/stores/customer';
 import { useGiftLogStore } from '@/stores/giftLog';
 import { message } from 'ant-design-vue';
 import type { FormInstance } from 'ant-design-vue'
-import type { GiftLogDTO, PageParams } from '@/types';
+import type { GiftLogDTO, PageParams, Gift } from '@/types';
 import { ReloadOutlined, GiftOutlined, LeftOutlined } from '@ant-design/icons-vue';
 
 const router = useRouter();
@@ -144,6 +145,7 @@ const modalVisible = ref(false);
 const formRef = ref<FormInstance>()
 const modelType = ref<'add' | 'edit'>('add');
 const currentGiftLog = ref<GiftLogDTO | null>(null);
+const currentGift = ref<Gift | null>(null);
 const dataSource = computed(() => giftLogStore.giftLogList);
 const pagination = reactive({
   ...giftLogStore.pagination, // 总条数
@@ -189,7 +191,7 @@ const rules = {
   customerId: [{ required: true, message: '请选择领取人', trigger: 'change' }],
   quantity: [{ required: true, message: '请输入发放数量', trigger: 'change' }],
   issueNotes: [
-    { required: true, message: '请输入处理说明', trigger: 'blur' },
+    // { required: true, message: '请输入处理说明', trigger: 'blur' },
     { max: 50, message: '处理说明不能超过50字', trigger: 'blur' },
   ]
 };
@@ -221,6 +223,17 @@ const handleIssuePendingLog = (record: GiftLogDTO) => {
 
 const handleBack = () => {
   router.push('/');
+};
+
+const handleGiftChange = (value: number) => {
+  const result = findGiftLimitData(value);
+  formState.limitEnabled = result.limitEnabled;
+  formState.quantity = result.limitPerPerson;
+  Object.assign(formState, {
+    ...formState,
+    limitEnabled: result.limitEnabled,
+    quantity: result.limitPerPerson,
+  });
 };
 
 const handleModalOk = async () => {
