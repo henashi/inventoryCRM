@@ -3,6 +3,7 @@ package com.henashi.inventorycrm.service;
 import com.henashi.inventorycrm.dto.SystemConfigCreateDTO;
 import com.henashi.inventorycrm.dto.SystemConfigDTO;
 import com.henashi.inventorycrm.exception.BusinessException;
+import com.henashi.inventorycrm.mapper.SystemConfigMapper;
 import com.henashi.inventorycrm.pojo.SystemConfig;
 import com.henashi.inventorycrm.repository.SystemConfigRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class SystemConfigService {
 
     private final Logger log = LoggerFactory.getLogger(SystemConfigService.class);
     private final SystemConfigRepository systemConfigRepository;
+    private final SystemConfigMapper systemConfigMapper;
 
     public SystemConfigDTO findSystemConfigDTOById(Long configId) {
         log.debug("查询系统配置详情: id={}", configId);
@@ -34,7 +36,7 @@ public class SystemConfigService {
         return systemConfigRepository.findById(configId)
                 .map(config -> {
                     log.info("找到系统配置: {} = {}", config.getConfigKey(), config.getConfigValue());
-                    return SystemConfigDTO.fromEntity(config);
+                    return systemConfigMapper.fromEntity(config);
                 })
                 .orElseThrow(() -> {
                     log.warn("系统配置不存在: id={}", configId);
@@ -55,7 +57,7 @@ public class SystemConfigService {
     public List<SystemConfigDTO> getConfigsByGroup(String configGroup) {
         return systemConfigRepository.findByConfigGroup(configGroup)
                 .stream()
-                .map(SystemConfigDTO::fromEntity)
+                .map(systemConfigMapper::fromEntity)
                 .collect(Collectors.toList());
     }
 
@@ -79,11 +81,11 @@ public class SystemConfigService {
                     String.format("配置键 %s 已存在", configCreateDTO.configKey()));
         }
 
-        SystemConfig config = configCreateDTO.toEntity();
+        SystemConfig config = systemConfigMapper.createToEntity(configCreateDTO);
         SystemConfig saved = systemConfigRepository.save(config);
 
         log.info("系统配置创建成功: {} = {}", saved.getConfigKey(), saved.getConfigValue());
-        return SystemConfigDTO.fromEntity(saved);
+        return systemConfigMapper.fromEntity(saved);
     }
 
     @Transactional
@@ -118,7 +120,7 @@ public class SystemConfigService {
         SystemConfig saved = systemConfigRepository.save(existingConfig);
         log.info("系统配置更新成功: {} = {}", saved.getConfigKey(), saved.getConfigValue());
 
-        return SystemConfigDTO.fromEntity(saved);
+        return systemConfigMapper.fromEntity(saved);
     }
 
     @Transactional
@@ -132,7 +134,7 @@ public class SystemConfigService {
         config.setUpdatedTime(LocalDateTime.now());
         SystemConfig savedConfig = systemConfigRepository.save(config);
         log.info("系统配置值更新成功: {} = {}", configKey, configValue);
-        return SystemConfigDTO.fromEntity(savedConfig);
+        return systemConfigMapper.fromEntity(savedConfig);
     }
 
     @Transactional

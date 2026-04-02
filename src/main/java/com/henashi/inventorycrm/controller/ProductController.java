@@ -6,6 +6,8 @@ import com.henashi.inventorycrm.dto.ProductDTO;
 import com.henashi.inventorycrm.dto.ProductUpdateDTO;
 import com.henashi.inventorycrm.pojo.InventoryLog;
 import com.henashi.inventorycrm.service.ProductService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -22,11 +24,13 @@ import java.net.URI;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/products")
+@Tag(name = "商品管理控制器", description = "提供商品相关的CRUD操作接口")
 public class ProductController {
 
     private final ProductService productService;
 
     @GetMapping("/{id}")
+    @Operation(summary = "根据ID获取商品信息", description = "通过商品ID查询商品的详细信息")
     public ProductDTO getProduct(
             @PathVariable @NotNull @Min(1) Long id) {
         return productService.findProductDTOById(id);
@@ -40,6 +44,7 @@ public class ProductController {
             quantityParam = "productCreateDTO.currentStock",
             reasonParam = "productCreateDTO.description"
     )
+    @Operation(summary = "创建新商品", description = "根据提供的商品信息创建一个新的商品")
     public ResponseEntity<ProductDTO> createProduct(
             @Valid @RequestBody ProductCreateDTO productCreateDTO) {
         ProductDTO savedProduct = productService.saveProduct(productCreateDTO);
@@ -52,6 +57,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "更新商品信息", description = "根据提供的商品信息更新指定ID的商品")
     public ProductDTO updateProduct(
             @PathVariable @NotNull @Min(1) Long id,
             @RequestBody ProductUpdateDTO productUpdateDTO) {
@@ -59,6 +65,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "根据ID删除商品", description = "通过商品ID删除对应的商品信息")
     public ResponseEntity<Void> deleteProduct(
             @PathVariable @NotNull @Min(1) Long id) {
         productService.deleteById(id);
@@ -66,6 +73,7 @@ public class ProductController {
     }
 
     @GetMapping
+    @Operation(summary = "获取商品列表", description = "分页查询所有商品信息，支持根据关键字搜索")
     public Page<ProductDTO> getProduct(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
@@ -89,6 +97,7 @@ public class ProductController {
             quantityParam = "stockOperationRequest.quantity",
             reasonParam = "stockOperationRequest.reason"
     )
+    @Operation(summary = "更新商品库存", description = "根据提供的商品ID和库存操作信息更新商品库存")
     public ProductDTO updateProducts(@PathVariable @NotNull @Min(1) Long id, @RequestBody StockOperationRequest stockOperationRequest) {
         return productService.updateStock(id, stockOperationRequest.type, stockOperationRequest.quantity, stockOperationRequest.reason);
 

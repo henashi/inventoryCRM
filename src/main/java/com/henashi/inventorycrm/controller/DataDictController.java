@@ -4,6 +4,8 @@ import com.henashi.inventorycrm.dto.DataDictCreateDTO;
 import com.henashi.inventorycrm.dto.DataDictDTO;
 import com.henashi.inventorycrm.dto.DataDictUpdateDTO;
 import com.henashi.inventorycrm.service.DataDictService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -28,11 +30,13 @@ import java.net.URI;
 @RestController
 @RequestMapping("/api/data-dict")
 @RequiredArgsConstructor
+@Tag(name = "数据字典管理", description = "提供数据字典的增删改查接口")
 public class DataDictController {
 
     public final DataDictService dataDictService;
 
     @GetMapping
+    @Operation(summary = "分页查询数据字典", description = "根据分页参数查询数据字典列表，默认每页5条，第一页")
     public Page<DataDictDTO> findDataDictPage(
             @RequestParam(defaultValue = "5") Integer size,
             @RequestParam(defaultValue = "0") Integer page
@@ -42,6 +46,7 @@ public class DataDictController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "根据ID查询数据字典", description = "根据数据字典ID查询对应的数据字典信息")
     public DataDictDTO findById(
             @PathVariable
             @NotNull
@@ -51,6 +56,7 @@ public class DataDictController {
     }
 
     @PostMapping
+    @Operation(summary = "创建数据字典", description = "根据提供的数据字典信息创建新的数据字典")
     public ResponseEntity<DataDictDTO> createDataDict(@RequestBody @Valid DataDictCreateDTO dataDictCreateDTO) {
         DataDictDTO dataDict = dataDictService.createDataDict(dataDictCreateDTO);
         URI uri = ServletUriComponentsBuilder
@@ -62,6 +68,7 @@ public class DataDictController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "更新数据字典", description = "根据数据字典ID和提供的更新信息修改对应的数据字典")
     public DataDictDTO updateDataDict(
             @PathVariable
             @NotNull
@@ -72,6 +79,7 @@ public class DataDictController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "删除数据字典", description = "根据数据字典ID删除对应的数据字典")
     public ResponseEntity<Void> deleteById(
             @NotNull
             @PathVariable
