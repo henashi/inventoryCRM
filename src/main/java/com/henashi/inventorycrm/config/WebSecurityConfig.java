@@ -85,18 +85,18 @@ public class WebSecurityConfig {
                                 "/index.html",
                                 "/favicon.ico",
                                 "/assets/**",
-                                "/static/**"
+                                "/static/**",
+                                "/swagger-ui.html"
                         ).permitAll()
 
                         // API接口权限
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/customers/**").hasAnyRole("USER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/customers").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/customers/**").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/customers/**").hasRole("ADMIN")
-
                         .requestMatchers("/api/products/**").hasAnyRole("USER", "MANAGER", "ADMIN")
                         .requestMatchers("/api/inventory/**").hasAnyRole("MANAGER", "ADMIN")
-
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                         // 默认需要认证

@@ -4,6 +4,7 @@ import com.henashi.inventorycrm.dto.CustomerCreateDTO;
 import com.henashi.inventorycrm.dto.CustomerDTO;
 import com.henashi.inventorycrm.dto.CustomerUpdateDTO;
 import com.henashi.inventorycrm.service.CustomerService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -29,6 +30,7 @@ import java.time.LocalDate;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/customers")
+@Tag(name = "Customer API", description = "客户相关操作接口")
 public class CustomerController {
 
     private final CustomerService customerService;

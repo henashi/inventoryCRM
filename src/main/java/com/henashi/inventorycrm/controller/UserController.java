@@ -4,6 +4,11 @@ import com.henashi.inventorycrm.dto.UserCreateDTO;
 import com.henashi.inventorycrm.dto.UserDTO;
 import com.henashi.inventorycrm.mapper.UserMapper;
 import com.henashi.inventorycrm.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -22,6 +27,7 @@ import java.net.URI;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
+@Tag(name = "用户管理", description = "用户增删改查接口")
 public class UserController {
 
     private final UserService userService;
@@ -29,19 +35,33 @@ public class UserController {
     private final UserMapper userMapper;
 
     private final Logger logger = LoggerFactory.getLogger(UserController.class);
+
     @GetMapping("/{id}")
+    @Operation(summary = "根据 ID 查询用户")
     public UserDTO getUser(
             @PathVariable @NotNull @Min(1) Long id) {
         return userService.findUserDTOById(id);
     }
 
     @GetMapping("/username/{username}")
+    @Operation(summary = "根据用户名查询用户")
     public UserDTO getUserByUsername(
             @PathVariable @NotNull String username) {
         return userService.findByUsername(username);
     }
 
     @PostMapping
+    @Operation(summary = "创建新用户",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "用户信息",
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = UserCreateDTO.class))
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "用户创建成功"),
+                    @ApiResponse(responseCode = "400", description = "请求参数错误")
+            }
+    )
     public ResponseEntity<UserDTO> createUser(
             @Valid @RequestBody UserCreateDTO userCreateDTO) {
         UserDTO savedUser = userService.saveUser(userCreateDTO);
@@ -54,6 +74,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "根据 ID 更新用户")
     public UserDTO updateUser(
             @PathVariable @NotNull @Min(1) Long id,
             @Valid @RequestBody UserCreateDTO userCreateDTO) {
@@ -61,6 +82,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "根据 ID 删除用户")
     public ResponseEntity<Void> deleteUser(
             @PathVariable @NotNull @Min(1) Long id) {
         userService.deleteById(id);
@@ -72,6 +94,7 @@ public class UserController {
      * @param userCreateDTO 用户信息
      * @return register or login page
      */
+    @Operation(summary = "注册新用户")
     @PostMapping("/register")
     public String register(@Valid @ModelAttribute UserCreateDTO userCreateDTO, BindingResult bindingResult,
                            RedirectAttributes redirectAttributes) {

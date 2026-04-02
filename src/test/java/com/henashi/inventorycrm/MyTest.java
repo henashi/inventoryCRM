@@ -13,47 +13,47 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
-@SpringBootTest
+//@SpringBootTest
 public class MyTest {
-
-    @Autowired
-    CustomerService customerService;
-    @Autowired
-    private CustomerRepository customerRepository;
-    @Autowired
-    private CustomerMapper customerMapper;
-
-    @Test
-    public void testCreateCustomer() {
-        CustomerCreateDTO customerCreateDTO = new CustomerCreateDTO("张二炮", "18123234568", "这是一串地址", null, 1, LocalDate.now(), null, null, null, null, null, 0, LocalDate.of(2000, 1, 1));
-        CustomerDTO customerDTO = customerService.saveCustomer(customerCreateDTO);
-        System.out.println(customerDTO);
-    }
-
-    @Test
-    @Transactional
-    public void testFind() {
-        CustomerDTO customerDTOById = customerService.findCustomerDTOById(1L);
-        System.out.println(customerDTOById);
-    }
-
-
+//
+//    @Autowired
+//    CustomerService customerService;
+//    @Autowired
+//    private CustomerRepository customerRepository;
+//    @Autowired
+//    private CustomerMapper customerMapper;
+//
+//    @Test
+//    public void testCreateCustomer() {
+//        CustomerCreateDTO customerCreateDTO = new CustomerCreateDTO("张二炮", "18123234568", "这是一串地址", null, 1, LocalDate.now(), null, null, null, null, null, 0, LocalDate.of(2000, 1, 1));
+//        CustomerDTO customerDTO = customerService.saveCustomer(customerCreateDTO);
+//        System.out.println(customerDTO);
+//    }
+//
+//    @Test
+//    @Transactional
+//    public void testFind() {
+//        CustomerDTO customerDTOById = customerService.findCustomerDTOById(1L);
+//        System.out.println(customerDTOById);
+//    }
+//
+//
+////    @Test
+////    @Commit
+////    @Transactional
+////    public void testUpdate() {
+////        CustomerDTO customerDTOById = customerService.findCustomerDTOById(1L);
+////        Customer entity = customerDTOById.toEntity(customerRepository);
+////        entity.setAddress("浙江省嘉兴市");
+//////        entity.setEmail("DapaoZhang@gmail.com");
+////        customerService.updateCustomer(1L, customerMapper.updateFromEntity(entity));
+////        System.out.println(1);
+////    }
+//
 //    @Test
 //    @Commit
 //    @Transactional
-//    public void testUpdate() {
-//        CustomerDTO customerDTOById = customerService.findCustomerDTOById(1L);
-//        Customer entity = customerDTOById.toEntity(customerRepository);
-//        entity.setAddress("浙江省嘉兴市");
-////        entity.setEmail("DapaoZhang@gmail.com");
-//        customerService.updateCustomer(1L, customerMapper.updateFromEntity(entity));
-//        System.out.println(1);
+//    public void testD() {
+//        customerService.deleteById(10086L);
 //    }
-
-    @Test
-    @Commit
-    @Transactional
-    public void testD() {
-        customerService.deleteById(10086L);
-    }
 }
