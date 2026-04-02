@@ -1,6 +1,5 @@
 package com.henashi.inventorycrm.pojo;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,7 +33,6 @@ public class User extends BaseEntity implements UserDetails{
     /**
      * 用户名
      */
-    @Schema(description = "用户名称")
     @Column(name = "username", unique = true, nullable = false, length = 50)
     private String username;
 

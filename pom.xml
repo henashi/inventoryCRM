@@ -88,6 +88,10 @@
 			<artifactId>spring-boot-starter-web-services</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
 		<!-- 替换为Spring Boot专用Druid启动器，版本由Spring Boot父工程兼容管理 -->
 		<dependency>
 			<groupId>com.alibaba</groupId>
