@@ -73,6 +73,9 @@ public class WebSecurityConfig {
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/api/public/**",
+                                "/actuator/health",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
                                 "/error",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
@@ -90,7 +93,6 @@ public class WebSecurityConfig {
                         ).permitAll()
 
                         // API接口权限
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/customers/**").hasAnyRole("USER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/customers").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/customers/**").hasAnyRole("MANAGER", "ADMIN")
