@@ -1,7 +1,6 @@
 package com.henashi.inventorycrm.pojo;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -9,41 +8,41 @@ import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
+import lombok.experimental.SuperBuilder;
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @MappedSuperclass
-@EntityListeners(AuditingEntityListener.class)
+@SuperBuilder
 public class BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @CreatedDate
     @Column(name = "created_time", updatable = false)
     private LocalDateTime createdTime;
 
-    @LastModifiedDate
-    @Column(name = "updated_time")
-    private LocalDateTime updatedTime;
+    @Column(name = "status_updated_time")
+    private LocalDateTime statusUpdatedTime;
 
-    @CreatedBy
+    @Column(name = "content_updated_time")
+    private LocalDateTime contentUpdatedTime;
+
     @Column(name = "created_by")
     private String createdBy;
 
-    @LastModifiedBy
-    @Column(name = "updated_by")
-    private String updatedBy;
+    @Column(name = "content_updated_by")
+    private String contentUpdatedBy;
 
-    @Column(name = "is_deleted", columnDefinition = "boolean default false")
-    private Boolean isDeleted = false;
+    @Column(name = "status_updated_by")
+    private String statusUpdatedBy;
+
+    @Column(name = "status")
+    private String status;
+
+    @Column(name = "deleted", nullable = false, columnDefinition = "boolean default false")
+    private boolean deleted = false;
 }

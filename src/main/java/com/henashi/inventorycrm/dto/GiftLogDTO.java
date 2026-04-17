@@ -33,8 +33,11 @@ public record GiftLogDTO(
         @Schema(description = "创建时间")
         LocalDateTime createdTime,
 
-        @Schema(description = "更新时间")
-        LocalDateTime updatedTime,
+        @Schema(description = "状态更新时间")
+        LocalDateTime statusUpdatedTime,
+
+        @Schema(description = "数据更新时间")
+        LocalDateTime contentUpdatedTime,
 
         @Schema(description = "发放备注")
         String issueNotes,

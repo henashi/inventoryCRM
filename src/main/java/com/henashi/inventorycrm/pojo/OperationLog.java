@@ -1,12 +1,17 @@
 package com.henashi.inventorycrm.pojo;
 
 
-import jakarta.persistence.*;
+import com.henashi.inventorycrm.enums.OperationType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
@@ -19,12 +24,12 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "operation_log")
-@SQLRestriction(value = "is_deleted = false")
-@SQLDelete(sql = "update operation_log set is_deleted = true where id = ?")
+@SQLRestriction(value = "deleted = false")
+@SQLDelete(sql = "update operation_log set deleted = true where id = ?")
 public class OperationLog extends BaseEntity {
 
     /**
@@ -36,8 +41,9 @@ public class OperationLog extends BaseEntity {
     /**
      * 操作类型
      */
+    @Enumerated(EnumType.STRING)
     @Column(name = "operation_type", length = 50)
-    private String operationType;
+    private OperationType operationType;
 
     /**
      * 操作描述
@@ -75,11 +81,11 @@ public class OperationLog extends BaseEntity {
     @Column(name = "ip_address", length = 50)
     private String ipAddress;
 
-    /**
+    /*
      * 操作状态：1-成功 0-失败
      */
-    @Column(name = "status")
-    private Integer status = 1;
+//    @Column(name = "status")
+//    private Integer status = 1;
 
     /**
      * 错误信息

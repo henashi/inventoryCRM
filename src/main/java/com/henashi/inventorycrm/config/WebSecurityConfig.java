@@ -168,7 +168,7 @@ public class WebSecurityConfig {
             user.setPassword(plainPassword);
             user.setEmail(username + "@quizapp.com");
             user.setRole(role);
-            user.setStatus(1);
+            user.setStatus("1");
             try {
                 userService.registerUser(user);
             }

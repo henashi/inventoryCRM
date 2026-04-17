@@ -1,11 +1,13 @@
 package com.henashi.inventorycrm.pojo;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -15,12 +17,12 @@ import org.hibernate.annotations.SQLRestriction;
 @Entity
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "system_config")
-@SQLRestriction(value = "is_deleted = false")
-@SQLDelete(sql = "update system_config set is_deleted = true where id = ?")
+@SQLRestriction(value = "deleted = false")
+@SQLDelete(sql = "update system_config set deleted = true where id = ?")
 public class SystemConfig extends BaseEntity {
 
     /**

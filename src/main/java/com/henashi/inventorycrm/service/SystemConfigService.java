@@ -13,8 +13,6 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -115,7 +113,6 @@ public class SystemConfigService {
 
         // 更新配置
         updateConfigFields(existingConfig, dto);
-        existingConfig.setUpdatedTime(LocalDateTime.now());
 
         SystemConfig saved = systemConfigRepository.save(existingConfig);
         log.info("系统配置更新成功: {} = {}", saved.getConfigKey(), saved.getConfigValue());
@@ -131,7 +128,6 @@ public class SystemConfigService {
                         String.format("配置项 %s 不存在", configKey)));
 
         config.setConfigValue(configValue);
-        config.setUpdatedTime(LocalDateTime.now());
         SystemConfig savedConfig = systemConfigRepository.save(config);
         log.info("系统配置值更新成功: {} = {}", configKey, configValue);
         return systemConfigMapper.fromEntity(savedConfig);

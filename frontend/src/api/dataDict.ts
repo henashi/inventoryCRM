@@ -16,7 +16,10 @@ export const dataDictApi = {
   createDataDict: (data: DataDictCreateDTO) => request.post('/data-dict', data),
 
   // 更新配置
-  updateDataDict: (id: number, data: DataDictUpdateDTO) => request.put(`/data-dict/${id}`, data),
+  updateDataDict: (id: number, data: DataDictUpdateDTO) => request.patch(`/data-dict/${id}`, data),
+
+  // 生失效配置
+  updateDataDictStatus: (id: number, enable: boolean) => request.patch(`/data-dict/status/${id}/${enable}`),
 
   // 删除配置
   deleteDataDict: (id: number) => request.delete(`/data-dict/${id}`),

@@ -12,7 +12,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -36,8 +37,12 @@ public class GiftController {
 
     @GetMapping
     @Operation(summary = "获取礼品列表", description = "分页查询所有礼品信息")
-    public Page<GiftDTO> getGifts(Pageable pageable) {
-        return giftService.findGifts(pageable);
+    public Page<GiftDTO> getGifts(
+            @RequestParam(defaultValue = "5") Integer size,
+            @RequestParam(defaultValue = "0") Integer page
+    ) {
+        Sort sort = Sort.by("contentUpdatedTime", "createdTime").descending();
+        return giftService.findGifts(PageRequest.of(page, size, sort));
     }
 
     @DeleteMapping("/{id}")

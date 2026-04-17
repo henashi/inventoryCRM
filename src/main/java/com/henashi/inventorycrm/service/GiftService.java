@@ -48,7 +48,7 @@ public class GiftService {
             throw new IllegalArgumentException("礼品数据不能为空");
         }
         Gift entity = giftMapper.createToEntity(giftDTO);
-        entity.setIsDeleted(false);
+        entity.setDeleted(false);
         return giftMapper.fromEntity(giftRepository.save(entity));
     }
 

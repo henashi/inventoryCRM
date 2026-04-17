@@ -9,9 +9,16 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -36,24 +43,31 @@ public class OperationLogController {
     @Operation(summary = "获取模块日志", description = "根据模块名称获取相关的操作日志")
     public Page<OperationLogDTO> getLogsByModule(
             @PathVariable @NotNull String module,
-            Pageable pageable) {
-        return operationLogService.getLogsByModule(module, pageable);
+            @RequestParam(defaultValue = "5") Integer size,
+            @RequestParam(defaultValue = "0") Integer page) {
+        Sort sort = Sort.by("id").descending();
+        return operationLogService.getLogsByModule(module, PageRequest.of(size, page, sort));
     }
 
     @GetMapping("/operator/{operator}")
     @Operation(summary = "获取操作人日志", description = "根据操作人名称获取相关的操作日志")
     public Page<OperationLogDTO> getLogsByOperator(
             @PathVariable @NotNull String operator,
-            Pageable pageable) {
-        return operationLogService.getLogsByOperator(operator, pageable);
+            @RequestParam(defaultValue = "5") Integer size,
+            @RequestParam(defaultValue = "0") Integer page) {
+        Sort sort = Sort.by("id").descending();
+        return operationLogService.getLogsByOperator(operator, PageRequest.of(size, page, sort));
     }
 
     @GetMapping("/search")
     @Operation(summary = "分页查询日志", description = "根据关键词搜索操作日志，支持模块名称、操作人和描述的模糊匹配")
     public Page<OperationLogDTO> searchLogs(
             @RequestParam(required = false) String keyword,
-            Pageable pageable) {
-        return operationLogService.searchLogs(keyword, pageable);
+            @RequestParam(defaultValue = "5") Integer size,
+            @RequestParam(defaultValue = "0") Integer page
+    ) {
+        Sort sort = Sort.by("id").descending();
+        return operationLogService.searchLogs(keyword, PageRequest.of(size, page, sort));
     }
 
     @PostMapping

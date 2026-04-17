@@ -15,8 +15,17 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
@@ -56,7 +65,7 @@ public class ProductController {
          return ResponseEntity.created(location).body(savedProduct);
     }
 
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     @Operation(summary = "更新商品信息", description = "根据提供的商品信息更新指定ID的商品")
     public ProductDTO updateProduct(
             @PathVariable @NotNull @Min(1) Long id,
@@ -78,7 +87,8 @@ public class ProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(required = false) String keyword) {
-        return productService.findProductPage(PageRequest.of(page, size), keyword);
+        Sort sort = Sort.by("contentUpdatedTime").descending();
+        return productService.findProductPage(PageRequest.of(page, size, sort), keyword);
     }
 
     public record StockOperationRequest(

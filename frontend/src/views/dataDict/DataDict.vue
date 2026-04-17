@@ -172,9 +172,9 @@ const columns = [
     key: 'status',
     render: (text: string) => {
       switch (text) {
-        case 'ACTIVE':
+        case 'DICT_STATUS_ACTIVE':
           return '生效'
-        case 'PAUSED':
+        case 'DICT_STATUS_PAUSED':
           return '失效'
         default:
           return '未知'
@@ -240,14 +240,16 @@ const handleActiveOrDisable = (record: DataDict, isActive: boolean) => {
     cancelText: '取消',
     onOk: async () => {
       try {
-        await dataDictStore.updateDataDict(record.id, { status: isActive ? 'DICT_STATUS_PAUSED' : 'DICT_STATUS_ACTIVE' })
+        await dataDictStore.updateDataDictStatus(record.id, !isActive )
         message.success(`${optionText}成功`)
       } catch (error) {
         message.error(`${optionText}失败`)
       }
+      finally {
+        loadDataDicts()
+      }
     }
   })
-  loadDataDicts()
 
 }
 
@@ -296,11 +298,13 @@ const handleAddOrEdit = async () => {
       message.success('更新配置成功')
     }
     modalVisible.value = false
-    loadDataDicts()
   } catch (error) {
     console.error('表单验证失败:', error)
   }
-  loadDataDicts()
+  finally {
+    formRef.value?.resetFields();
+    loadDataDicts();
+  }
 }
 
 const handleModalCancel = () => {

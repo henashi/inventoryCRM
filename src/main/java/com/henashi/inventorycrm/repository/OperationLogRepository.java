@@ -16,7 +16,7 @@ public interface OperationLogRepository extends JpaRepository<OperationLog, Long
 
     @Query("SELECT o FROM OperationLog o WHERE " +
             "LOWER(o.module) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(o.operationType) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+//            "LOWER(o.operationType) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(o.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(o.operator) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     Page<OperationLog> search(@Param("keyword") String keyword, Pageable pageable);

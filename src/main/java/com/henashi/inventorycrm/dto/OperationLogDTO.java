@@ -1,5 +1,6 @@
 package com.henashi.inventorycrm.dto;
 
+import com.henashi.inventorycrm.enums.OperationType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -10,7 +11,7 @@ public record OperationLogDTO(
         @Schema(description = "模块")
         String module,
         @Schema(description = "操作类型")
-        String operationType,
+        OperationType operationType,
         @Schema(description = "操作描述")
         String description,
         @Schema(description = "请求URL")

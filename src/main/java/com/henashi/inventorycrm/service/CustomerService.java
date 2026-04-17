@@ -69,7 +69,7 @@ public class CustomerService {
             customer = customerMapper.createToEntity(customerCreateDTO);
 //                    customerCreateDTO.toEntity(customerRepository);
         }
-        customer.setStatus(1);
+        customer.setStatus("1");
         return customerMapper.fromEntity(customerRepository.save(customer));
     }
 
@@ -115,7 +115,7 @@ public class CustomerService {
 //            GiftLog giftLog = GiftLog.builder()
 //                    .customer(referrer)
 //                    .gift(giftByCode.get())
-//                    .status(GiftLog.GiftLogStatus.PENDING)
+//                    .giftStatus(GiftLog.GiftLogStatus.PENDING)
 //                    .quantity(1)
 //                    .build();
 //            giftLogRepository.save(giftLog);
@@ -191,8 +191,8 @@ public class CustomerService {
 //        if (dto.remark() != null) {
 //            customer.setRemark(dto.remark());
 //        }
-//        if (dto.status() != null) {
-//            customer.setStatus(dto.status());
+//        if (dto.giftStatus() != null) {
+//            customer.setStatus(dto.giftStatus());
 //        }
 //        if (dto.gender() != null) {
 //            customer.setGender(dto.gender());
@@ -211,7 +211,7 @@ public class CustomerService {
 
 
     public Page<CustomerDTO> findAllCustomers(PageRequest pageRequest, String keyword, String sort, Integer status, Integer giftLevel, Integer gender, String direction, LocalDate startDate, LocalDate endDate) {
-        log.debug("分页查询客户列表: page={}, size={}, keyword={}, sort={}, status={}, giftLevel={}, gender={}, startDate={}, endDate={}, direction={}",
+        log.debug("分页查询客户列表: page={}, size={}, keyword={}, sort={}, giftStatus={}, giftLevel={}, gender={}, startDate={}, endDate={}, direction={}",
                 pageRequest.getPageNumber(), pageRequest.getPageSize(), keyword, sort, status, giftLevel, gender, startDate, endDate, direction);
         // 解析sort参数
         Sort sortObj = Sort.unsorted();
@@ -255,7 +255,7 @@ public class CustomerService {
             }
 
             if (status != null) {
-                predicates.add(cb.equal(root.get("status"), status));
+                predicates.add(cb.equal(root.get("giftStatus"), status));
             }
 
             // 注册日期范围查询条件

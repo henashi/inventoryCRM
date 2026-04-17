@@ -8,16 +8,18 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Index;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PostLoad;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 import lombok.experimental.Accessors;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.SQLDelete;
@@ -38,14 +40,13 @@ import java.util.Random;
  * 使用Hibernate注解实现软删除和动态SQL：@DynamicInsert, @DynamicUpdate, @SQLDelete, @Where
  */
 @Accessors(chain = true)
-@ToString
 //        (exclude = {"distributions", "logs"})
 @Entity
 @Table(name = "gift",
         indexes = {
                 @Index(name = "idx_gift_name", columnList = "name"),
                 @Index(name = "idx_gift_code", columnList = "code"),
-                @Index(name = "idx_gift_status", columnList = "status"),
+                @Index(name = "idx_gift_status", columnList = "giftStatus"),
                 @Index(name = "idx_gift_type", columnList = "type")
         },
         uniqueConstraints = {
@@ -54,13 +55,13 @@ import java.util.Random;
 )
 @DynamicInsert
 @DynamicUpdate
-@SQLDelete(sql = "UPDATE gift set is_deleted = true WHERE id = ?")
-@SQLRestriction("is_deleted = false")
+@SQLDelete(sql = "UPDATE gift set deleted = true WHERE id = ?")
+@SQLRestriction("deleted = false")
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 public class Gift extends BaseEntity implements Serializable {
 
     @Serial
@@ -110,9 +111,8 @@ public class Gift extends BaseEntity implements Serializable {
      * 非空，使用字符串枚举类型
      * 默认值为DRAFT（草稿）
      */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 20, nullable = false)
-    private GiftStatus status = GiftStatus.DRAFT;
+    @Transient
+    private GiftStatus giftStatus;
 
     /**
      * 是否限制领取次数
@@ -139,6 +139,40 @@ public class Gift extends BaseEntity implements Serializable {
     private void generateCodeBeforeCreate() {
         if (StringUtil.isNullOrEmpty(getCode())) {
             setCode(generateGiftCode());
+        }
+        if (giftStatus != null) {
+            setStatus(giftStatus.name());
+        }
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        if (giftStatus != null) {
+          setStatus(giftStatus.name());
+        }
+    }
+
+    @PostLoad
+    public void postLoad() {
+        if(getStatus() != null) {
+            this.giftStatus = GiftStatus.valueOf(getStatus());
+        }
+    }
+
+    public GiftStatus getGiftStatus() {
+        if (giftStatus == null && this.getStatus() != null) {
+            giftStatus = GiftStatus.valueOf(this.getStatus());
+        }
+        return giftStatus;
+    }
+
+    public void setGiftStatus(GiftStatus giftStatus) {
+        this.giftStatus = giftStatus;
+        if (giftStatus != null) {
+            setStatus(giftStatus.name());
+        }
+        else {
+            setStatus(null);
         }
     }
 
@@ -176,28 +210,6 @@ public class Gift extends BaseEntity implements Serializable {
             throw new IllegalArgumentException("未知的礼品类型: " + value);
         }
     }
-
-//    @Getter
-//    public enum NewGiftLevel {
-//        LEVEL_1("一级邀新"),
-//        LEVEL_2("二级邀新"),
-//        LEVEL_3("三级邀新");
-//
-//        private final String description;
-//
-//        NewGiftLevel(String description) {
-//            this.description = description;
-//        }
-//
-//        public static NewGiftLevel fromString(String value) {
-//            for (NewGiftLevel level : NewGiftLevel.values()) {
-//                if (level.name().equalsIgnoreCase(value)) {
-//                    return level;
-//                }
-//            }
-//            throw new IllegalArgumentException("未知的邀新礼品等级: " + value);
-//        }
-//    }
 
     /**
      * 礼品状态枚举
@@ -253,10 +265,6 @@ public class Gift extends BaseEntity implements Serializable {
         if (this.limitEnabled && (this.limitPerPerson == null || this.limitPerPerson <= 0)) {
             throw new IllegalStateException("限制领取次数时，每人限领次数必须大于0");
         }
-
-//        if (this.startTime != null && this.endTime != null && this.endTime.isBefore(this.startTime)) {
-//            throw new IllegalStateException("结束时间必须晚于开始时间");
-//        }
     }
 
     /**
@@ -266,21 +274,7 @@ public class Gift extends BaseEntity implements Serializable {
      */
     public boolean isDistributable() {
         // 状态检查
-        if (this.status != GiftStatus.ACTIVE) {
-            return false;
-        }
-
-        // 时间检查
-//        LocalDateTime now = LocalDateTime.now();
-//        if (this.startTime != null && now.isBefore(this.startTime)) {
-//            return false;
-//        }
-//
-//        if (this.endTime != null && now.isAfter(this.endTime)) {
-//            return false;
-//        }
-
-        return true;
+        return this.giftStatus == GiftStatus.ACTIVE;
     }
 
     /**
@@ -302,19 +296,11 @@ public class Gift extends BaseEntity implements Serializable {
      * 将礼品状态设置为生效中
      */
     public void activate() {
-        if (this.status == GiftStatus.ACTIVE) {
+        if (this.giftStatus == GiftStatus.ACTIVE) {
             return;
         }
 
-//        if (this.startTime != null && LocalDateTime.now().isBefore(this.startTime)) {
-//            throw new IllegalStateException("未到开始时间，不能激活");
-//        }
-//
-//        if (this.endTime != null && LocalDateTime.now().isAfter(this.endTime)) {
-//            throw new IllegalStateException("已过结束时间，不能激活");
-//        }
-
-        this.status = GiftStatus.ACTIVE;
+        this.giftStatus = GiftStatus.ACTIVE;
     }
 
     /**
@@ -322,15 +308,15 @@ public class Gift extends BaseEntity implements Serializable {
      * 将礼品状态设置为已暂停
      */
     public void pause() {
-        if (this.status == GiftStatus.PAUSED) {
+        if (this.giftStatus == GiftStatus.PAUSED) {
             return;
         }
 
-        if (this.status != GiftStatus.ACTIVE) {
+        if (this.giftStatus != GiftStatus.ACTIVE) {
             throw new IllegalStateException("只有生效中的礼品可以暂停");
         }
 
-        this.status = GiftStatus.PAUSED;
+        this.giftStatus = GiftStatus.PAUSED;
     }
 
     /**
@@ -338,29 +324,15 @@ public class Gift extends BaseEntity implements Serializable {
      * 将礼品状态从已暂停恢复为生效中
      */
     public void resume() {
-        if (this.status == GiftStatus.ACTIVE) {
+        if (this.giftStatus == GiftStatus.ACTIVE) {
             return;
         }
 
-        if (this.status != GiftStatus.PAUSED) {
+        if (this.giftStatus != GiftStatus.PAUSED) {
             throw new IllegalStateException("只有暂停的礼品可以恢复");
         }
 
-        this.status = GiftStatus.ACTIVE;
-    }
-
-    /**
-     * 过期礼品
-     * 将礼品状态设置为已过期
-     */
-    public void expire() {
-        if (this.status == GiftStatus.EXPIRED) {
-            return;
-        }
-
-//        if (this.endTime != null && LocalDateTime.now().isAfter(this.endTime)) {
-//            this.status = GiftStatus.EXPIRED;
-//        }
+        this.giftStatus = GiftStatus.ACTIVE;
     }
 
     /**
@@ -381,7 +353,7 @@ public class Gift extends BaseEntity implements Serializable {
      * @return 状态描述
      */
     public String getStatusDescription() {
-        return this.status.getDescription();
+        return this.giftStatus.getDescription();
     }
 
     /**
@@ -395,23 +367,6 @@ public class Gift extends BaseEntity implements Serializable {
     // ==================== 静态工厂方法 ====================
 
     /**
-     * 创建草稿礼品
-     * @param name 礼品名称
-     * @param code 礼品编码
-     * @param type 礼品类型
-     * @return 礼品对象
-     */
-    public static Gift createDraft(String name, String code, GiftType type) {
-        Gift gift = new Gift();
-        gift.setName(name);
-        gift.setCode(code);
-        gift.setType(type);
-        gift.setStatus(GiftStatus.DRAFT);
-        gift.validateBusinessRules();
-        return gift;
-    }
-
-    /**
      * 创建立即生效的礼品
      * @param name 礼品名称
      * @param code 礼品编码
@@ -423,8 +378,7 @@ public class Gift extends BaseEntity implements Serializable {
         gift.setName(name);
         gift.setCode(code);
         gift.setType(type);
-        gift.setStatus(GiftStatus.ACTIVE);
-//        gift.setStartTime(LocalDateTime.now());
+        gift.setGiftStatus(GiftStatus.ACTIVE);
         gift.validateBusinessRules();
         return gift;
     }
@@ -445,10 +399,8 @@ public class Gift extends BaseEntity implements Serializable {
         gift.setName(name);
         gift.setCode(code);
         gift.setType(type);
-        gift.setStatus(startTime == null || !LocalDateTime.now().isBefore(startTime)
+        gift.setGiftStatus(startTime == null || !LocalDateTime.now().isBefore(startTime)
                 ? GiftStatus.ACTIVE : GiftStatus.DRAFT);
-//        gift.setStartTime(startTime);
-//        gift.setEndTime(endTime);
         gift.validateBusinessRules();
         return gift;
     }
@@ -456,13 +408,13 @@ public class Gift extends BaseEntity implements Serializable {
     @Override
     public String toString() {
         return String.format(
-                "Gift{name='%s', code='%s', type=%s, product=%s, description='%s', status=%s, limitEnabled=%s, limitPerPerson=%d, remark='%s'}",
+                "Gift{name='%s', code='%s', type=%s, product=%s, description='%s', giftStatus=%s, limitEnabled=%s, limitPerPerson=%d, remark='%s'}",
                 getName(),
                 getCode(),
                 getType(),
                 getProduct() != null ? getProduct().getId() : "null",  // 安全处理
                 getDescription(),
-                getStatus(),
+                getGiftStatus(),
                 getLimitEnabled(),
                 getLimitPerPerson(),
                 getRemark()

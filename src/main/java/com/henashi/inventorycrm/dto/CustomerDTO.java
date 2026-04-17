@@ -5,12 +5,18 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 
 // 客户DTO
-public record CustomerDTO(
+public record CustomerDTO (
         @Schema(description = "客户ID")
         Long id,
 
         @Schema(description = "客户名称")
         String name,
+
+        @Schema(description = "客户手机号")
+        String phone,
+
+        @Schema(description = "客户邮箱")
+        String email,
 
         @Schema(description = "客户联系方式")
         String contactInfo,

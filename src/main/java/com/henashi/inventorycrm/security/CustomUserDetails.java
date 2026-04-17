@@ -36,7 +36,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return user.getStatus() == 1; // 1表示正常，0表示锁定
+        return "1".equals(user.getStatus());
     }
 
     @Override
@@ -46,7 +46,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return user.getStatus() == 1;
+        return "1".equals(user.getStatus());
     }
 
     public User getUser() {

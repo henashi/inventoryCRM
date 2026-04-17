@@ -16,6 +16,6 @@ public interface InventoryLogRepository extends JpaRepository<InventoryLog, Long
 
     Page<InventoryLog> findByType(InventoryLog.LogType type, Pageable pageable);
 
-    @Query("select il.type, sum(il.quantity) quantityCount, count(il) count from InventoryLog il where il.isDeleted = false group by il.type")
+    @Query("select il.type, sum(il.quantity) quantityCount, count(il) count from InventoryLog il where il.deleted = false group by il.type")
     List<InventoryLogTypeStatsDTO> countStats();
 }

@@ -1,11 +1,18 @@
 package com.henashi.inventorycrm.pojo;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -15,12 +22,12 @@ import org.hibernate.annotations.SQLRestriction;
 @Entity
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "inventory_log")
-@SQLRestriction(value = "is_deleted = false")
-@SQLDelete(sql = "update inventory_log set is_deleted = true where id = ?")
+@SQLRestriction(value = "deleted = false")
+@SQLDelete(sql = "update inventory_log set deleted = true where id = ?")
 public class InventoryLog extends BaseEntity {
 
     /**
@@ -113,5 +120,23 @@ public class InventoryLog extends BaseEntity {
         log.setOperator(operator);
         log.setRemark(remark);
         return log;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("InventoryLog{" +
+                "id=%s," +
+                "product=%s," +
+                "type=%s," +
+                "quantity=%d," +
+                "beforeStock=%d," +
+                "afterStock=%d," +
+                "reason='%s'," +
+                "operator='%s'," +
+                "remark='%s'" +
+                "}",
+                getId(),
+                product != null ? product.getId() : null,
+                type, quantity, beforeStock, afterStock, reason, operator, remark);
     }
 }
