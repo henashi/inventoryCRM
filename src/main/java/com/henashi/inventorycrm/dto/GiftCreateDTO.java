@@ -6,8 +6,6 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import org.hibernate.validator.constraints.Length;
 
-import java.time.LocalDateTime;
-
 public record GiftCreateDTO (
         @NotNull
         @Length(max = 100)
@@ -35,10 +33,6 @@ public record GiftCreateDTO (
         @Min(1)
         @Schema(description = "每人领取限制数量")
         Integer limitPerPerson,
-        @Schema(description = "创建时间")
-        LocalDateTime createdTime,
-        @Schema(description = "更新时间")
-        LocalDateTime updatedTime,
         @Length(max = 200)
         @Schema(description = "备注")
         String remark)

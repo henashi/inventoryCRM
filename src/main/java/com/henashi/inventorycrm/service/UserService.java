@@ -75,7 +75,7 @@ public class UserService {
         User user = userMapper.createToEntity(userCreateDTO);
         user.setPassword(encodedPassword);
         // 默认启用
-        user.setStatus(1);
+        user.setStatus("1");
 
         User saved = userRepository.save(user);
         log.info("用户创建成功: {} ", saved.getUsername());
@@ -130,14 +130,7 @@ public class UserService {
                             String.format("用户(ID: %d)不存在", id));
                 });
 
-        if (user.getStatus() == 0) {
-            log.warn("该用户(ID: {})已停用", id);
-            throw new BusinessException("USER_ALREADY_DISABLED",
-                    String.format("用户(ID: %d)已停用", id));
-        }
-
-        user.setStatus(0); // 停用
-        userRepository.save(user);
+        userRepository.deleteById(id);
         log.info("用户停用成功: {} ", user.getUsername());
     }
 
@@ -171,7 +164,6 @@ public class UserService {
     @Transactional
     public void registerUser(User user) throws BusinessException {
         if (user == null
-                || user.getUsername() == null
                 || user.getUsername().trim().isEmpty()) {
             throw new BusinessException("INVALID_INPUT", "用户名无效");
         }
@@ -187,7 +179,7 @@ public class UserService {
         // 统一在服务端编码密码（约定：registerUser 接受明文密码）
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         if (user.getStatus() == null) {
-            user.setStatus(1);
+            user.setStatus("1");
         }
 
         try {

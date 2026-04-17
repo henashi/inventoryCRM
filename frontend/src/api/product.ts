@@ -23,7 +23,7 @@ export const productApi = {
 
   // 更新商品
   updateProduct: (id: number, data: Partial<ProductUpdateDTO>) =>
-    request.put<Product>(`/products/${id}`, data),
+    request.patch<Product>(`/products/${id}`, data),
 
   // 删除商品
   deleteProduct: (id: number) =>

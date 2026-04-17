@@ -1,12 +1,22 @@
 package com.henashi.inventorycrm.pojo;
 
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
@@ -20,17 +30,17 @@ import java.time.LocalDateTime;
 @Table(name = "gift_log",
         indexes = {
                 @Index(name = "idx_gift_id", columnList = "gift_id"),
-                @Index(name = "idx_gift_log_status", columnList = "status"),
+                @Index(name = "idx_gift_log_status", columnList = "giftStatus"),
                 @Index(name = "idx_gift_log_customer", columnList = "customer_id")
         }
 )
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@SQLRestriction("is_deleted = false")
-@SQLDelete(sql = "update gift_log set is_deleted = true where id = ?")
+@SQLRestriction("deleted = false")
+@SQLDelete(sql = "update gift_log set deleted = true where id = ?")
 public class GiftLog extends BaseEntity {
 
     /**
@@ -50,9 +60,8 @@ public class GiftLog extends BaseEntity {
     @Column(nullable = false)
     private Integer quantity = 1;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private GiftLogStatus status = GiftLogStatus.PENDING;
+    @Transient
+    private GiftLogStatus giftLogStatus;
 
     /**
      * 发放时间
@@ -90,19 +99,53 @@ public class GiftLog extends BaseEntity {
 
     }
 
+    @PrePersist
+    public void prePersist() {
+        if (giftLogStatus == null) {
+            giftLogStatus = GiftLogStatus.PENDING;
+        }
+        setStatus(giftLogStatus.name());
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        if (giftLogStatus != null) {
+            setStatus(giftLogStatus.name());
+        }
+    }
+
+    @PostLoad
+    public void postLoad() {
+        if (getStatus() != null) {
+            setGiftLogStatus(GiftLogStatus.valueOf(getStatus()));
+        }
+    }
+
+    public void setGiftLogStatus(GiftLogStatus logStatus) {
+        this.giftLogStatus = logStatus;
+        setStatus(logStatus.name());
+    }
+
+    public GiftLogStatus getGiftLogStatus() {
+        if (giftLogStatus == null && getStatus() != null) {
+            giftLogStatus = GiftLogStatus.valueOf(getStatus());
+        }
+        return giftLogStatus;
+    }
+
     public void issue(String notes) {
-        if (this.status != GiftLogStatus.PENDING) {
+        if (this.giftLogStatus != GiftLogStatus.PENDING) {
             throw new IllegalStateException("只有待发放的记录才能发放");
         }
-        this.status = GiftLogStatus.ISSUED;
+        this.giftLogStatus = GiftLogStatus.ISSUED;
         this.issueNotes = notes;
     }
 
     public void cancel(String reason) {
-        if (this.status != GiftLogStatus.PENDING) {
+        if (this.giftLogStatus != GiftLogStatus.PENDING) {
             throw new IllegalStateException("只有待发放的记录才能取消");
         }
-        this.status = GiftLogStatus.CANCELLED;
+        this.giftLogStatus = GiftLogStatus.CANCELLED;
         this.issueNotes = reason;
     }
 }

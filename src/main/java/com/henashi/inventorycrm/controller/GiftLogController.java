@@ -12,7 +12,9 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -30,8 +32,12 @@ public class GiftLogController {
 
     @GetMapping
     @Operation(summary = "获取礼品日志列表", description = "分页查询所有礼品日志信息")
-    public Page<GiftLogDTO> loadGiftLogPage(Pageable pageable) {
-        return giftLogService.loadGiftLogPage(pageable);
+    public Page<GiftLogDTO> loadGiftLogPage(
+            @RequestParam(defaultValue = "5") Integer size,
+            @RequestParam(defaultValue = "0") Integer page
+    ) {
+        Sort sort = Sort.by("contentUpdatedTime", "createdTime").descending();
+        return giftLogService.loadGiftLogPage(PageRequest.of(page, size, sort));
     }
 
     @GetMapping("/{id}")

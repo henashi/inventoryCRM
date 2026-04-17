@@ -704,6 +704,7 @@ const formatDate = (dateStr?: string, format?: string) => {
 // 加载数据
 const loadCustomers = async (params?: PageParams) => {
   try {
+    console.log('Loading customers with params:', params)
     const filteredParams = Object.fromEntries(
       Object.entries(params || {}).filter(([_, v]) => v != null && v !== '')
     )

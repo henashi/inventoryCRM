@@ -60,7 +60,7 @@ public class ReferrerGiftEventListener {
             GiftLog giftLog = GiftLog.builder()
                     .customer(referrer)
                     .gift(giftByCode.get())
-                    .status(GiftLog.GiftLogStatus.PENDING)
+                    .giftLogStatus(GiftLog.GiftLogStatus.PENDING)
                     .quantity(1)
                     .build();
             giftLogRepository.save(giftLog);

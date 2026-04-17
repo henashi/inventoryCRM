@@ -23,17 +23,14 @@ export const useGiftLogStore = defineStore('giftLog', () => {
 
   const deleteGiftLog = async (id: number) => {
     await giftLogApi.deleteGiftLog(id)
-    await loadGiftLogs({page: pagination.value.page - 1, size: pagination.value.size})
   }
 
   const createGiftLog = async (giftLog: GiftLogDTO) => {
     await giftLogApi.addGiftLog(giftLog)
-    await loadGiftLogs({page: pagination.value.page - 1, size: pagination.value.size})
   }
 
   const updateGiftLog = async (id: number, giftLog: GiftLogDTO) => {
     await giftLogApi.updateGiftLog(id, giftLog)
-    await loadGiftLogs({page: pagination.value.page - 1, size: pagination.value.size})
   }
 
   const getGiftLogDetail = async (id: number) => {

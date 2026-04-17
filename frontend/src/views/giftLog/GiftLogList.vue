@@ -250,13 +250,16 @@ const handleModalOk = async () => {
 
       // 编辑逻辑（如果需要）
       await giftLogStore.updateGiftLog(currentGiftLog.value!.id, formState);
-      message.success('礼品日志更新成功');
+      message.success('礼品发放成功');
     }
-    loadGiftLogs();
-    modalVisible.value = false;
   } catch (error) {
     console.error('表单验证失败:', error);
     message.error('请检查表单输入');
+  }
+  finally {
+    modalVisible.value = false;
+    formRef.value?.resetFields();
+    loadGiftLogs();
   }
 };
 

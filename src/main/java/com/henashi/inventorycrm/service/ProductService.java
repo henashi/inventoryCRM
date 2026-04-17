@@ -49,7 +49,7 @@ public class ProductService {
         validateInventory(productCreateDTO);
 
         Product product = productMapper.createToEntity(productCreateDTO);
-        product.setStatus(1); // 默认上架
+        product.setStatus("1"); // 默认上架
 
         Product saved = productRepository.save(product);
         log.info("商品创建成功: {} ({})", saved.getName(), saved.getCode());
@@ -139,8 +139,8 @@ public class ProductService {
 //        if (dto.remark() != null) {
 //            product.setRemark(dto.remark());
 //        }
-//        if (dto.status() != null) { // 只允许上架或下架
-//            product.setStatus(dto.status());
+//        if (dto.giftStatus() != null) { // 只允许上架或下架
+//            product.setStatus(dto.giftStatus());
 //        }
 //    }
 

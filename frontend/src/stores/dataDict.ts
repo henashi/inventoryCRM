@@ -30,6 +30,10 @@ export const useDataDictStore = defineStore('data-dict', () => {
     await dataDictApi.updateDataDict(id, dataDict)
   }
 
+  const updateDataDictStatus = async (id: number, enable: boolean) => {
+    await dataDictApi.updateDataDictStatus(id, enable)
+  }
+
   const deleteDataDict = async (id: number) => {
     await dataDictApi.deleteDataDict(id)
   }
@@ -44,6 +48,7 @@ export const useDataDictStore = defineStore('data-dict', () => {
     loadDataDicts,
     createDataDict,
     updateDataDict,
+    updateDataDictStatus,
     deleteDataDict,
     getDataDict
   }

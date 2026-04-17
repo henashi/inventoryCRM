@@ -25,7 +25,7 @@ public class SecurityUtils {
     /**
      * 获取当前登录用户的用户名
      */
-    public String getCurrentUsername() {
+    public static String getCurrentUsername() {
         Authentication authentication = getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -49,7 +49,7 @@ public class SecurityUtils {
     /**
      * 获取当前登录用户的ID
      */
-    public Long getCurrentUserId() {
+    public static Long getCurrentUserId() {
         Authentication authentication = getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -69,7 +69,7 @@ public class SecurityUtils {
     /**
      * 获取当前登录用户的详细信息
      */
-    public Optional<UserDetails> getCurrentUserDetails() {
+    public static Optional<UserDetails> getCurrentUserDetails() {
         Authentication authentication = getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -87,7 +87,7 @@ public class SecurityUtils {
     /**
      * 检查当前用户是否已认证
      */
-    public boolean isAuthenticated() {
+    public static boolean isAuthenticated() {
         Authentication authentication = getAuthentication();
         return authentication != null && authentication.isAuthenticated();
     }
@@ -95,7 +95,7 @@ public class SecurityUtils {
     /**
      * 检查当前用户是否具有指定角色
      */
-    public boolean hasRole(String role) {
+    public static boolean hasRole(String role) {
         Authentication authentication = getAuthentication();
 
         if (authentication == null) {
@@ -109,7 +109,7 @@ public class SecurityUtils {
     /**
      * 检查当前用户是否具有指定权限
      */
-    public boolean hasAuthority(String authority) {
+    public static  boolean hasAuthority(String authority) {
         Authentication authentication = getAuthentication();
 
         if (authentication == null) {
@@ -123,7 +123,7 @@ public class SecurityUtils {
     /**
      * 获取当前请求的客户端IP地址
      */
-    public String getClientIp() {
+    public static String getClientIp() {
         ServletRequestAttributes attributes = (ServletRequestAttributes)
                 RequestContextHolder.getRequestAttributes();
 
@@ -138,7 +138,7 @@ public class SecurityUtils {
     /**
      * 获取当前请求的用户代理
      */
-    public String getUserAgent() {
+    public static String getUserAgent() {
         ServletRequestAttributes attributes = (ServletRequestAttributes)
                 RequestContextHolder.getRequestAttributes();
 
@@ -153,7 +153,7 @@ public class SecurityUtils {
     /**
      * 获取当前请求的请求URI
      */
-    public String getRequestUri() {
+    public static String getRequestUri() {
         ServletRequestAttributes attributes = (ServletRequestAttributes)
                 RequestContextHolder.getRequestAttributes();
 
@@ -168,7 +168,7 @@ public class SecurityUtils {
     /**
      * 获取当前请求的方法
      */
-    public String getRequestMethod() {
+    public static String getRequestMethod() {
         ServletRequestAttributes attributes = (ServletRequestAttributes)
                 RequestContextHolder.getRequestAttributes();
 
@@ -183,7 +183,7 @@ public class SecurityUtils {
     /**
      * 记录安全审计日志
      */
-    public void logSecurityAudit(String action, String details) {
+    public static void logSecurityAudit(String action, String details) {
         String username = getCurrentUsername();
         String ip = getClientIp();
         String userAgent = getUserAgent();
@@ -197,7 +197,7 @@ public class SecurityUtils {
     /**
      * 从HttpServletRequest中提取客户端真实IP
      */
-    private String getClientIpFromRequest(HttpServletRequest request) {
+    private static String getClientIpFromRequest(HttpServletRequest request) {
         String ip = null;
 
         // 尝试从X-Forwarded-For获取（经过代理的情况）
@@ -247,14 +247,14 @@ public class SecurityUtils {
     /**
      * 验证IP地址是否有效
      */
-    private boolean isValidIp(String ip) {
+    private static boolean isValidIp(String ip) {
         return ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip);
     }
 
     /**
      * 获取Authentication对象
      */
-    private Authentication getAuthentication() {
+    private static Authentication getAuthentication() {
         return SecurityContextHolder.getContext().getAuthentication();
     }
 

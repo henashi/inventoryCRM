@@ -5,8 +5,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import org.hibernate.validator.constraints.Length;
 
-import java.time.LocalDateTime;
-
 public record GiftUpdateDTO (
         @Schema(description = "礼品ID")
         Long id,
@@ -32,10 +30,6 @@ public record GiftUpdateDTO (
         Boolean limitEnabled,
         @Schema(description = "每人领取限制数量")
         Integer limitPerPerson,
-        @Schema(description = "创建时间")
-        LocalDateTime createdTime,
-        @Schema(description = "更新时间")
-        LocalDateTime updatedTime,
         @Length(max = 200)
         @Schema(description = "备注")
         String remark,

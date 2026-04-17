@@ -32,7 +32,7 @@ public record GiftDTO (
     String productName,
 
     @Schema(description = "礼品状态")
-    Gift.GiftStatus status,
+    Gift.GiftStatus giftStatus,
 
     @Schema(description = "是否启用领取限制")
     Boolean limitEnabled,
@@ -43,8 +43,11 @@ public record GiftDTO (
     @Schema(description = "创建时间")
     LocalDateTime createdTime,
 
-    @Schema(description = "更新时间")
-    LocalDateTime updatedTime,
+    @Schema(description = "状态更新时间")
+    LocalDateTime statusUpdatedTime,
+
+    @Schema(description = "数据更新时间")
+    LocalDateTime contentUpdatedTime,
 
     @Schema(description = "备注")
     String remark)

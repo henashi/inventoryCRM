@@ -9,12 +9,12 @@ import com.henashi.inventorycrm.pojo.DataDict;
 import com.henashi.inventorycrm.repository.DataDictRepository;
 import com.henashi.inventorycrm.utils.CustomBeanUtils;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -45,8 +45,8 @@ public class DataDictService {
     @Transactional
     public DataDictDTO createDataDict(DataDictCreateDTO dataDictCreateDTO) {
         DataDict entity = dataDictMapper.createToEntity(dataDictCreateDTO);
-        entity.setIsDeleted(false);
-        entity.setStatus(DataDict.DataDictStatus.DICT_STATUS_ACTIVE);
+        entity.setDeleted(false);
+        entity.setDictStatus(DataDict.DataDictStatus.DICT_STATUS_ACTIVE);
         DataDict dataDict = dataDictRepository.saveAndFlush(entity);
         return dataDictMapper.fromEntity(dataDict);
     }
@@ -56,6 +56,15 @@ public class DataDictService {
         DataDict dataDictFind = dataDictRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("数据字典不存在: " + id));
         DataDict updateEntity = dataDictMapper.partialUpdate(dataDictUpdateDTO, dataDictFind);
         CustomBeanUtils.copyNonNullProperties(updateEntity, dataDictFind);
+        DataDict dataDict = dataDictRepository.saveAndFlush(dataDictFind);
+        return dataDictMapper.fromEntity(dataDict);
+    }
+
+    @Transactional
+    public DataDictDTO enableOrDisable(Long id, @NotNull Boolean enable) {
+        DataDict dataDictFind = dataDictRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("数据字典不存在: " + id));
+
+        dataDictFind.setDictStatus(enable ? DataDict.DataDictStatus.DICT_STATUS_ACTIVE : DataDict.DataDictStatus.DICT_STATUS_PAUSED);
         DataDict dataDict = dataDictRepository.saveAndFlush(dataDictFind);
         return dataDictMapper.fromEntity(dataDict);
     }

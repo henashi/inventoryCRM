@@ -54,7 +54,7 @@ public class AuthService {
                 .orElseThrow(() -> new SecurityAuthenticationException("用户不存在"));
 
         // 检查用户状态
-        if (user.getStatus() == 0) {
+        if ("0".equals(user.getStatus())) {
             throw new SecurityAuthenticationException("用户已被禁用");
         }
 
@@ -94,7 +94,7 @@ public class AuthService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .email(request.getEmail())
                 .role("USER")  // 默认角色
-                .status(1)     // 默认启用
+                .status("1")     // 默认启用
                 .build();
 
         User savedUser = userRepository.save(user);

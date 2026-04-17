@@ -1,5 +1,6 @@
 package com.henashi.inventorycrm.dto;
 
+import com.henashi.inventorycrm.enums.OperationType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -18,7 +19,7 @@ public record OperationLogCreateDTO(
         @NotBlank(message = "操作类型不能为空")
         @Size(max = 50, message = "操作类型不能超过50字符")
         @Schema(description = "操作类型")
-        String operationType,
+        OperationType operationType,
 
         @NotBlank(message = "操作描述不能为空")
         @Size(max = 200, message = "操作描述不能超过200字符")

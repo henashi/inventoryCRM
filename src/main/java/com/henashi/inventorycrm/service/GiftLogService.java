@@ -83,8 +83,8 @@ public class GiftLogService {
             customerRepository.save(customer);
         }
 
-        giftLog.setStatus(GiftLog.GiftLogStatus.ISSUED);
-        giftLog.setIsDeleted(false);
+        giftLog.setGiftLogStatus(GiftLog.GiftLogStatus.ISSUED);
+        giftLog.setDeleted(false);
         GiftLog saved = giftLogRepository.save(giftLog);
         log.info("礼品日志创建成功: 客户 {} 获得 礼品 {}",
                 customer.getName(), logCreateDTO.giftId());
@@ -125,7 +125,7 @@ public class GiftLogService {
         GiftLog giftLogFind = giftLogOptional.get();
         GiftLog giftLog = giftLogMapper.partialUpdate(giftLogUpdateDTO, giftLogFind);
 
-        if (GiftLog.GiftLogStatus.ISSUED.equals(giftLog.getStatus())) {
+        if (GiftLog.GiftLogStatus.ISSUED.equals(giftLog.getGiftLogStatus())) {
             giftLog.setIssueAt(LocalDateTime.now());
             eventPublisher.publishEvent(new GiftLogIssueEvent(giftLog));
         }

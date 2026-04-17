@@ -1,11 +1,16 @@
 package com.henashi.inventorycrm.pojo;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -22,12 +27,12 @@ import java.util.Set;
 @Entity
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "product")
-@SQLRestriction(value = "is_deleted = false")
-@SQLDelete(sql = "update product set is_deleted = true where id = ?")
+@SQLRestriction(value = "deleted = false")
+@SQLDelete(sql = "update product set deleted = true where id = ?")
 public class Product extends BaseEntity {
 
     /**
@@ -78,11 +83,11 @@ public class Product extends BaseEntity {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    /**
+    /*
      * 商品状态：1-正常 0-停用
      */
-    @Column(name = "status")
-    private Integer status = 1;
+//    @Column(name = "status")
+//    private Integer status = 1;
 
     @Column(name = "remark", length = 500)
     private String remark;
@@ -90,7 +95,7 @@ public class Product extends BaseEntity {
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
     private Set<Gift> gifts = new LinkedHashSet<>();
 
-    @OneToMany(mappedBy = "product")
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
     private Set<InventoryLog> inventoryLogs = new LinkedHashSet<>();
 
     // 业务方法
@@ -141,17 +146,10 @@ public class Product extends BaseEntity {
 
     @Override
     public String toString() {
-        return "Product{" +
-                "name='" + getName() + '\'' +
-                ", code='" + getCode() + '\'' +
-                ", category='" + getCategory() + '\'' +
-                ", currentStock=" + getCurrentStock() +
-                ", safeStock=" + getSafeStock() +
-                ", unit='" + getUnit() + '\'' +
-                ", price=" + getPrice() +
-                ", description='" + getDescription() + '\'' +
-                ", status=" + getStatus() +
-                ", remark='" + getRemark() + '\'' +
-                '}';
+        return String.format(
+                "Product{id=%d, name='%s', code='%s', category='%s', currentStock=%d, " +
+                        "safeStock=%d, unit='%s', price=%f, description='%s', status=%s, remark='%s'}",
+                getId(), getName(), getCode(), getCategory(), getCurrentStock(),
+                getSafeStock(), getUnit(), getPrice(), getDescription(), getStatus(), getRemark());
     }
 }

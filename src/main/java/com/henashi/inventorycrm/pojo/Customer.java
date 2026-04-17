@@ -1,11 +1,18 @@
 package com.henashi.inventorycrm.pojo;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -23,14 +30,14 @@ import java.util.List;
 @Table(
         name = "customer",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_phone_deleted", columnNames = {"phone", "is_deleted"})
+                @UniqueConstraint(name = "uk_phone_deleted", columnNames = {"phone", "deleted"})
         }
 )
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@SQLRestriction(value = "is_deleted = false")
-@SQLDelete(sql = "update customer set is_deleted = true where id = ?")
+@SuperBuilder
+@SQLRestriction(value = "deleted = false")
+@SQLDelete(sql = "update customer set deleted = true where id = ?")
 public class Customer extends BaseEntity{
 
     /**
@@ -94,11 +101,11 @@ public class Customer extends BaseEntity{
     @Column(name = "registered_at")
     private LocalDate registeredAt = LocalDate.now();
 
-    /**
-     * 客户状态：1-正常 0-停用
+    /*
+      客户状态：1-正常 0-停用
      */
-    @Column(name = "status")
-    private Integer status = 1;
+//    @Column(name = "status")
+//    private Integer status = 1;
 
     /**
      * 性别字段

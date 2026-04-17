@@ -1,11 +1,13 @@
 package com.henashi.inventorycrm.pojo;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import org.springframework.security.core.GrantedAuthority;
@@ -22,12 +24,12 @@ import java.util.Collections;
 @Entity
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "sys_user")
-@SQLRestriction(value = "is_deleted = false")
-@SQLDelete(sql = "update sys_user set is_deleted = true where id = ?")
+@SQLRestriction(value = "deleted = false")
+@SQLDelete(sql = "update sys_user set deleted = true where id = ?")
 public class User extends BaseEntity implements UserDetails{
 
     /**
@@ -55,12 +57,6 @@ public class User extends BaseEntity implements UserDetails{
     private String role = "USER";
 
     /**
-     * 用户状态：1-正常 0-锁定
-     */
-    @Column(name = "status")
-    private Integer status = 1;
-
-    /**
      * 最后登录时间
      */
     @Column(name = "last_login_at")
@@ -76,23 +72,14 @@ public class User extends BaseEntity implements UserDetails{
     }
 
     @Override
-    public String getPassword() {
-        return this.password;
-    }
-
-    @Override
-    public String getUsername() {
-        return this.username;
-    }
-
-    @Override
     public boolean isAccountNonExpired() {
         return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return status == 1;
+        return "1".equals(getStatus());
+
     }
 
     @Override
@@ -102,6 +89,6 @@ public class User extends BaseEntity implements UserDetails{
 
     @Override
     public boolean isEnabled() {
-        return status == 1;
+        return "1".equals(getStatus());
     }
 }
