@@ -46,6 +46,11 @@
           <template v-else-if="column.dataIndex === 'issueTime'">
             {{ formatDateTime(record.issueTime) }}
           </template>
+          <template v-if="column.dataIndex === 'status'">
+            <a-tag :color="record.status === 'PENDING' ? 'orange' : 'green'">
+              {{ record.status === 'PENDING' ? '待发放' : '已发放' }}
+            </a-tag>
+          </template>
           <template v-else-if="column.dataIndex === 'issueNotes'">
             <a-tooltip :title="record.issueNotes">
               <span>{{ record.issueNotes }}</span>
@@ -160,6 +165,7 @@ const columns = [
   { title: '发放时间', dataIndex: 'createdTime', key: 'createdTime' },
   { title: '发放数量', dataIndex: 'quantity', key: 'quantity' },
   { title: '处理说明', dataIndex: 'issueNotes', key: 'issueNotes' },
+  { title: '发放状态', dataIndex: 'status', key: 'status' },
   {
     title: '操作',
     key: 'action',
