@@ -32,7 +32,7 @@ public record GiftDTO (
     String productName,
 
     @Schema(description = "礼品状态")
-    Gift.GiftStatus giftStatus,
+    Gift.GiftStatus status,
 
     @Schema(description = "是否启用领取限制")
     Boolean limitEnabled,

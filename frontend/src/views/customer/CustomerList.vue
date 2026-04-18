@@ -130,7 +130,7 @@
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'name'">
             <div class="customer-name">
-              <a-avatar :size="32" :src="record.avatar || getAvatarColor(record.name)">
+              <a-avatar :size="32" :src="record.avatar || getAvatarColor(record.name)" :style="{ backgroundColor: getCustomerColor(record.name) }">
                 {{ getFirstChar(record.name) }}
               </a-avatar>
               <div class="name-info">
@@ -431,7 +431,7 @@
       <template v-if="currentCustomer">
         <div class="customer-detail">
           <div class="detail-header">
-            <a-avatar :size="64" :src="currentCustomer.avatar || getAvatarColor(currentCustomer.name)">
+            <a-avatar :size="64" :src="currentCustomer.avatar || getAvatarColor(currentCustomer.name)" :style="{ backgroundColor: getCustomerColor(currentCustomer.name) }">
               {{ getFirstChar(currentCustomer.name) }}
             </a-avatar>
             <div class="header-info">
@@ -712,6 +712,7 @@ const loadCustomers = async (params?: PageParams) => {
       filteredParams.sort = 'registeredAt'
       filteredParams.direction = 'desc'
     }
+    console.log('Loading customers with params:', filteredParams)
     await customerStore.loadCustomers(filteredParams)
   } catch (error) {
     message.error('加载客户列表失败')
@@ -1073,6 +1074,12 @@ const handleReferrerFocus = async () => {
     console.log('Loading default referrer list on focus')
     await handleReferrerSearch('')
   }
+}
+
+const getCustomerColor = (name: string) => {
+  const colors = ['#1890ff', '#52c41a', '#faad14', '#f5222d']
+  const index = name.charCodeAt(0) % colors.length
+  return colors[index]
 }
 </script>
 
