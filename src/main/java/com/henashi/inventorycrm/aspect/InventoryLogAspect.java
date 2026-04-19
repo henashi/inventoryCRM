@@ -112,7 +112,7 @@ public class InventoryLogAspect {
                     quantity,
                     reason,
                     operator,
-                    "0",
+                    "SUCCESS",
                     operationType
             );
 
@@ -130,7 +130,7 @@ public class InventoryLogAspect {
                         quantity,
                         reason,
                         operator,
-                        "1",
+                        "FAIL",
                         operationType
                 );
 

@@ -319,8 +319,8 @@
 
           <!-- 操作状态 -->
           <template v-else-if="column.dataIndex === 'status'">
-            <a-tag :color="record.status === '0' ? 'green' : 'red'">
-              {{ record.status === '0' ? '成功' : '失败' }}
+            <a-tag :color="record.status === 'SUCCESS' ? 'green' : 'red'">
+              {{ record.status === 'SUCCESS' ? '成功' : '失败' }}
             </a-tag>
             <!-- <div v-if="!record.success && record.errorMessage" class="error-msg">
               {{ record.errorMessage }}
