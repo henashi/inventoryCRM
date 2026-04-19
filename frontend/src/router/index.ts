@@ -34,10 +34,10 @@ const router = createRouter({
       meta: { requiresAuth: true, title: '客户详情' }
     },
     {
-      path: '/products',
+      path: '/products/:code?',
       name: 'ProductList',
       component: () => import('../views/product/ProductList.vue'),
-      meta: { requiresAuth: true, title: '商品管理', roles: ['ADMIN', 'USER'] }
+      meta: { requiresAuth: true, title: '商品管理', roles: ['ADMIN', 'USER'], mode: 'list-or-detail' }
     },
     {
       path: '/inventory',

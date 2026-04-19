@@ -318,14 +318,14 @@
           </template>
 
           <!-- 操作状态 -->
-          <!-- <template v-else-if="column.dataIndex === 'success'">
-            <a-tag :color="record.success ? 'green' : 'red'">
-              {{ record.success ? '成功' : '失败' }}
+          <template v-else-if="column.dataIndex === 'status'">
+            <a-tag :color="record.status === '0' ? 'green' : 'red'">
+              {{ record.status === '0' ? '成功' : '失败' }}
             </a-tag>
-            <div v-if="!record.success && record.errorMessage" class="error-msg">
+            <!-- <div v-if="!record.success && record.errorMessage" class="error-msg">
               {{ record.errorMessage }}
-            </div>
-          </template> -->
+            </div> -->
+          </template>
 
           <!-- 操作 -->
           <template v-else-if="column.dataIndex === 'actions'">
@@ -341,7 +341,7 @@
                 v-if="record.type === 'CREATE'"
                 type="link"
                 size="small"
-                @click="handleViewProduct(record.productId)"
+                @click="handleViewProduct(record.productCode)"
               >
                 查看商品
               </a-button>
@@ -478,7 +478,7 @@ const columns = [
     title: '商品信息',
     dataIndex: 'productInfo',
     key: 'productInfo',
-    width: 200
+    width: 150
   },
   {
     title: '操作类型',
@@ -502,14 +502,14 @@ const columns = [
     title: '原因',
     dataIndex: 'reason',
     key: 'reason',
-    width: 200
+    width: 150
   },
-  // {
-  //   title: '状态',
-  //   dataIndex: 'success',
-  //   key: 'success',
-  //   width: 80
-  // },
+  {
+    title: '状态',
+    dataIndex: 'status',
+    key: 'status',
+    width: 80
+  },
   {
     title: '操作',
     dataIndex: 'actions',
@@ -706,8 +706,12 @@ const handleViewDetail = (record: InventoryLogRecord) => {
 }
 
 // 查看商品
-const handleViewProduct = (productId: number) => {
-  router.push(`/products/${productId}`)
+const handleViewProduct = (code: string) => {
+  console.log(`查看商品: ${code}`)
+  router.push({ path: `/products/${code}`,
+        query: {
+          code,      // 目标ID
+        } })
 }
 
 // 初始化

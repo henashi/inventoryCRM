@@ -28,7 +28,9 @@ public record InventoryLogDTO(
         String operator,
         @Schema(description = "创建时间")
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-        LocalDateTime createdTime
+        LocalDateTime createdTime,
+        @Schema(description = "操作结果")
+        String status
 ) {
 }
 

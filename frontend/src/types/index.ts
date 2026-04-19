@@ -178,6 +178,11 @@ export interface InventoryQueryParams extends PageParams {
   lowStockOnly?: boolean
 }
 
+export interface Props {
+  id?: number,
+  code?: string
+}
+
 /**
  * 库存操作类型枚举
  */
