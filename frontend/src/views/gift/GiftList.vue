@@ -59,9 +59,9 @@
         </template>
 
         <template #action="{ record }">
-          <a-button type="link" @click="router.push(`/gift/${record.id}`)">
+          <!-- <a-button type="link" @click="router.push(`/gift/${record.id}`)">
             查看详情
-          </a-button>
+          </a-button> -->
           <a-button
             type="link"
             size="small"

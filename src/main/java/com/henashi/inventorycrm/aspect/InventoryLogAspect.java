@@ -112,6 +112,7 @@ public class InventoryLogAspect {
                     quantity,
                     reason,
                     operator,
+                    "0",
                     operationType
             );
 
@@ -129,6 +130,7 @@ public class InventoryLogAspect {
                         quantity,
                         reason,
                         operator,
+                        "1",
                         operationType
                 );
 
@@ -207,18 +209,19 @@ public class InventoryLogAspect {
             Integer quantity,
             String reason,
             String operator,
+            String status,
             InventoryLog.LogType type
     ) {
-        InventoryLog logRecord = new InventoryLog();
-        logRecord.setProduct(productRepository.findById(productId).orElseThrow(() -> new BusinessException("商品不存在")));
-        logRecord.setType(annotation.operationType());
-        logRecord.setBeforeStock(beforeStock);
-        logRecord.setAfterStock(afterStock);
-        logRecord.setQuantity(quantity);
-        logRecord.setReason(reason != null ? reason : annotation.description());
-        logRecord.setOperator(operator);
-        logRecord.setCreatedTime(LocalDateTime.now());
-        logRecord.setType(type);
-        return logRecord;
+        return InventoryLog.builder()
+        .product(productRepository.findById(productId).orElseThrow(() -> new BusinessException("商品不存在")))
+        .type(annotation.operationType())
+        .beforeStock(beforeStock)
+        .afterStock(afterStock)
+        .quantity(quantity)
+        .reason(reason != null ? reason : annotation.description())
+        .operator(operator)
+        .status(status)
+        .type(type)
+        .build();
     }
 }

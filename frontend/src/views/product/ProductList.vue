@@ -325,16 +325,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { useRoute,useRouter } from 'vue-router'
 import { message, Modal, type FormInstance } from 'ant-design-vue'
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import { useProductStore } from '@/stores/product'
-import type { Product, ProductCreateDTO, PageParams } from '@/types'
+import type { Product, ProductCreateDTO, PageParams, Props } from '@/types'
 
 const router = useRouter()
+const route = useRoute()
 const productStore = useProductStore()
 const formRef = ref<FormInstance>()
+
+const props = defineProps<Props>();
 
 // 状态
 const isLoading = ref(false)
@@ -483,7 +486,7 @@ const handleSearch = () => {
 
 const handleReset = () => {
   searchForm.keyword = ''
-  searchForm.category = undefined
+  // searchForm.category = undefined
   handleSearch()
 }
 
@@ -684,9 +687,28 @@ const handleEnable = (record: Product) => {
   })
 }
 
+watch(
+  () => route.params.code,  // 监听特定参数
+  (newCode, oldCode) => {
+    console.log(`code 变化: ${oldCode} -> ${newCode}`)
+    if (newCode) {
+      // 如果 URL 中有 code 参数，直接搜索该商品
+      searchForm.keyword = Array.isArray(newCode) ? newCode[0] || '' : newCode || ''
+      if (oldCode && oldCode !== newCode) {
+        // 只有当 code 发生变化时才触发搜索，避免重复请求
+        handleSearch()
+      }
+    } else {
+      // 如果没有 code 参数，清空搜索框
+      searchForm.keyword = ''
+    }
+  },
+  { immediate: true }
+)
+
 // 初始化
 onMounted(() => {
-  loadProducts()
+  handleSearch()
 })
 </script>
 
