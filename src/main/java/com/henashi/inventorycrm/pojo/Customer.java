@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -32,6 +34,10 @@ import java.util.List;
         uniqueConstraints = {
                 @UniqueConstraint(name = "uk_phone_deleted", columnNames = {"phone", "deleted"})
         }
+)
+@NamedEntityGraph(
+        name = "Customer.withReferrer",
+        attributeNodes = @NamedAttributeNode("referrer")
 )
 @NoArgsConstructor
 @AllArgsConstructor

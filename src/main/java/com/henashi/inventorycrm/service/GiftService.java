@@ -7,6 +7,7 @@ import com.henashi.inventorycrm.mapper.GiftMapper;
 import com.henashi.inventorycrm.pojo.Gift;
 import com.henashi.inventorycrm.repository.GiftRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,7 @@ public class GiftService {
                 .map(giftMapper::fromEntity);
     }
 
+    @CacheEvict(value = "gifts", key = "#giftId", cacheManager = "shortCache")
     public void deleteGiftById(Long giftId) {
         if (!giftRepository.existsById(giftId)) {
             throw new IllegalArgumentException("礼品不存在: id=" + giftId);
@@ -52,6 +54,7 @@ public class GiftService {
         return giftMapper.fromEntity(giftRepository.save(entity));
     }
 
+    @CacheEvict(value = "gifts", key = "#giftId", cacheManager = "shortCache")
     public GiftDTO updateGift(Long giftId, GiftUpdateDTO giftDTO) {
         if (giftId == null || giftId <= 0) {
             throw new IllegalArgumentException("礼品ID 无效: id=" + giftId);

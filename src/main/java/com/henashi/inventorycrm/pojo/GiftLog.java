@@ -7,6 +7,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
 import jakarta.persistence.PostLoad;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -30,8 +32,15 @@ import java.time.LocalDateTime;
 @Table(name = "gift_log",
         indexes = {
                 @Index(name = "idx_gift_id", columnList = "gift_id"),
-                @Index(name = "idx_gift_log_status", columnList = "giftStatus"),
+                @Index(name = "idx_gift_log_status", columnList = "status"),
                 @Index(name = "idx_gift_log_customer", columnList = "customer_id")
+        }
+)
+@NamedEntityGraph(
+        name = "GiftLog.withCustomerAndGift",
+        attributeNodes = {
+                @NamedAttributeNode("customer"),
+                @NamedAttributeNode("gift")
         }
 )
 @Getter
