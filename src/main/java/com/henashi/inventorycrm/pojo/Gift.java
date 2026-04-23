@@ -90,12 +90,6 @@ public class Gift extends BaseEntity implements Serializable {
     @Column(name = "type", length = 20, nullable = false)
     private GiftType type = GiftType.NEW;
 
-//    @Column(
-//            name = "new_gift_level",
-//            comment = "邀新礼品等级，只有type为NEW时才有意义"
-//    )
-//    private NewGiftLevel newGiftLevel = NewGiftLevel.LEVEL_1;
-
     @ManyToOne(fetch = FetchType.LAZY)
     private Product product;
 

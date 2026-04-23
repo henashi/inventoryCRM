@@ -5,6 +5,7 @@ import com.henashi.inventorycrm.pojo.Gift;
 import com.henashi.inventorycrm.repository.GiftRepository;
 import lombok.RequiredArgsConstructor;
 import org.mapstruct.Named;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -13,6 +14,9 @@ public class GiftReferenceMapper {
 
     private final GiftRepository giftRepository;
 
+    @Cacheable(value = "gifts", key = "#id",
+            unless = "#result == null",
+            cacheManager = "shortCache")
     @Named("idToGift")
     public Gift idToGift(Long giftId) {
         if (giftId == null) {

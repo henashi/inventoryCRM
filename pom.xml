@@ -54,6 +54,15 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-cache</artifactId>
+		</dependency>
+		<!-- Caffeine 实现（必需，Spring Boot 自动管理版本） -->
+		<dependency>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
+		</dependency>
 <!--	用于解决Controller返回Page可能不稳定的问题，但是由于引入成本比较大，暂时不引入	-->
 <!--		<dependency>-->
 <!--			<groupId>org.springframework.boot</groupId>-->

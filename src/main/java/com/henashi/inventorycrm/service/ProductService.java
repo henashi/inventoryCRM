@@ -10,6 +10,7 @@ import com.henashi.inventorycrm.pojo.Product;
 import com.henashi.inventorycrm.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -58,6 +59,7 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = "products", key = "#id", cacheManager = "shortCache")
     public ProductDTO updateProduct(Long id, ProductUpdateDTO dto) {
         if (id == null || id <= 0L) {
             log.warn("更新商品信息异常: {}", dto);
@@ -84,6 +86,7 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = "products", key = "#id", cacheManager = "shortCache")
     public void deleteById(Long id) {
         if (id == null || id <= 0L) {
             log.warn("商品ID异常: {}", id);
@@ -114,36 +117,6 @@ public class ProductService {
         }
     }
 
-//    private void updateAllowedFields(Product product, ProductUpdateDTO dto) {
-//        if (dto.name() != null) {
-//            product.setName(dto.name());
-//        }
-//        if (dto.code() != null && !product.getCode().equals(dto.code())) {
-//            product.setCode(dto.code());
-//        }
-//        if (dto.currentStock() != null) {
-//            product.setCurrentStock(dto.currentStock());
-//        }
-//        if (dto.safeStock() != null) {
-//            product.setSafeStock(dto.safeStock());
-//        }
-//        if (dto.unit() != null) {
-//            product.setUnit(dto.unit());
-//        }
-//        if (dto.price() != null) {
-//            product.setPrice(dto.price());
-//        }
-//        if (dto.description() != null) {
-//            product.setDescription(dto.description());
-//        }
-//        if (dto.remark() != null) {
-//            product.setRemark(dto.remark());
-//        }
-//        if (dto.giftStatus() != null) { // 只允许上架或下架
-//            product.setStatus(dto.giftStatus());
-//        }
-//    }
-
     // 新增：库存检查方法
     public void checkStock(Long productId, Integer requiredQuantity) {
         Product product = productRepository.findById(productId)
@@ -167,6 +140,7 @@ public class ProductService {
         return products.map(productMapper::fromEntity);
     }
 
+    @CacheEvict(value = "products", key = "#id", cacheManager = "shortCache")
     public ProductDTO updateStock(Long id, String type, Integer quantity, String reason) {
         if (id == null || id <= 0L) {
             log.warn("商品ID异常: {}", id);
