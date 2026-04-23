@@ -5,6 +5,7 @@ import com.henashi.inventorycrm.pojo.Product;
 import com.henashi.inventorycrm.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.mapstruct.Named;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -13,6 +14,9 @@ public class ProductReferenceMapper {
 
     private final ProductRepository productRepository;
 
+    @Cacheable(value = "products", key = "#productId",
+            unless = "#result == null",
+            cacheManager = "shortCache")
     @Named("idToProduct")
     public Product idToProduct(Long productId) {
         if (productId == null) {
