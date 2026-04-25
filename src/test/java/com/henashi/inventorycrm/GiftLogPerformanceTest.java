@@ -3,7 +3,6 @@ package com.henashi.inventorycrm;
 import com.henashi.inventorycrm.dto.GiftLogCreateDTO;
 import com.henashi.inventorycrm.service.GiftLogService;
 import org.junit.jupiter.api.RepeatedTest;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +16,6 @@ class GiftLogPerformanceTest {
     @Autowired
     private GiftLogService giftLogService;
 
-    @Test
     @RepeatedTest(100)
     void testCreatePerformance() {
         long start = System.currentTimeMillis();
