@@ -4,7 +4,6 @@ import com.henashi.inventorycrm.dto.GiftLogCreateDTO;
 import com.henashi.inventorycrm.dto.GiftLogDTO;
 import com.henashi.inventorycrm.pojo.Customer;
 import com.henashi.inventorycrm.pojo.Gift;
-import com.henashi.inventorycrm.pojo.GiftLog;
 import com.henashi.inventorycrm.repository.CustomerRepository;
 import com.henashi.inventorycrm.repository.GiftLogRepository;
 import com.henashi.inventorycrm.repository.GiftRepository;
@@ -13,9 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.RepetitionInfo;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -27,10 +23,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest
-@Transactional
 @Slf4j
-@ExtendWith(MockitoExtension.class)
+@Transactional
+@SpringBootTest
 class GiftLogMapperPerformanceTest {
 
     @Autowired
@@ -41,6 +36,7 @@ class GiftLogMapperPerformanceTest {
 
     @MockitoBean
     private GiftRepository giftRepository;
+
     @MockitoBean
     private GiftLogRepository giftLogRepository;
 
