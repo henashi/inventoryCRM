@@ -20,7 +20,7 @@ public class CustomerReferenceMapper {
     private final CustomerRepository customerRepository;
 
     // 添加1分钟缓存
-    @Cacheable(value = "customers", key = "#id",
+    @Cacheable(value = "customers", key = "#customerId",
             unless = "#result == null",
             cacheManager = "shortCache")
     @Named("idToCustomer")

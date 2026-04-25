@@ -14,7 +14,7 @@ public class ProductReferenceMapper {
 
     private final ProductRepository productRepository;
 
-    @Cacheable(value = "products", key = "#id",
+    @Cacheable(value = "products", key = "#productId",
             unless = "#result == null",
             cacheManager = "shortCache")
     @Named("idToProduct")
