@@ -43,7 +43,7 @@ public class CustomerController {
 
     @PostMapping
     public ResponseEntity<CustomerDTO> create(@Valid @RequestBody CustomerCreateDTO customerCreateDTO) {
-        CustomerDTO savedCustomer = customerService.saveCustomer(customerCreateDTO);
+        CustomerDTO savedCustomer = customerService.createCustomer(customerCreateDTO);
         URI uri = ServletUriComponentsBuilder
                     .fromCurrentRequest()
                     .path("/{id}")

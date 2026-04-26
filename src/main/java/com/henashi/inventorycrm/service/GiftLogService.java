@@ -1,5 +1,7 @@
 package com.henashi.inventorycrm.service;
 
+import com.henashi.inventorycrm.dto.CustomerDTO;
+import com.henashi.inventorycrm.dto.GiftDTO;
 import com.henashi.inventorycrm.dto.GiftLogCreateDTO;
 import com.henashi.inventorycrm.dto.GiftLogDTO;
 import com.henashi.inventorycrm.dto.GiftLogUpdateDTO;
@@ -11,10 +13,11 @@ import com.henashi.inventorycrm.pojo.Gift;
 import com.henashi.inventorycrm.pojo.GiftLog;
 import com.henashi.inventorycrm.repository.CustomerRepository;
 import com.henashi.inventorycrm.repository.GiftLogRepository;
-import com.henashi.inventorycrm.repository.GiftRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,19 +25,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "giftLogs", cacheManager = "shortCache")
 public class GiftLogService {
 
     private final Logger log = LoggerFactory.getLogger(GiftLogService.class);
     private final GiftLogRepository giftLogRepository;
     private final CustomerRepository customerRepository;
-    private final GiftRepository giftRepository;
+    private final CustomerService customerService;
+    private final GiftService giftService;
     private final GiftLogMapper giftLogMapper;
     private final ApplicationEventPublisher eventPublisher;
 
+    @Cacheable(key = "#logId", unless = "#result == null")
     public GiftLogDTO findGiftLogDTOById(Long logId) {
         log.debug("查询礼品日志详情: id={}", logId);
         if (logId == null || logId <= 0) {
@@ -62,13 +69,16 @@ public class GiftLogService {
         Customer customer = customerRepository.findById(logCreateDTO.customerId())
                 .orElseThrow(() -> new BusinessException("CUSTOMER_NOT_FOUND",
                         String.format("客户(ID: %d)不存在", logCreateDTO.customerId())));
+
         // 验证礼品是否存在
-        Gift gift = giftRepository.findById(logCreateDTO.giftId())
-                .orElseThrow(() -> new BusinessException("GIFT_NOT_FOUND",
-                        String.format("礼品(ID: %d)不存在", logCreateDTO.giftId())));
+        GiftDTO giftDTO = giftService.findGiftById(logCreateDTO.giftId());
+        if (giftDTO == null) {
+            throw new BusinessException("GIFT_NOT_FOUND",
+                    String.format("礼品(ID: %d)不存在", logCreateDTO.giftId()));
+        }
 
         // 验证客户是否可领取礼品
-        boolean isNewTypeGift = Gift.GiftType.NEW.equals(gift.getType());
+        boolean isNewTypeGift = Gift.GiftType.NEW.equals(giftDTO.type());
         if (isNewTypeGift && customer.getGiftLevel() != null && customer.getGiftLevel() >= 3) {
             throw new BusinessException("GIFT_LIMIT_EXCEEDED",
                     String.format("客户 %s 已达到礼品领取上限", customer.getName()));
@@ -80,7 +90,7 @@ public class GiftLogService {
         if (isNewTypeGift) {
             // 更新客户的礼品等级
             customer.setGiftLevel(customer.getGiftLevel() != null ? customer.getGiftLevel() + 1 : 1);
-            customerRepository.save(customer);
+            customerService.updateEntity(customer);
         }
 
         giftLog.setGiftLogStatus(GiftLog.GiftLogStatus.ISSUED);
@@ -103,9 +113,12 @@ public class GiftLogService {
 //    }
 
     public Integer getCustomerGiftLevel(Long customerId) {
-        Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new BusinessException("CUSTOMER_NOT_FOUND", "客户不存在"));
-        return customer.getGiftLevel();
+        CustomerDTO customerDTO = customerService.findCustomerDTOById(customerId);
+        if(Objects.isNull(customerDTO)) {
+            throw new BusinessException("CUSTOMER_NOT_FOUND",
+                    String.format("客户(ID: %d)不存在", customerId));
+        }
+        return customerDTO.giftLevel();
     }
 
     public Page<GiftLogDTO> loadGiftLogPage(Pageable pageable) {

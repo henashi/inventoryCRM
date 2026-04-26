@@ -7,7 +7,9 @@ import com.henashi.inventorycrm.mapper.GiftMapper;
 import com.henashi.inventorycrm.pojo.Gift;
 import com.henashi.inventorycrm.repository.GiftRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,12 +18,14 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "gifts", cacheManager = "shortCache")
 public class GiftService {
 
     private final GiftRepository giftRepository;
 
     private final GiftMapper giftMapper;
 
+    @Cacheable(key = "giftId", unless = "#result == null")
     public GiftDTO findGiftById(Long giftId) {
         return giftRepository.findById(giftId)
                 .map(giftMapper::fromEntity)
@@ -50,11 +54,10 @@ public class GiftService {
             throw new IllegalArgumentException("礼品数据不能为空");
         }
         Gift entity = giftMapper.createToEntity(giftDTO);
-        entity.setDeleted(false);
         return giftMapper.fromEntity(giftRepository.save(entity));
     }
 
-    @CacheEvict(value = "gifts", key = "#giftId", cacheManager = "shortCache")
+    @CacheEvict(key = "#giftId")
     public GiftDTO updateGift(Long giftId, GiftUpdateDTO giftDTO) {
         if (giftId == null || giftId <= 0) {
             throw new IllegalArgumentException("礼品ID 无效: id=" + giftId);
