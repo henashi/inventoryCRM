@@ -10,7 +10,9 @@ import com.henashi.inventorycrm.pojo.Product;
 import com.henashi.inventorycrm.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,11 +21,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "products", cacheManager = "shortCache")
 public class ProductService {
 
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
 
+    @Cacheable(key = "#productId", unless = "#result == null")
     public ProductDTO findProductDTOById(Long productId) {
         log.debug("查询商品详情: id={}", productId);
         if (productId == null || productId <= 0) {
@@ -59,7 +63,7 @@ public class ProductService {
     }
 
     @Transactional
-    @CacheEvict(value = "products", key = "#id", cacheManager = "shortCache")
+    @CacheEvict(key = "#id")
     public ProductDTO updateProduct(Long id, ProductUpdateDTO dto) {
         if (id == null || id <= 0L) {
             log.warn("更新商品信息异常: {}", dto);
@@ -86,7 +90,7 @@ public class ProductService {
     }
 
     @Transactional
-    @CacheEvict(value = "products", key = "#id", cacheManager = "shortCache")
+    @CacheEvict(key = "#id")
     public void deleteById(Long id) {
         if (id == null || id <= 0L) {
             log.warn("商品ID异常: {}", id);
@@ -140,7 +144,7 @@ public class ProductService {
         return products.map(productMapper::fromEntity);
     }
 
-    @CacheEvict(value = "products", key = "#id", cacheManager = "shortCache")
+    @CacheEvict(key = "#id")
     public ProductDTO updateStock(Long id, String type, Integer quantity, String reason) {
         if (id == null || id <= 0L) {
             log.warn("商品ID异常: {}", id);

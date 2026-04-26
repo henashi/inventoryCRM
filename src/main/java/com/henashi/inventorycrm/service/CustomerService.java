@@ -15,7 +15,9 @@ import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -30,6 +32,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "customers", cacheManager = "shortCache")
 public class CustomerService {
 
     private final Logger log = LoggerFactory.getLogger(CustomerService.class);
@@ -38,6 +41,7 @@ public class CustomerService {
     private final CustomerMapper customerMapper;
     private final ApplicationEventPublisher eventPublisher;
 
+    @Cacheable(key = "#customerId", unless = "#result == null")
     public CustomerDTO findCustomerDTOById(Long customerId) {
         log.debug("查询客户详情: id={}", customerId);
         if (customerId == null || customerId <= 0) {
@@ -56,7 +60,7 @@ public class CustomerService {
     }
 
     @Transactional
-    public CustomerDTO saveCustomer(CustomerCreateDTO customerCreateDTO) {
+    public CustomerDTO createCustomer(CustomerCreateDTO customerCreateDTO) {
         log.debug("创建客户详情: {}", customerCreateDTO);
         validateCustomerData(customerCreateDTO);
         Customer customer;
@@ -68,6 +72,11 @@ public class CustomerService {
         }
         customer.setStatus("1");
         return customerMapper.fromEntity(customerRepository.save(customer));
+    }
+
+    @CacheEvict(key = "#customer.id")
+    public Customer updateEntity(Customer customer) {
+        return customerRepository.save(customer);
     }
 
     private @NonNull Customer getCustomerWithReferrer(CustomerCreateDTO customerCreateDTO) {
@@ -95,7 +104,7 @@ public class CustomerService {
     }
 
     @Transactional
-    @CacheEvict(value = "customers", key = "#id", cacheManager = "shortCache")
+    @CacheEvict(key = "#id")
     public CustomerDTO updateCustomer(Long id, CustomerUpdateDTO dto) {
         if (id == null || id <= 0L) {
             log.warn("更新客户信息异常: {}", dto);
@@ -117,7 +126,7 @@ public class CustomerService {
     }
 
     @Transactional
-    @CacheEvict(value = "customers", key = "#id", cacheManager = "shortCache")
+    @CacheEvict(key = "#id")
     public void deleteById(Long id) {
         if (id == null || id <= 0L) {
             log.warn("客户信息异常: {}", id);
