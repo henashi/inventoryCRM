@@ -10,6 +10,7 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.persistence.UniqueConstraint;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -56,6 +57,7 @@ public class DataDict extends BaseEntity {
     @Column(name = "description")
     private String description;
 
+    @Builder.Default
     @Transient
     private DataDictStatus dictStatus = DataDictStatus.DICT_STATUS_ACTIVE;
 

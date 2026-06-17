@@ -3,6 +3,7 @@ package com.henashi.inventorycrm.pojo;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -46,6 +47,7 @@ public class SystemConfig extends BaseEntity {
     /**
      * 配置分组
      */
+    @Builder.Default
     @Column(name = "config_group", length = 50)
     private String configGroup = "default";
 

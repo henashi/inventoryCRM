@@ -32,9 +32,6 @@ public class CustomerReferenceMapper {
                 .orElseThrow(() -> new IllegalArgumentException("Mapper转换 客户不存在: " + customerId));
     }
 
-    /**
-     * 批量转换
-     */
     @Named("idsToCustomers")
     public List<Customer> idsToCustomers(List<Long> customerIds) {
         if (customerIds == null || customerIds.isEmpty()) {

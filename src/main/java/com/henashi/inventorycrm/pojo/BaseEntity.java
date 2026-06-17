@@ -5,6 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -43,6 +44,7 @@ public class BaseEntity {
     @Column(name = "status")
     private String status;
 
+    @Builder.Default
     @Column(name = "deleted", nullable = false, columnDefinition = "boolean default false")
     private boolean deleted = false;
 }

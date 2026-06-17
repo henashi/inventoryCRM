@@ -6,6 +6,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -56,18 +57,21 @@ public class Product extends BaseEntity {
     /**
      * 当前库存
      */
+    @Builder.Default
     @Column(name = "current_stock")
     private Integer currentStock = 0;
 
     /**
      * 安全库存（低于此值预警）
      */
+    @Builder.Default
     @Column(name = "safe_stock")
     private Integer safeStock = 10;
 
     /**
      * 单位（个、件、箱等）
      */
+    @Builder.Default
     @Column(name = "unit", length = 20)
     private String unit = "个";
 
@@ -92,9 +96,17 @@ public class Product extends BaseEntity {
     @Column(name = "remark", length = 500)
     private String remark;
 
+    /**
+     * 礼品关联
+     */
+    @Builder.Default
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
     private Set<Gift> gifts = new LinkedHashSet<>();
 
+    /**
+     * 库存日志关联
+     */
+    @Builder.Default
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
     private Set<InventoryLog> inventoryLogs = new LinkedHashSet<>();
 

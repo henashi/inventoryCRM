@@ -15,6 +15,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -86,6 +87,7 @@ public class Gift extends BaseEntity implements Serializable {
      * 非空，使用字符串枚举类型
      * 默认值为PHYSICAL（实体礼品）
      */
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "type", length = 20, nullable = false)
     private GiftType type = GiftType.NEW;
@@ -112,6 +114,7 @@ public class Gift extends BaseEntity implements Serializable {
      * 是否限制领取次数
      * 非空，默认值为false
      */
+    @Builder.Default
     @Column(name = "limit_enabled", nullable = false)
     private Boolean limitEnabled = false;
 
@@ -119,6 +122,7 @@ public class Gift extends BaseEntity implements Serializable {
      * 每人限领次数
      * 当limitEnabled为true时生效
      */
+    @Builder.Default
     @Column(name = "limit_per_person")
     private Integer limitPerPerson = 1;
 

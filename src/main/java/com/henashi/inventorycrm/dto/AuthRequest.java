@@ -25,6 +25,7 @@ public class AuthRequest {
     @Schema(description = "密码", example = "admin123", requiredMode = Schema.RequiredMode.REQUIRED)
     private String password;
 
+    @Builder.Default
     @Schema(description = "记住我", example = "false")
     private Boolean rememberMe = false;
 
