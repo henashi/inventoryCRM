@@ -2,6 +2,7 @@ package com.henashi.inventorycrm.config;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import jakarta.persistence.EntityManagerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -18,15 +19,18 @@ import javax.sql.DataSource;
 @EnableTransactionManagement
 public class SpringDataJpaConfig {
 
-    @Bean
-    public DataSource dataSource() {
-        DruidDataSource dataSource = new DruidDataSource();
-        dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        dataSource.setUrl("jdbc:mysql://localhost:3306/inventory_crm?serverTimezone=UTC");
-        dataSource.setUsername("root");
-        dataSource.setPassword("password");
-        return dataSource;
-    }
+//    @Bean
+//    public DataSource dataSource() {
+//        DruidDataSource dataSource = new DruidDataSource();
+//        dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
+//        dataSource.setUrl("jdbc:mysql://localhost:3306/inventory_crm?serverTimezone=UTC");
+//        dataSource.setUsername("root");
+//        dataSource.setPassword("password");
+//        return dataSource;
+//    }
+
+    @Autowired
+    DataSource dataSource;
 
     @Bean
     public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
@@ -38,7 +42,7 @@ public class SpringDataJpaConfig {
         LocalContainerEntityManagerFactoryBean factory = new LocalContainerEntityManagerFactoryBean();
         factory.setJpaVendorAdapter(vendorAdapter);
         factory.setPackagesToScan("com.henashi.inventoryCRM.pojo");
-        factory.setDataSource(dataSource());
+        factory.setDataSource(dataSource);
         return factory;
     }
 

@@ -22,6 +22,7 @@ public class AuthResponse {
     @JsonProperty("refresh_token")
     private String refreshToken;
 
+    @Builder.Default
     @Schema(description = "令牌类型", example = "Bearer")
     @JsonProperty("token_type")
     private String tokenType = "Bearer";

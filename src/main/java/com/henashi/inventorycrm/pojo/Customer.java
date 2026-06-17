@@ -10,6 +10,7 @@ import jakarta.persistence.NamedEntityGraph;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -73,6 +74,7 @@ public class Customer extends BaseEntity{
     /**
      * 客户类型：1-普通客户 2-会员
      */
+    @Builder.Default
     @Column(name = "type")
     private Integer type = 1;
 
@@ -86,12 +88,14 @@ public class Customer extends BaseEntity{
     /**
      * 被推荐人列表（一对多关系）
      */
+    @Builder.Default
     @OneToMany(mappedBy = "referrer", fetch = FetchType.LAZY)
     private List<Customer> referrals = new ArrayList<>();
 
     /**
      * 礼品等级：0-未领取 1-已领一级礼 2-已领二级礼 3-已领三级礼
      */
+    @Builder.Default
     @Column(name = "gift_level")
     private Integer giftLevel = 0;
 
@@ -104,6 +108,7 @@ public class Customer extends BaseEntity{
     /**
      * 注册时间
      */
+    @Builder.Default
     @Column(name = "registered_at")
     private LocalDate registeredAt = LocalDate.now();
 
@@ -116,6 +121,7 @@ public class Customer extends BaseEntity{
     /**
      * 性别字段
      */
+    @Builder.Default
     @Column(name = "gender")
     private Integer gender = 0;  // 0: 女, 1: 男, null: 未设置
 

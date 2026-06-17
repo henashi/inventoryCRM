@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -81,7 +82,16 @@ public class OperationLogService {
     }
 
     public Page<OperationLogDTO> searchLogs(String keyword, Pageable pageable) {
-        return operationLogRepository.search(keyword, pageable)
+        Specification<OperationLog> spec = (root, query, cb) -> {
+            String likeKeyword = "%" + keyword + "%";
+            return cb.or(
+                    cb.like(root.get("module"), likeKeyword),
+                    cb.like(root.get("operationType"), likeKeyword),
+                    cb.like(root.get("operator"), likeKeyword),
+                    cb.like(root.get("description"), likeKeyword)
+            );
+        };
+        return operationLogRepository.findAll(spec, pageable)
                 .map(operationLogMapper::fromEntity);
     }
 }

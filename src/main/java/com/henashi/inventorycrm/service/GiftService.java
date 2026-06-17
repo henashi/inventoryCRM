@@ -25,7 +25,7 @@ public class GiftService {
 
     private final GiftMapper giftMapper;
 
-    @Cacheable(key = "giftId", unless = "#result == null")
+    @Cacheable(key = "#giftId", unless = "#result == null")
     public GiftDTO findGiftById(Long giftId) {
         return giftRepository.findById(giftId)
                 .map(giftMapper::fromEntity)

@@ -3,6 +3,7 @@ package com.henashi.inventorycrm.pojo;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -53,6 +54,7 @@ public class User extends BaseEntity implements UserDetails{
     /**
      * 角色：ADMIN-管理员 USER-普通用户
      */
+    @Builder.Default
     @Column(name = "role", length = 20)
     private String role = "USER";
 

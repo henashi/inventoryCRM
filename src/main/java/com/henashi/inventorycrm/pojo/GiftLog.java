@@ -14,6 +14,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -66,6 +67,7 @@ public class GiftLog extends BaseEntity {
     @JoinColumn(name = "gift_id", nullable = false)
     private Gift gift;
 
+    @Builder.Default
     @Column(nullable = false)
     private Integer quantity = 1;
 
@@ -85,6 +87,7 @@ public class GiftLog extends BaseEntity {
     /**
      * 操作人
      */
+    @Builder.Default
     @Column(name = "operator", length = 50)
     private String operator = "system";
 

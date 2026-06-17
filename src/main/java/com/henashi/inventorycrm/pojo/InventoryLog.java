@@ -8,6 +8,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -71,6 +72,7 @@ public class InventoryLog extends BaseEntity {
     /**
      * 操作人
      */
+    @Builder.Default
     @Column(name = "operator", length = 50)
     private String operator = "system";
 
