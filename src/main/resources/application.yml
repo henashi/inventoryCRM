@@ -1,0 +1,60 @@
+spring:
+  application:
+    name: inventoryCRM
+  profiles:
+    default: dev
+  mvc:
+    log-request-details: true
+  devtools:
+    restart:
+      enabled: false
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+      jakarta:
+        persistence:
+          schema-generation:
+            scripts:
+              action: create
+              create-target: create.sql
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.hibernate.orm.jdbc.bind: TRACE
+    org.springframework.boot.devtools: TRACE
+    org.springframework.boot.devtools.restart: DEBUG
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    api-docs:
+      path: /v3/api-docs
+      enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  endpoint:
+    health:
+      show-details: always
+
+caffeine:
+  short:
+    init-capacity: 100
+    max-size: 2000
+    expire-write: 5
+    short-access: 5
