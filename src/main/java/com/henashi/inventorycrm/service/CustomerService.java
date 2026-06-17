@@ -41,7 +41,7 @@ public class CustomerService {
     private final CustomerMapper customerMapper;
     private final ApplicationEventPublisher eventPublisher;
 
-    @Cacheable(key = "#customerId", unless = "#result == null")
+    @Cacheable(key = "#p0", unless = "#result == null")
     public CustomerDTO findCustomerDTOById(Long customerId) {
         log.debug("查询客户详情: id={}", customerId);
         if (customerId == null || customerId <= 0) {
@@ -74,7 +74,7 @@ public class CustomerService {
         return customerMapper.fromEntity(customerRepository.save(customer));
     }
 
-    @CacheEvict(key = "#customer.id")
+    @CacheEvict(key = "#p0.id")
     public Customer updateEntity(Customer customer) {
         return customerRepository.save(customer);
     }
@@ -104,7 +104,7 @@ public class CustomerService {
     }
 
     @Transactional
-    @CacheEvict(key = "#id")
+    @CacheEvict(key = "#p0")
     public CustomerDTO updateCustomer(Long id, CustomerUpdateDTO dto) {
         if (id == null || id <= 0L) {
             log.warn("更新客户信息异常: {}", dto);
@@ -126,7 +126,7 @@ public class CustomerService {
     }
 
     @Transactional
-    @CacheEvict(key = "#id")
+    @CacheEvict(key = "#p0")
     public void deleteById(Long id) {
         if (id == null || id <= 0L) {
             log.warn("客户信息异常: {}", id);
