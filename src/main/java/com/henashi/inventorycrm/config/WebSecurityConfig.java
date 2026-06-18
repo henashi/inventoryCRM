@@ -1,6 +1,7 @@
 package com.henashi.inventorycrm.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.henashi.inventorycrm.config.properties.AppProperties;
 import com.henashi.inventorycrm.pojo.User;
 import com.henashi.inventorycrm.security.JwtAccessDeniedHandler;
 import com.henashi.inventorycrm.security.JwtAuthenticationEntryPoint;
@@ -36,6 +37,8 @@ public class WebSecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    private final AppProperties appProperties;
+
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -45,7 +48,7 @@ public class WebSecurityConfig {
     public CommandLineRunner createDefaultUsers(UserService userService) {
         return args -> {
             // 只在开发环境或明确启用时创建默认用户
-            if (shouldCreateDefaultUsers()) {
+            if (appProperties.isCreateDefaultUsers()) {
                 createUserIfNotExists("admin", "admin123", "Admin", userService);
                 createUserIfNotExists("user", "user123", "User", userService);
                 createUserIfNotExists("demo", "demo123", "User", userService);
@@ -75,11 +78,7 @@ public class WebSecurityConfig {
                                 "/api/public/**",
                                 "/actuator/health",
                                 "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/error",
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html"
+                                "/v3/api-docs/**"
                         ).permitAll()
 
                         // 静态资源
@@ -89,7 +88,8 @@ public class WebSecurityConfig {
                                 "/favicon.ico",
                                 "/assets/**",
                                 "/static/**",
-                                "/swagger-ui.html"
+                                "/swagger-ui.html",
+                                "/error"
                         ).permitAll()
 
                         // API接口权限
@@ -177,10 +177,5 @@ public class WebSecurityConfig {
             }
             log.info("Create default User success:" + username + "(role: "+ role + ")");
         }
-    }
-
-    private boolean shouldCreateDefaultUsers() {
-        // 可以根据环境变量或其他条件判断
-        return true; // 或者从配置读取
     }
 }

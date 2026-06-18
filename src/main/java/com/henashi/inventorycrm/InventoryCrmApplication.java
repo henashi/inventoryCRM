@@ -2,9 +2,11 @@ package com.henashi.inventorycrm;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 //import org.springframework.data.web.config.EnableSpringDataWebSupport;
 
 @SpringBootApplication
+@ConfigurationPropertiesScan
 // hateoas开启注解
 //@EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
 public class InventoryCrmApplication {

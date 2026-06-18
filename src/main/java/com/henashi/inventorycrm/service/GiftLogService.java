@@ -41,7 +41,7 @@ public class GiftLogService {
     private final GiftLogMapper giftLogMapper;
     private final ApplicationEventPublisher eventPublisher;
 
-    @Cacheable(key = "#logId", unless = "#result == null")
+    @Cacheable(key = "#p0", unless = "#result == null")
     public GiftLogDTO findGiftLogDTOById(Long logId) {
         log.debug("查询礼品日志详情: id={}", logId);
         if (logId == null || logId <= 0) {

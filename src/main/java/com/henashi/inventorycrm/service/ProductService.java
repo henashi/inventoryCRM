@@ -28,7 +28,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
 
-    @Cacheable(key = "#productId", unless = "#result == null")
+    @Cacheable(key = "#p0", unless = "#result == null")
     public ProductDTO findProductDTOById(Long productId) {
         log.debug("查询商品详情: id={}", productId);
         if (productId == null || productId <= 0) {
@@ -64,7 +64,7 @@ public class ProductService {
     }
 
     @Transactional
-    @CacheEvict(key = "#id")
+    @CacheEvict(key = "#p0")
     public ProductDTO updateProduct(Long id, ProductUpdateDTO dto) {
         if (id == null || id <= 0L) {
             log.warn("更新商品信息异常: {}", dto);
@@ -91,7 +91,7 @@ public class ProductService {
     }
 
     @Transactional
-    @CacheEvict(key = "#id")
+    @CacheEvict(key = "#p0")
     public void deleteById(Long id) {
         if (id == null || id <= 0L) {
             log.warn("商品ID异常: {}", id);
@@ -150,7 +150,7 @@ public class ProductService {
         return products.map(productMapper::fromEntity);
     }
 
-    @CacheEvict(key = "#id")
+    @CacheEvict(key = "#p0")
     public ProductDTO updateStock(Long id, String type, Integer quantity, String reason) {
         if (id == null || id <= 0L) {
             log.warn("商品ID异常: {}", id);

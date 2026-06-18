@@ -1,11 +1,13 @@
 package com.henashi.inventorycrm.service;
 
+import com.henashi.inventorycrm.config.properties.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -20,20 +22,21 @@ import java.util.function.Function;
 @Service
 @Slf4j
 @RefreshScope
+@RequiredArgsConstructor
 public class JwtService {
 
-    @Value("${jwt.secret}")
-    private String secret;
+    private final JwtProperties jwtProperties;
 
-    @Value("${jwt.expiration}")
-    private Long expiration;
+    private SecretKey signingKey;
 
-    @Value("${jwt.refresh-expiration}")
-    private Long refreshExpiration;
+    @PostConstruct
+    public void init() {
+        byte[] keyBytes = jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8);
+        this.signingKey = Keys.hmacShaKeyFor(keyBytes);
+    }
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
-        return Keys.hmacShaKeyFor(keyBytes);
+        return signingKey;
     }
 
     public String extractUsername(String token) {
@@ -64,25 +67,25 @@ public class JwtService {
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", "ACCESS");
-        return createToken(claims, userDetails.getUsername(), expiration);
+        return createToken(claims, userDetails.getUsername(), jwtProperties.getExpiration());
     }
 
     public String generateRefreshToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", "REFRESH");
-        return createToken(claims, userDetails.getUsername(), refreshExpiration);
+        return createToken(claims, userDetails.getUsername(), jwtProperties.getRefreshExpiration());
     }
 
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", "ACCESS");
-        return createToken(claims, username, expiration);
+        return createToken(claims, username, jwtProperties.getExpiration());
     }
 
     public String generateRefreshToken(String username) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", "REFRESH");
-        return createToken(claims, username, refreshExpiration);
+        return createToken(claims, username, jwtProperties.getRefreshExpiration());
     }
 
     private String createToken(Map<String, Object> claims, String subject, Long expiration) {
@@ -114,11 +117,11 @@ public class JwtService {
     }
 
     public Long getExpirationTime() {
-        return expiration;
+        return jwtProperties.getExpiration();
     }
 
     public Long getRefreshExpirationTime() {
-        return refreshExpiration;
+        return jwtProperties.getRefreshExpiration();
     }
 
     public String getTokenType(String token) {
