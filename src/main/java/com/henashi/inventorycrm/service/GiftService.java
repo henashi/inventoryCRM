@@ -25,7 +25,7 @@ public class GiftService {
 
     private final GiftMapper giftMapper;
 
-    @Cacheable(key = "#giftId", unless = "#result == null")
+    @Cacheable(key = "#p0", unless = "#result == null")
     public GiftDTO findGiftById(Long giftId) {
         return giftRepository.findById(giftId)
                 .map(giftMapper::fromEntity)
@@ -41,7 +41,7 @@ public class GiftService {
                 .map(giftMapper::fromEntity);
     }
 
-    @CacheEvict(value = "gifts", key = "#giftId", cacheManager = "shortCache")
+    @CacheEvict(value = "gifts", key = "#p0", cacheManager = "shortCache")
     public void deleteGiftById(Long giftId) {
         if (!giftRepository.existsById(giftId)) {
             throw new IllegalArgumentException("礼品不存在: id=" + giftId);
@@ -57,7 +57,7 @@ public class GiftService {
         return giftMapper.fromEntity(giftRepository.save(entity));
     }
 
-    @CacheEvict(key = "#giftId")
+    @CacheEvict(key = "#p0")
     public GiftDTO updateGift(Long giftId, GiftUpdateDTO giftDTO) {
         if (giftId == null || giftId <= 0) {
             throw new IllegalArgumentException("礼品ID 无效: id=" + giftId);

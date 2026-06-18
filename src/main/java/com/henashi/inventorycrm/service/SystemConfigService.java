@@ -43,7 +43,7 @@ public class SystemConfigService {
                 });
     }
 
-    @Cacheable(value = "systemConfig", key = "#configKey")
+    @Cacheable(value = "systemConfig", key = "#p0")
     public String getConfigValue(String configKey) {
         return systemConfigRepository.findByConfigKey(configKey)
                 .map(SystemConfig::getConfigValue)
@@ -51,7 +51,7 @@ public class SystemConfigService {
                         String.format("配置项 %s 不存在", configKey)));
     }
 
-    @Cacheable(value = "systemConfigs", key = "#configGroup")
+    @Cacheable(value = "systemConfigs", key = "#p0")
     public List<SystemConfigDTO> getConfigsByGroup(String configGroup) {
         return systemConfigRepository.findByConfigGroup(configGroup)
                 .stream()

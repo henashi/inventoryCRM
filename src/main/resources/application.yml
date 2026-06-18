@@ -51,10 +51,3 @@ management:
   endpoint:
     health:
       show-details: always
-
-caffeine:
-  short:
-    init-capacity: 100
-    max-size: 2000
-    expire-write: 5
-    short-access: 5
