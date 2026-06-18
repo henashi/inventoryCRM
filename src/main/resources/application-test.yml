@@ -6,4 +6,4 @@ spring:
       password: ${NACOS_PASSWORD:nacos}
   config:
     import:
-      - nacos:test.yml?refreshEnabled=true&group=DEFAULT_GROUP
+      - optional:nacos:test.yml?refreshEnabled=true&group=DEFAULT_GROUP
