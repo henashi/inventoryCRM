@@ -3,8 +3,6 @@ spring:
     name: inventoryCRM
   profiles:
     default: dev
-  mvc:
-    log-request-details: true
   devtools:
     restart:
       enabled: false
@@ -22,14 +20,6 @@ spring:
             scripts:
               action: create
               create-target: create.sql
-
-logging:
-  level:
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    org.hibernate.orm.jdbc.bind: TRACE
-    org.springframework.boot.devtools: TRACE
-    org.springframework.boot.devtools.restart: DEBUG
 
 springdoc:
   swagger-ui:
