@@ -1,3 +1,11 @@
+app:
+  create-default-users: true
+  cache:
+    initial-capacity: 100
+    max-size: 2000
+    expire-write-minutes: 5
+    expire-access-minutes: 5
+
 spring:
   application:
     name: inventoryCRM
@@ -6,6 +14,11 @@ spring:
   devtools:
     restart:
       enabled: false
+  datasource:
+    url: jdbc:mysql://localhost:3306/inventory_crm?serverTimezone=UTC
+    username: root
+    password: ${DB_PASSWORD:password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
@@ -20,6 +33,17 @@ spring:
             scripts:
               action: create
               create-target: create.sql
+
+jwt:
+  secret: "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789+/ab=="
+  # 1 day
+  expiration: 86400000
+  # 7 days
+  refresh-expiration: 604800000
+  issuer: inventory-crm
+  audience: crm-users
+  token-prefix: Bearer
+  token-header: Authorization
 
 springdoc:
   swagger-ui:
@@ -41,3 +65,11 @@ management:
   endpoint:
     health:
       show-details: always
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.hibernate.orm.jdbc.bind: TRACE
+    org.springframework.boot.devtools: TRACE
+    org.springframework.boot.devtools.restart: DEBUG

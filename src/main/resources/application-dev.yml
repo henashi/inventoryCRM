@@ -1,9 +1,11 @@
 spring:
   cloud:
     nacos:
-      serverAddr: 127.0.0.1:8848
+      serverAddr: ${NACOS_SERVER_ADDR:}
       username: ${NACOS_USERNAME:nacos}
       password: ${NACOS_PASSWORD:nacos}
+      config:
+        enabled: ${NACOS_ENABLED:false}
   config:
     import:
-      - nacos:dev.yml?refreshEnabled=true&group=DEFAULT_GROUP
+      - optional:nacos:dev.yml?refreshEnabled=false&group=DEFAULT_GROUP
