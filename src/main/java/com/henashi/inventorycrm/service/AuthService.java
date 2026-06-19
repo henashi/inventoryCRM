@@ -2,24 +2,30 @@ package com.henashi.inventorycrm.service;
 
 import com.henashi.inventorycrm.dto.AuthRequest;
 import com.henashi.inventorycrm.dto.AuthResponse;
+import com.henashi.inventorycrm.dto.ChangePasswordRequest;
+import com.henashi.inventorycrm.dto.RefreshTokenRequest;
 import com.henashi.inventorycrm.dto.RegisterRequest;
+import com.henashi.inventorycrm.dto.UpdateProfileRequest;
 import com.henashi.inventorycrm.dto.UserDTO;
+import com.henashi.inventorycrm.exception.BusinessException;
 import com.henashi.inventorycrm.exception.SecurityAuthenticationException;
+import com.henashi.inventorycrm.exception.UserAlreadyExistsException;
 import com.henashi.inventorycrm.mapper.UserMapper;
 import com.henashi.inventorycrm.pojo.User;
-import com.henashi.inventorycrm.exception.UserAlreadyExistsException;
 import com.henashi.inventorycrm.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +39,6 @@ public class AuthService {
 
     @Transactional
     public AuthResponse authenticate(AuthRequest request) {
-        // 认证
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -49,28 +54,26 @@ public class AuthService {
             throw new SecurityAuthenticationException("用户名或密码错误");
         }
 
-        // 获取用户
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new SecurityAuthenticationException("用户不存在"));
 
-        // 检查用户状态
         if ("0".equals(user.getStatus())) {
             throw new SecurityAuthenticationException("用户已被禁用");
         }
 
-        // 更新最后登录时间
         user.setLastLoginAt(LocalDateTime.now());
-        userRepository.save(user);
+        if (user.getTokenVersion() == null) {
+            user.setTokenVersion(0);
+        }
+        User savedUser = userRepository.save(user);
 
-        // 生成token
-        String token = jwtService.generateToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
+        String token = jwtService.generateToken(savedUser);
+        String refreshToken = jwtService.generateRefreshToken(savedUser);
 
-        // 返回响应
         return AuthResponse.builder()
                 .token(token)
                 .refreshToken(refreshToken)
-                .user(userMapper.fromEntity(user))
+                .user(userMapper.fromEntity(savedUser))
                 .expiresIn(jwtService.getExpirationTime())
                 .tokenType("Bearer")
                 .build();
@@ -78,23 +81,23 @@ public class AuthService {
 
     @Transactional
     public UserDTO register(RegisterRequest request) {
-        // 检查用户名是否已存在
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new UserAlreadyExistsException("用户名已存在");
         }
 
-        // 检查邮箱是否已存在
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new UserAlreadyExistsException("邮箱已存在");
         }
 
-        // 创建用户
         User user = User.builder()
-                .username(request.getUsername())
+                .username(request.getUsername().trim())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .email(request.getEmail())
-                .role("USER")  // 默认角色
-                .status("1")     // 默认启用
+                .realName(request.getRealName().trim())
+                .email(request.getEmail().trim())
+                .role("USER")
+                .status("1")
+                .remark(request.getRemark())
+                .tokenVersion(0)
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -102,19 +105,67 @@ public class AuthService {
         return userMapper.fromEntity(savedUser);
     }
 
+    @Transactional(readOnly = true)
     public UserDTO getCurrentUser() {
-        String username = Objects.requireNonNull(SecurityContextHolder.getContext()
-                        .getAuthentication())
-                .getName();
-
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new SecurityAuthenticationException("用户不存在"));
-
-        return userMapper.fromEntity(user);
+        return userMapper.fromEntity(getCurrentAuthenticatedUser());
     }
 
-    public AuthResponse refreshToken(String refreshToken) {
-        if (!jwtService.validateToken(refreshToken)) {
+    @Transactional
+    public UserDTO updateProfile(UpdateProfileRequest request) {
+        User user = getCurrentAuthenticatedUser();
+
+        String username = normalizeOptional(request.getUsername());
+        if (username != null && !username.equals(user.getUsername())) {
+            throw new BusinessException("当前接口不支持修改用户名");
+        }
+
+        String realName = normalizeOptional(request.getRealName());
+        if (realName != null) {
+            user.setRealName(realName);
+        }
+
+        String email = normalizeOptional(request.getEmail());
+        if (email != null && !email.equals(user.getEmail())) {
+            if (userRepository.existsByEmailAndIdNot(email, user.getId())) {
+                throw new UserAlreadyExistsException("邮箱已存在");
+            }
+            user.setEmail(email);
+        }
+
+        User savedUser = userRepository.save(user);
+        return userMapper.fromEntity(savedUser);
+    }
+
+    @Transactional
+    public void changePassword(ChangePasswordRequest request) {
+        User user = getCurrentAuthenticatedUser();
+
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            throw new SecurityAuthenticationException("旧密码错误");
+        }
+
+        if (request.getOldPassword().equals(request.getNewPassword())) {
+            throw new BusinessException("新密码不能与旧密码相同");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setTokenVersion(nextTokenVersion(user));
+        userRepository.save(user);
+        SecurityContextHolder.clearContext();
+    }
+
+    @Transactional
+    public void logoutCurrentUser() {
+        User user = getCurrentAuthenticatedUser();
+        user.setTokenVersion(nextTokenVersion(user));
+        userRepository.save(user);
+        SecurityContextHolder.clearContext();
+    }
+
+    @Transactional(readOnly = true)
+    public AuthResponse refreshToken(RefreshTokenRequest request) {
+        String refreshToken = request.getRefreshToken();
+        if (!jwtService.validateToken(refreshToken) || !jwtService.isRefreshToken(refreshToken)) {
             throw new SecurityAuthenticationException("无效的刷新令牌");
         }
 
@@ -122,14 +173,48 @@ public class AuthService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new SecurityAuthenticationException("用户不存在"));
 
+        if (!jwtService.validateRefreshToken(refreshToken, user)) {
+            throw new SecurityAuthenticationException("刷新令牌已失效，请重新登录");
+        }
+
+        if ("0".equals(user.getStatus())) {
+            throw new SecurityAuthenticationException("用户已被禁用");
+        }
+
         String newToken = jwtService.generateToken(user);
 
         return AuthResponse.builder()
                 .token(newToken)
-                .refreshToken(refreshToken)  // 返回相同的刷新令牌
+                .refreshToken(refreshToken)
                 .user(userMapper.fromEntity(user))
                 .expiresIn(jwtService.getExpirationTime())
                 .tokenType("Bearer")
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    protected User getCurrentAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !StringUtils.hasText(authentication.getName())) {
+            throw new SecurityAuthenticationException("未登录或登录状态已失效");
+        }
+
+        return userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new SecurityAuthenticationException("用户不存在"));
+    }
+
+    private String normalizeOptional(String value) {
+        if (value == null) {
+            return null;
+        }
+        String normalized = value.trim();
+        if (!StringUtils.hasText(normalized)) {
+            throw new BusinessException("资料字段不能为空白字符");
+        }
+        return normalized;
+    }
+
+    private int nextTokenVersion(User user) {
+        return (user.getTokenVersion() == null ? 0 : user.getTokenVersion()) + 1;
     }
 }

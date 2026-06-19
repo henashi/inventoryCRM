@@ -47,7 +47,6 @@ public class WebSecurityConfig {
     @Bean
     public CommandLineRunner createDefaultUsers(UserService userService) {
         return args -> {
-            // 只在开发环境或明确启用时创建默认用户
             if (appProperties.isCreateDefaultUsers()) {
                 createUserIfNotExists("admin", "admin123", "Admin", userService);
                 createUserIfNotExists("user", "user123", "User", userService);
@@ -59,29 +58,23 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, ObjectMapper objectMapper) throws Exception {
         http
-                // 禁用CSRF
                 .csrf(AbstractHttpConfigurer::disable)
-
-                // 启用CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                // 配置会话管理
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-
-                // 配置请求授权
                 .authorizeHttpRequests(auth -> auth
-                        // 公开接口
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/auth/login",
+                                "/api/auth/register",
+                                "/api/auth/refresh-token"
+                        ).permitAll()
                         .requestMatchers(
-                                "/api/auth/**",
                                 "/api/public/**",
                                 "/actuator/health",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
-
-                        // 静态资源
                         .requestMatchers(
                                 "/",
                                 "/index.html",
@@ -91,25 +84,32 @@ public class WebSecurityConfig {
                                 "/swagger-ui.html",
                                 "/error"
                         ).permitAll()
-
-                        // API接口权限
+                        .requestMatchers(HttpMethod.GET, "/api/auth/me").hasAnyRole("USER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/auth/profile").hasAnyRole("USER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/auth/change-password", "/api/auth/logout").hasAnyRole("USER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/customers/**").hasAnyRole("USER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/customers").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/customers/**").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/customers/**").hasRole("ADMIN")
-                        .requestMatchers("/api/products/**").hasAnyRole("USER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/products/**").hasAnyRole("USER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/products/**").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/products/**").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/gifts", "/api/gifts/**").hasAnyRole("USER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/gifts").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/gifts/**").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/gifts/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/gift-logs", "/api/gift-logs/**").hasAnyRole("USER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/gift-logs").hasAnyRole("USER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/gift-logs/**").hasAnyRole("USER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/gift-logs/**").hasRole("ADMIN")
                         .requestMatchers("/api/inventory/**").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers("/api/inventories", "/api/inventories/**").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
-                        // 默认需要认证
                         .anyRequest().authenticated()
                 )
-
-                // 添加JWT过滤器
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class)
-
-                // 异常处理
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(new JwtAuthenticationEntryPoint(objectMapper))
                         .accessDeniedHandler(new JwtAccessDeniedHandler())
@@ -122,10 +122,9 @@ public class WebSecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // 允许的前端地址
         configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:8081",  // Vue开发服务器
-                "http://localhost:8080"   // 生产部署
+                "http://localhost:8081",
+                "http://localhost:8080"
         ));
 
         configuration.setAllowedMethods(Arrays.asList(
@@ -152,7 +151,7 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(HttpSecurity httpSecurity, UserDetailsServiceImpl userService) throws Exception{
+    public AuthenticationManager authenticationManager(HttpSecurity httpSecurity, UserDetailsServiceImpl userService) throws Exception {
         AuthenticationManagerBuilder authenticationManagerBuilder = httpSecurity.getSharedObject(AuthenticationManagerBuilder.class);
         authenticationManagerBuilder.userDetailsService(userService)
                 .passwordEncoder(passwordEncoder());
@@ -166,6 +165,7 @@ public class WebSecurityConfig {
             User user = new User();
             user.setUsername(username);
             user.setPassword(plainPassword);
+            user.setRealName(username);
             user.setEmail(username + "@quizapp.com");
             user.setRole(role);
             user.setStatus("1");

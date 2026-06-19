@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -65,30 +66,25 @@ public class GiftLogService {
         log.debug("创建礼品日志: 客户ID={}, 礼品标识={}",
                 logCreateDTO.customerId(), logCreateDTO.giftId());
 
-        // 验证客户是否存在
         Customer customer = customerRepository.findById(logCreateDTO.customerId())
                 .orElseThrow(() -> new BusinessException("CUSTOMER_NOT_FOUND",
                         String.format("客户(ID: %d)不存在", logCreateDTO.customerId())));
 
-        // 验证礼品是否存在
         GiftDTO giftDTO = giftService.findGiftById(logCreateDTO.giftId());
         if (giftDTO == null) {
             throw new BusinessException("GIFT_NOT_FOUND",
                     String.format("礼品(ID: %d)不存在", logCreateDTO.giftId()));
         }
 
-        // 验证客户是否可领取礼品
         boolean isNewTypeGift = Gift.GiftType.NEW.equals(giftDTO.type());
         if (isNewTypeGift && customer.getGiftLevel() != null && customer.getGiftLevel() >= 3) {
             throw new BusinessException("GIFT_LIMIT_EXCEEDED",
                     String.format("客户 %s 已达到礼品领取上限", customer.getName()));
         }
 
-        // 创建礼品日志
         GiftLog giftLog = giftLogMapper.createToEntity(logCreateDTO);
         giftLog.setCustomer(customer);
         if (isNewTypeGift) {
-            // 更新客户的礼品等级
             customer.setGiftLevel(customer.getGiftLevel() != null ? customer.getGiftLevel() + 1 : 1);
             customerService.updateEntity(customer);
         }
@@ -107,14 +103,9 @@ public class GiftLogService {
                 .map(giftLogMapper::fromEntity);
     }
 
-//    public Page<GiftLogDTO> getLogsByGiftLevel(Integer giftLevel, Pageable pageable) {
-//        return giftLogRepository.findByGiftLevel(giftLevel, pageable)
-//                .map(GiftLogDTO::fromEntity);
-//    }
-
     public Integer getCustomerGiftLevel(Long customerId) {
         CustomerDTO customerDTO = customerService.findCustomerDTOById(customerId);
-        if(Objects.isNull(customerDTO)) {
+        if (Objects.isNull(customerDTO)) {
             throw new BusinessException("CUSTOMER_NOT_FOUND",
                     String.format("客户(ID: %d)不存在", customerId));
         }
@@ -127,6 +118,7 @@ public class GiftLogService {
     }
 
     @Transactional
+    @CacheEvict(key = "#p0")
     public GiftLogDTO updateGiftLog(Long id, GiftLogUpdateDTO giftLogUpdateDTO) {
         if (id == null || id <= 0) {
             throw new IllegalArgumentException("id");
@@ -145,5 +137,18 @@ public class GiftLogService {
 
         GiftLog saved = giftLogRepository.save(giftLog);
         return giftLogMapper.fromEntity(saved);
+    }
+
+    @Transactional
+    @CacheEvict(key = "#p0")
+    public void deleteGiftLog(Long id) {
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException("礼品日志ID无效");
+        }
+        GiftLog giftLog = giftLogRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("GIFT_LOG_NOT_FOUND",
+                        String.format("礼品日志(ID: %d)不存在", id)));
+        giftLogRepository.delete(giftLog);
+        log.info("礼品日志软删除成功: id={}", id);
     }
 }

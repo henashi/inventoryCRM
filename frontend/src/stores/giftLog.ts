@@ -2,6 +2,7 @@ import {defineStore} from 'pinia'
 import {ref} from 'vue'
 import {giftLogApi} from '@/api/giftLog'
 import type {GiftLogDTO, PageParams} from '@/types'
+import { toUiPage } from '@/utils/pagination'
 
 export const useGiftLogStore = defineStore('giftLog', () => {
   const giftLogList = ref<GiftLogDTO[]>([])
@@ -15,7 +16,7 @@ export const useGiftLogStore = defineStore('giftLog', () => {
     const res = await giftLogApi.loadGiftLogs(params)
     giftLogList.value = res.content
     pagination.value = {
-      page: res.number,
+      page: toUiPage(res.number),
       size: res.size,
       total: res.totalElements
     }

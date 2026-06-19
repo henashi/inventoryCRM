@@ -2,10 +2,9 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { productApi } from '@/api/product'
-import type { Product, ProductCreateDTO, PageParams, PageResult } from '@/types'
+import type { Product, ProductCreateDTO, ProductUpdateDTO, PageParams, PageResult } from '@/types'
 
 export const useProductStore = defineStore('product', () => {
-  // 状态
   const products = ref<Product[]>([])
   const currentProduct = ref<Product | null>(null)
   const isLoading = ref(false)
@@ -18,7 +17,6 @@ export const useProductStore = defineStore('product', () => {
   const searchKeyword = ref('')
   const selectedCategory = ref<string>('')
 
-  // Getter
   const totalProducts = computed(() => total.value)
   const lowStockProducts = computed(() =>
     products.value.filter(p => p.currentStock < p.safeStock)
@@ -52,24 +50,27 @@ export const useProductStore = defineStore('product', () => {
     products.value.reduce((total, p) => total + (p.currentStock * p.price), 0)
   )
 
-  // Actions
   const loadProducts = async (params?: PageParams) => {
     try {
       isLoading.value = true
-      console.log('params', params)
-      // Build query params: prefer explicit params passed in, fallback to store state
       const queryParams = {
         page: params?.page ?? (pagination.value.page - 1),
         size: params?.size ?? pagination.value.size,
         keyword: params?.keyword ?? (searchKeyword.value || undefined),
-        // category: selectedCategory.value || undefined
+        category: params?.category ?? (selectedCategory.value || undefined)
       }
-      console.log('queryParams', queryParams)
       const response: PageResult<Product> = await productApi.getProducts(queryParams)
 
       products.value = response.content
       total.value = response.totalElements
       pagination.value.total = response.totalElements
+
+      if (params?.keyword !== undefined) {
+        searchKeyword.value = params.keyword ?? ''
+      }
+      if (params?.category !== undefined) {
+        selectedCategory.value = params.category ?? ''
+      }
 
       if (params?.page !== undefined) {
         pagination.value.page = params.page + 1
@@ -83,8 +84,7 @@ export const useProductStore = defineStore('product', () => {
   }
 
   const loadCategories = async () => {
-    const categories = await productApi.getCategories()
-    return categories
+    return await productApi.getCategories()
   }
 
   const getProduct = async (id: number) => {
@@ -110,7 +110,7 @@ export const useProductStore = defineStore('product', () => {
     }
   }
 
-  const updateProduct = async (id: number, data: Partial<ProductCreateDTO>) => {
+  const updateProduct = async (id: number, data: Partial<ProductUpdateDTO>) => {
     try {
       isLoading.value = true
       const updatedProduct = await productApi.updateProduct(id, data)
@@ -146,7 +146,6 @@ export const useProductStore = defineStore('product', () => {
   }
 
   const updateStock = async (id: number, quantity: number, type: 'IN' | 'OUT') => {
-    console.log('updateStock', id, quantity, type)
     try {
       isLoading.value = true
       const updatedProduct = await productApi.updateStock(id, quantity, type)
@@ -191,7 +190,6 @@ export const useProductStore = defineStore('product', () => {
   }
 
   return {
-    // State
     products,
     currentProduct,
     isLoading,
@@ -199,17 +197,14 @@ export const useProductStore = defineStore('product', () => {
     pagination,
     searchKeyword,
     selectedCategory,
-
-    // Getter
     totalProducts,
     lowStockProducts,
     outOfStockProducts,
     filteredProducts,
     categories,
     stockValue,
-
-    // Actions
     loadProducts,
+    loadCategories,
     getProduct,
     addProduct,
     updateProduct,

@@ -1,6 +1,7 @@
 package com.henashi.inventorycrm.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -28,6 +29,9 @@ public record ProductDTO(
 
         @Schema(description = "单价")
         BigDecimal price,
+
+        @Schema(description = "成本")
+        BigDecimal cost,
 
         @Schema(description = "是否库存低于安全库存")
         boolean stockLow,

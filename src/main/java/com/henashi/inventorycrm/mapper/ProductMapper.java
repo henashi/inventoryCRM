@@ -9,6 +9,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
@@ -18,7 +19,6 @@ import org.mapstruct.ReportingPolicy;
 )
 public interface ProductMapper {
 
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     Product toEntity(ProductDTO productDTO);
 
     @Mapping(source = "currentStock", target = "currentStock", defaultValue = "0")
@@ -30,9 +30,18 @@ public interface ProductMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     Product updateToEntity(ProductUpdateDTO productUpdateDTO);
 
+    @Mapping(source = "status", target = "status", qualifiedByName = "stringStatusToInteger")
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     ProductDTO fromEntity(Product product);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     Product partialUpdate(ProductUpdateDTO productDTO, @MappingTarget Product product);
+
+    @Named("stringStatusToInteger")
+    default Integer stringStatusToInteger(String status) {
+        if (status == null || status.isBlank()) {
+            return 1;
+        }
+        return "0".equals(status.trim()) ? 0 : 1;
+    }
 }

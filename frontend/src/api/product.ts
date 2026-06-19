@@ -46,6 +46,10 @@ export const productApi = {
       responseType: 'blob'
     }),
 
+  // 获取导入模板信息
+  getImportTemplate: () =>
+    request.get('/products/import/template'),
+
   // 导入商品
   importProducts: (file: File) => {
     const formData = new FormData()

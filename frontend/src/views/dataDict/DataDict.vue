@@ -127,10 +127,21 @@ import dayjs from 'dayjs'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDataDictStore } from '@/stores/dataDict'
-import type { DataDict, DataDictDTO, PageParams } from '@/types'
+import type { DataDict, PageParams } from '@/types'
 import { message, Modal } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
 import { ReloadOutlined, HomeOutlined, PlusOutlined } from '@ant-design/icons-vue'
+
+type DataDictFormState = {
+  groupName: string | null
+  groupCode: string | null
+  paramName: string | null
+  paramCode: string | null
+  paramValue: string | null
+  description: string | null
+  status: string
+  isDeleted: number
+}
 
 const modalType = ref<'add' | 'edit'>('add')
 const modalTitle = ref('')
@@ -139,7 +150,7 @@ const formRef = ref<FormInstance>()
 const router = useRouter()
 const dataDictStore = useDataDictStore()
 const currentDataDict = ref<DataDict | null>(null)
-const isLoading = ref(false);
+const isLoading = ref(false)
 const columns = [
   {
     title: '分组名称',
@@ -195,7 +206,7 @@ const columns = [
   },
 ]
 // 表单数据
-const formState = reactive<DataDictDTO>({
+const formState = reactive<DataDictFormState>({
   paramCode: null,
   paramName: null,
   paramValue: null,
@@ -273,8 +284,10 @@ const handleDelete = (record: DataDict) => {
 
 const getStatusColor = (status: string) => {
   switch (status) {
+    case 'ACTIVE':
     case 'DICT_STATUS_ACTIVE':
       return 'green'
+    case 'PAUSED':
     case 'DICT_STATUS_PAUSED':
       return 'blue'
     default:
@@ -288,13 +301,25 @@ const handleAddOrEdit = async () => {
       message.error('表单未初始化')
       return
     }
+
     await formRef.value.validate()
+
+    const payload = {
+      groupName: formState.groupName ?? undefined,
+      groupCode: formState.groupCode ?? undefined,
+      paramName: formState.paramName ?? undefined,
+      paramCode: formState.paramCode ?? undefined,
+      paramValue: formState.paramValue ?? undefined,
+      description: formState.description ?? undefined,
+      status: formState.status,
+      isDeleted: formState.isDeleted,
+    }
+
     if (modalType.value === 'add') {
-      await dataDictStore.createDataDict(formState)
+      await dataDictStore.createDataDict(payload as any)
       message.success('新增配置成功')
     } else {
-      // 编辑逻辑（如果需要）
-      await dataDictStore.updateDataDict(currentDataDict.value!.id, formState)
+      await dataDictStore.updateDataDict(currentDataDict.value!.id, payload as any)
       message.success('更新配置成功')
     }
     modalVisible.value = false
@@ -315,14 +340,20 @@ const handleModalCancel = () => {
 
 const getStatusText = (status: string) => {
   switch (status) {
+    case 'ACTIVE':
     case 'DICT_STATUS_ACTIVE':
       return '生效'
+    case 'PAUSED':
     case 'DICT_STATUS_PAUSED':
       return '失效'
     default:
       return '未知'
   }
 }
+
+const getTypeColor = (_type?: string) => 'default'
+
+const getTypeText = (type?: string) => type || '未知'
 
 // 新增商品
 const showAddModal = () => {

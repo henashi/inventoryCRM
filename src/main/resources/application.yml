@@ -13,7 +13,7 @@ spring:
     default: dev
   devtools:
     restart:
-      enabled: false
+      enabled: true
   datasource:
     url: jdbc:mysql://localhost:3306/inventory_crm?serverTimezone=UTC
     username: root

@@ -1,5 +1,6 @@
 package com.henashi.inventorycrm.security;
 
+import com.henashi.inventorycrm.pojo.User;
 import com.henashi.inventorycrm.service.JwtService;
 import com.henashi.inventorycrm.service.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
@@ -36,25 +37,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String jwt = extractJwtFromRequest(request);
 
-            if (StringUtils.hasText(jwt) && jwtService.validateToken(jwt)) {
-                String username = jwtService.extractUsername(jwt);
+            if (StringUtils.hasText(jwt) && jwtService.validateToken(jwt) && jwtService.isAccessToken(jwt)) {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(jwtService.extractUsername(jwt));
 
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                if (userDetails instanceof CustomUserDetails customUserDetails) {
+                    User user = customUserDetails.getUser();
+                    if (jwtService.validateAccessToken(jwt, user)) {
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(
+                                        userDetails,
+                                        null,
+                                        userDetails.getAuthorities()
+                                );
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
+                        authentication.setDetails(
+                                new WebAuthenticationDetailsSource().buildDetails(request)
                         );
 
-                authentication.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                log.debug("用户 '{}' 认证成功", username);
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                        log.debug("用户 '{}' 认证成功", user.getUsername());
+                    }
+                }
             }
         } catch (Exception e) {
             log.error("无法设置用户认证: {}", e.getMessage());

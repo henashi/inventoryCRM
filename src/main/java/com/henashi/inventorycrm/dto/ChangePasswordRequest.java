@@ -23,9 +23,4 @@ public class ChangePasswordRequest {
     @Size(min = 6, max = 20, message = "新密码长度6-20个字符")
     @Schema(description = "新密码", example = "newPassword123", requiredMode = Schema.RequiredMode.REQUIRED)
     private String newPassword;
-
-    @NotBlank(message = "确认密码不能为空")
-    @Size(min = 6, max = 20, message = "确认密码长度6-20个字符")
-    @Schema(description = "确认密码", example = "newPassword123", requiredMode = Schema.RequiredMode.REQUIRED)
-    private String confirmPassword;
 }

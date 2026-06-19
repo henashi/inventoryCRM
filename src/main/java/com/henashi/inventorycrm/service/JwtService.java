@@ -1,6 +1,7 @@
 package com.henashi.inventorycrm.service;
 
 import com.henashi.inventorycrm.config.properties.JwtProperties;
+import com.henashi.inventorycrm.pojo.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -17,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 @Service
@@ -65,27 +67,40 @@ public class JwtService {
     }
 
     public String generateToken(UserDetails userDetails) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("type", "ACCESS");
+        Map<String, Object> claims = buildClaims("ACCESS", 0);
         return createToken(claims, userDetails.getUsername(), jwtProperties.getExpiration());
     }
 
     public String generateRefreshToken(UserDetails userDetails) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("type", "REFRESH");
+        Map<String, Object> claims = buildClaims("REFRESH", 0);
         return createToken(claims, userDetails.getUsername(), jwtProperties.getRefreshExpiration());
     }
 
+    public String generateToken(User user) {
+        Map<String, Object> claims = buildClaims("ACCESS", getCurrentTokenVersion(user));
+        return createToken(claims, user.getUsername(), jwtProperties.getExpiration());
+    }
+
+    public String generateRefreshToken(User user) {
+        Map<String, Object> claims = buildClaims("REFRESH", getCurrentTokenVersion(user));
+        return createToken(claims, user.getUsername(), jwtProperties.getRefreshExpiration());
+    }
+
     public String generateToken(String username) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("type", "ACCESS");
+        Map<String, Object> claims = buildClaims("ACCESS", 0);
         return createToken(claims, username, jwtProperties.getExpiration());
     }
 
     public String generateRefreshToken(String username) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("type", "REFRESH");
+        Map<String, Object> claims = buildClaims("REFRESH", 0);
         return createToken(claims, username, jwtProperties.getRefreshExpiration());
+    }
+
+    private Map<String, Object> buildClaims(String type, int tokenVersion) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("type", type);
+        claims.put("tokenVersion", tokenVersion);
+        return claims;
     }
 
     private String createToken(Map<String, Object> claims, String subject, Long expiration) {
@@ -100,7 +115,28 @@ public class JwtService {
 
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+    }
+
+    public boolean validateAccessToken(String token, User user) {
+        return validateTokenForType(token, user, "ACCESS");
+    }
+
+    public boolean validateRefreshToken(String token, User user) {
+        return validateTokenForType(token, user, "REFRESH");
+    }
+
+    private boolean validateTokenForType(String token, User user, String expectedType) {
+        if (!validateToken(token)) {
+            return false;
+        }
+        if (!Objects.equals(expectedType, getTokenType(token))) {
+            return false;
+        }
+        if (!Objects.equals(extractUsername(token), user.getUsername())) {
+            return false;
+        }
+        return extractTokenVersionOrDefault(token) == getCurrentTokenVersion(user);
     }
 
     public Boolean validateToken(String token) {
@@ -133,6 +169,15 @@ public class JwtService {
         }
     }
 
+    public Integer getTokenVersion(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            return claims.get("tokenVersion", Integer.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     public boolean isRefreshToken(String token) {
         String type = getTokenType(token);
         return "REFRESH".equals(type);
@@ -145,5 +190,14 @@ public class JwtService {
 
     public Date getTokenIssuedAt(String token) {
         return extractClaim(token, Claims::getIssuedAt);
+    }
+
+    private int extractTokenVersionOrDefault(String token) {
+        Integer tokenVersion = getTokenVersion(token);
+        return tokenVersion == null ? 0 : tokenVersion;
+    }
+
+    private int getCurrentTokenVersion(User user) {
+        return user.getTokenVersion() == null ? 0 : user.getTokenVersion();
     }
 }

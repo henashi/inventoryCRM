@@ -12,6 +12,10 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,7 +27,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,6 +39,24 @@ import java.time.LocalDate;
 public class InventoryLogController {
 
     private final InventoryLogService inventoryLogService;
+
+    @Operation(summary = "导出库存日志", description = "根据查询条件导出筛选后的库存日志")
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportInventoryLogs(
+            @RequestParam(required = false) Long productId,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String operator,
+            @RequestParam(required = false)
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+            LocalDate startTime,
+            @RequestParam(required = false)
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+            LocalDate endTime
+    ) {
+        byte[] content = inventoryLogService.exportInventoryLogs(productId, type, operator, startTime, endTime);
+        String fileName = "inventory_logs_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + ".csv";
+        return buildCsvResponse(fileName, content);
+    }
 
     @Operation(summary = "根据ID查询库存日志", description = "通过库存日志ID查询库存日志的详细信息")
     @GetMapping("/{id}")
@@ -48,8 +73,12 @@ public class InventoryLogController {
             @RequestParam(required = false) Long productId,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String operator,
-            @RequestParam(required = false) LocalDate startTime,
-            @RequestParam(required = false) LocalDate endTime
+            @RequestParam(required = false)
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+            LocalDate startTime,
+            @RequestParam(required = false)
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+            LocalDate endTime
     ) {
         return inventoryLogService.findPage(page, size, productId, type, operator, startTime, endTime);
     }
@@ -87,5 +116,17 @@ public class InventoryLogController {
     @GetMapping("/stats")
     public InventoryLogStatsDTO countStats() {
         return inventoryLogService.countStats();
+    }
+
+    private ResponseEntity<byte[]> buildCsvResponse(String fileName, byte[] content) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(fileName, StandardCharsets.UTF_8)
+                                .build()
+                                .toString())
+                .contentType(MediaType.parseMediaType("text/csv;charset=UTF-8"))
+                .contentLength(content.length)
+                .body(content);
     }
 }

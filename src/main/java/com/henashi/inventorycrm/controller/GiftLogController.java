@@ -16,6 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,8 +41,8 @@ public class GiftLogController {
     @GetMapping
     @Operation(summary = "获取礼品日志列表", description = "分页查询所有礼品日志信息")
     public Page<GiftLogDTO> loadGiftLogPage(
-            @RequestParam(defaultValue = "5") Integer size,
-            @RequestParam(defaultValue = "0") Integer page
+            @RequestParam(name = "size", defaultValue = "5") Integer size,
+            @RequestParam(name = "page", defaultValue = "0") Integer page
     ) {
         Sort sort = Sort.by("contentUpdatedTime", "createdTime").descending();
         return giftLogService.loadGiftLogPage(PageRequest.of(page, size, sort));
@@ -50,37 +51,37 @@ public class GiftLogController {
     @GetMapping("/{id}")
     @Operation(summary = "根据ID获取礼品日志信息", description = "通过礼品日志ID查询礼品日志的详细信息")
     public GiftLogDTO getGiftLog(
-            @PathVariable @NotNull @Min(1) Long id) {
+            @PathVariable("id") @NotNull @Min(1) Long id) {
         return giftLogService.findGiftLogDTOById(id);
     }
 
     @GetMapping("/customer/{customerId}")
     @Operation(summary = "根据客户ID获取礼品日志列表", description = "通过客户ID分页查询该客户的所有礼品日志信息")
     public Page<GiftLogDTO> getLogsByCustomerId(
-            @PathVariable @NotNull Long customerId,
+            @PathVariable("customerId") @NotNull Long customerId,
             Pageable pageable) {
         return giftLogService.getLogsByCustomerId(customerId, pageable);
     }
 
-//    @GetMapping("/level/{level}")
-//    public ResponseEntity<Page<GiftLogDTO>> getLogsByGiftLevel(
-//            @PathVariable @NotNull Integer level,
-//            Pageable pageable) {
-//        return ResponseEntity.ok(giftLogService.getLogsByGiftLevel(level, pageable));
-//    }
-
     @GetMapping("/customer/{customerId}/gift-level")
     @Operation(summary = "获取客户的礼品等级", description = "根据客户ID查询该客户当前的礼品等级")
     public Integer getCustomerGiftLevel(
-            @PathVariable @NotNull Long customerId) {
+            @PathVariable("customerId") @NotNull Long customerId) {
         log.info("请求查询客户 {} 的礼品等级", customerId);
         return giftLogService.getCustomerGiftLevel(customerId);
     }
 
     @PatchMapping("/{id}")
     @Operation(summary = "更新礼品日志信息", description = "根据提供的礼品日志ID和更新信息修改对应的礼品日志")
-    public GiftLogDTO updateGiftLog(@PathVariable @NotNull Long id, @Valid @RequestBody GiftLogUpdateDTO giftLogUpdateDTO) {
+    public GiftLogDTO updateGiftLog(@PathVariable("id") @NotNull Long id, @Valid @RequestBody GiftLogUpdateDTO giftLogUpdateDTO) {
         return giftLogService.updateGiftLog(id, giftLogUpdateDTO);
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "删除礼品日志", description = "根据礼品日志ID软删除对应记录")
+    public ResponseEntity<Void> deleteGiftLog(@PathVariable("id") @NotNull @Min(1) Long id) {
+        giftLogService.deleteGiftLog(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping

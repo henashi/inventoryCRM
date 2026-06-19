@@ -1,57 +1,111 @@
-// frontend/src/stores/auth.ts
+import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import { authApi } from '@/api/auth'
-import type { LoginRequest, User, LoginResponse } from '@/types/auth'
 import { message } from 'ant-design-vue'
+import { authApi } from '@/api/auth'
+import type {
+  ChangePasswordRequest,
+  LoginRequest,
+  LoginResponse,
+  UpdateProfileRequest,
+  User,
+} from '@/types/auth'
+
+type LogoutOptions = {
+  notify?: boolean
+  remote?: boolean
+}
+
+const ACCESS_TOKEN_KEY = 'token'
+const REFRESH_TOKEN_KEY = 'refreshToken'
+const USER_KEY = 'user'
 
 export const useAuthStore = defineStore('auth', () => {
-  // 状态
-  const token = ref<string | null>(localStorage.getItem('token'))
+  const token = ref<string | null>(localStorage.getItem(ACCESS_TOKEN_KEY))
+  const refreshToken = ref<string | null>(localStorage.getItem(REFRESH_TOKEN_KEY))
   const user = ref<User | null>(null)
   const loading = ref(false)
 
-  // Getter
   const isAuthenticated = computed(() => !!token.value)
   const userRole = computed(() => user.value?.role)
-  const userName = computed(() => user.value?.username)
+  const userName = computed(() => user.value?.realName || user.value?.username)
 
-  // Actions
+  const normalizeUser = (input: User | null): User | null => {
+    if (!input) {
+      return null
+    }
+
+    return {
+      ...input,
+      realName: input.realName || input.username,
+      email: input.email || '',
+      role: (input.role || 'USER').toUpperCase() as User['role'],
+    }
+  }
+
+  const setAccessToken = (nextToken: string | null) => {
+    token.value = nextToken
+    if (nextToken) {
+      localStorage.setItem(ACCESS_TOKEN_KEY, nextToken)
+    } else {
+      localStorage.removeItem(ACCESS_TOKEN_KEY)
+    }
+  }
+
+  const setRefreshToken = (nextRefreshToken: string | null) => {
+    refreshToken.value = nextRefreshToken
+    if (nextRefreshToken) {
+      localStorage.setItem(REFRESH_TOKEN_KEY, nextRefreshToken)
+    } else {
+      localStorage.removeItem(REFRESH_TOKEN_KEY)
+    }
+  }
+
+  const persistUser = (nextUser: User | null) => {
+    user.value = normalizeUser(nextUser)
+    if (user.value) {
+      localStorage.setItem(USER_KEY, JSON.stringify(user.value))
+    } else {
+      localStorage.removeItem(USER_KEY)
+    }
+  }
+
+  const setSession = (responseData: Pick<LoginResponse, 'token' | 'access_token' | 'accessToken' | 'refreshToken' | 'refresh_token' | 'user' | 'data'>) => {
+    const nextAccessToken = responseData.token || responseData.access_token || responseData.accessToken || null
+    const nextRefreshToken = responseData.refreshToken || responseData.refresh_token || null
+
+    setAccessToken(nextAccessToken)
+    setRefreshToken(nextRefreshToken)
+
+    const respUser = responseData.user || responseData.data?.user || null
+    if (respUser) {
+      persistUser(respUser)
+    }
+  }
+
+  const clearAuthState = (notify = true) => {
+    setAccessToken(null)
+    setRefreshToken(null)
+    persistUser(null)
+    sessionStorage.clear()
+
+    if (notify) {
+      message.success('已退出登录')
+    }
+  }
+
   const login = async (request: LoginRequest) => {
     try {
       loading.value = true
-      const res = await authApi.login(request)
-
-      // request 的响应拦截器已返回 response.data，res 就是后端返回的主体数据
-      const responseData: any = res
-
-      // 兼容不同后端字段命名：支持 token 或 access_token
+      const responseData: LoginResponse = await authApi.login(request)
       const tokenStr = responseData.token || responseData.access_token || responseData.accessToken
 
-        if (!tokenStr) {
-          return { success: false, error: '未收到访问令牌' }
+      if (!tokenStr) {
+        return { success: false, error: '未收到访问令牌' }
       }
 
-      // 保存token
-      token.value = tokenStr
-      localStorage.setItem('token', tokenStr)
+      setSession(responseData)
 
-      // 保存用户信息（兼容 data.user 或 user）
-      const respUser = responseData.user || responseData.data?.user || null
-      if (respUser) {
-        // 规范角色为大写，避免后端大小写差异导致前端权限判断失败
-        if (respUser.role && typeof respUser.role === 'string') {
-          respUser.role = respUser.role.toUpperCase()
-        }
-        user.value = respUser
-        localStorage.setItem('user', JSON.stringify(user.value))
-        // 如果后端返回的用户信息缺少 role 字段，尝试通过 /auth/me 获取完整信息
-        if (!respUser.role) {
-          await checkAuth()
-        }
-      } else {
-        // 如果登录接口未返回用户信息，尝试通过 /auth/me 获取当前用户信息
-        user.value = null
+      if (!user.value) {
         await checkAuth()
       }
 
@@ -59,68 +113,89 @@ export const useAuthStore = defineStore('auth', () => {
       return { success: true, data: responseData }
     } catch (error: any) {
       const errorMsg = error.response?.data?.message || '登录失败'
-        // 不在 store 中弹出全局提示，交由调用方（如 Login.vue）展示内联或 toast
       return { success: false, error: errorMsg }
     } finally {
       loading.value = false
     }
   }
 
-  const logout = () => {
-    // 清除本地存储
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    sessionStorage.clear()
+  const logout = async (options: LogoutOptions = {}) => {
+    const { notify = true, remote = true } = options
 
-    // 清除状态
-    token.value = null
-    user.value = null
-
-    message.success('已退出登录')
+    try {
+      if (remote && (token.value || localStorage.getItem(ACCESS_TOKEN_KEY))) {
+        await authApi.logout()
+      }
+    } catch {
+    } finally {
+      clearAuthState(notify)
+    }
   }
 
   const checkAuth = async () => {
     if (!token.value) return false
 
     try {
-      // authApi.getCurrentUser() 通过 request 拦截器返回的通常是 response.data
       const res = await authApi.getCurrentUser()
-      // 直接将返回的数据作为用户信息保存
-      user.value = res || null
-      if (user.value && user.value.role && typeof user.value.role === 'string') {
-        user.value.role = user.value.role.toUpperCase()
-      }
-      if (user.value) localStorage.setItem('user', JSON.stringify(user.value))
+      persistUser(res || null)
       return true
-    } catch (error) {
-      logout()
+    } catch {
+      await logout({ notify: false, remote: false })
       return false
+    }
+  }
+
+  const changePassword = async (request: ChangePasswordRequest) => {
+    try {
+      await authApi.changePassword(request)
+      clearAuthState(false)
+      message.success('密码已修改，请重新登录')
+      return { success: true as const }
+    } catch (error: any) {
+      return {
+        success: false as const,
+        error: error.response?.data?.message || '修改密码失败',
+      }
+    }
+  }
+
+  const updateProfile = async (request: UpdateProfileRequest) => {
+    try {
+      const nextUser = await authApi.updateProfile(request)
+      persistUser(nextUser)
+      message.success('个人资料已更新')
+      return { success: true as const, data: nextUser }
+    } catch (error: any) {
+      return {
+        success: false as const,
+        error: error.response?.data?.message || '更新个人资料失败',
+      }
     }
   }
 
   const updateUserInfo = (newUserInfo: Partial<User>) => {
     if (user.value) {
-      user.value = { ...user.value, ...newUserInfo }
-      localStorage.setItem('user', JSON.stringify(user.value))
+      persistUser({ ...user.value, ...newUserInfo })
     }
   }
 
-  // 初始化时从localStorage恢复用户信息
   const initFromStorage = () => {
-    const storedUser = localStorage.getItem('user')
+    setAccessToken(localStorage.getItem(ACCESS_TOKEN_KEY))
+    setRefreshToken(localStorage.getItem(REFRESH_TOKEN_KEY))
+
+    const storedUser = localStorage.getItem(USER_KEY)
     if (storedUser) {
       try {
-        const parsed = JSON.parse(storedUser)
-        if (parsed && parsed.role && typeof parsed.role === 'string') parsed.role = parsed.role.toUpperCase()
-        user.value = parsed
+        persistUser(JSON.parse(storedUser))
       } catch {
-        user.value = null
+        persistUser(null)
       }
     }
   }
 
   return {
     token,
+    refreshToken,
     user,
     loading,
     isAuthenticated,
@@ -129,7 +204,13 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     logout,
     checkAuth,
+    changePassword,
+    updateProfile,
     updateUserInfo,
-    initFromStorage
+    initFromStorage,
+    setAccessToken,
+    setRefreshToken,
+    setSession,
+    clearAuthState,
   }
 })

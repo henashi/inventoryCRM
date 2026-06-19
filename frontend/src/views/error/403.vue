@@ -12,12 +12,16 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { resolveHomePath } from '@/router/accessControl'
+import { logoutAndNavigateToLogin } from '@/utils/navigation'
+
 const router = useRouter()
 const authStore = useAuthStore()
-const goHome = () => router.push('/dashboard')
-const logout = () => {
-  authStore.logout()
-  router.push('/login')
+
+const goHome = () => router.push(resolveHomePath(authStore.userRole))
+
+const logout = async () => {
+  await logoutAndNavigateToLogin(authStore, router)
 }
 </script>
 

@@ -41,7 +41,7 @@ public class SpringDataJpaConfig {
 
         LocalContainerEntityManagerFactoryBean factory = new LocalContainerEntityManagerFactoryBean();
         factory.setJpaVendorAdapter(vendorAdapter);
-        factory.setPackagesToScan("com.henashi.inventoryCRM.pojo");
+        factory.setPackagesToScan("com.henashi.inventorycrm.pojo");
         factory.setDataSource(dataSource);
         return factory;
     }
