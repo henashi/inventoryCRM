@@ -1,4 +1,3 @@
-// frontend/src/types/auth.ts
 export interface User {
   id?: number
   username: string
@@ -8,6 +7,7 @@ export interface User {
   status: 0 | 1
   lastLoginAt?: string
   createdAt?: string
+  remark?: string
 }
 
 export interface LoginRequest {
@@ -19,9 +19,17 @@ export interface LoginRequest {
 export interface LoginResponse {
   token: string
   refreshToken?: string
+  access_token?: string
+  accessToken?: string
+  refresh_token?: string
   user: User
   expiresIn: number
+  expires_in?: number
   tokenType: string
+  token_type?: string
+  data?: {
+    user?: User
+  }
 }
 
 export interface RegisterRequest {
@@ -34,4 +42,15 @@ export interface RegisterRequest {
 
 export interface RefreshTokenRequest {
   refreshToken: string
+}
+
+export interface ChangePasswordRequest {
+  oldPassword: string
+  newPassword: string
+}
+
+export interface UpdateProfileRequest {
+  username?: string
+  realName?: string
+  email?: string
 }

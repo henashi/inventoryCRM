@@ -35,6 +35,9 @@ export interface Customer {
   status: 0 | 1  // 0: 停用, 1: 正常
   remark?: string
   referrerId?: number
+  referrerName?: string
+  avatar?: string
+  registeredAt?: string
   createdAt?: string
   updatedAt?: string
 }
@@ -56,6 +59,7 @@ export interface CustomerUpdateDTO extends Partial<CustomerCreateDTO> {
   status?: 0 | 1
   birthday?: string
   gender?: 0 | 1
+  referrerName?: string
 }
 
 // 商品相关类型
@@ -63,7 +67,7 @@ export interface Product {
   id?: number
   name: string
   code: string
-  // category: string
+  category?: string
   brand?: string
   unit: string
   price: number
@@ -115,17 +119,26 @@ export interface StockChange {
 export interface Inventory {
   id?: number
   productId: number
+  productCode: string
   productName: string
+  category?: string
   warehouseId?: number
   warehouseName?: string
   currentStock: number
   safeStock: number
   maxStock: number
   unit: string
-  status: 0 | 1  // 0: 停用, 1: 正常
+  status: 0 | 1
   lastUpdateTime?: string
+  lowStock?: boolean
+  outOfStock?: boolean
+  alertReason?: string
   createdAt?: string
   updatedAt?: string
+}
+
+export interface InventoryDetail extends Inventory {
+  recentChanges: InventoryChange[]
 }
 
 export interface InventoryChange {
@@ -147,9 +160,7 @@ export interface InventoryInDTO {
   productId: number
   quantity: number
   warehouseId?: number
-  batchNo?: string
-  purchasePrice?: number
-  supplier?: string
+  reason: string
   remark?: string
 }
 
@@ -157,8 +168,6 @@ export interface InventoryOutDTO {
   productId: number
   quantity: number
   warehouseId?: number
-  customerId?: number
-  orderNo?: string
   reason: string
   remark?: string
 }
@@ -169,13 +178,14 @@ export interface InventoryAdjustDTO {
   remark?: string
 }
 
-// 库存查询参数
 export interface InventoryQueryParams extends PageParams {
+  keyword?: string
   productId?: number
   warehouseId?: number
   minStock?: number
   maxStock?: number
   lowStockOnly?: boolean
+  status?: 0 | 1
 }
 
 export interface Props {

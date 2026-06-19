@@ -17,9 +17,13 @@ public record ProductCreateDTO(
         @Size(min = 2, max = 100, message = "商品名称长度2-100字符")
         String name,
 
-//        @Schema(description = "商品分类")
-//        @Size(max = 50, message = "商品分类不能超过50字符")
-//        String category,
+        @Schema(description = "商品编码，可为空，空时由系统生成")
+        @Size(max = 50, message = "商品编码不能超过50字符")
+        String code,
+
+        @Schema(description = "商品分类")
+        @Size(max = 50, message = "商品分类不能超过50字符")
+        String category,
 
         @Schema(description = "当前库存")
         @NotNull(message = "当前库存不能为空")
@@ -41,6 +45,11 @@ public record ProductCreateDTO(
         @DecimalMin(value = "0.00", message = "价格不能为负数")
         @DecimalMax(value = "9999999.99", message = "价格不能超过9999999.99")
         BigDecimal price,
+
+        @Schema(description = "成本")
+        @DecimalMin(value = "0.00", message = "成本不能为负数")
+        @DecimalMax(value = "9999999.99", message = "成本不能超过9999999.99")
+        BigDecimal cost,
 
         @Schema(description = "商品描述")
         @Size(max = 1000, message = "商品描述不能超过1000字符")

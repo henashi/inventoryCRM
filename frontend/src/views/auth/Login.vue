@@ -1,4 +1,3 @@
-<!-- frontend/src/views/auth/Login.vue -->
 <template>
   <div class="login-container">
     <div class="login-card">
@@ -7,10 +6,16 @@
           <inbox-outlined />
         </div>
         <h1 class="login-title">库存CRM系统</h1>
-        <!-- <p class="login-subtitle">请输入您的账户信息</p> -->
       </div>
 
-      <!-- 登录表单 -->
+      <a-alert
+        class="login-alert"
+        type="info"
+        show-icon
+        message="当前仅开放内部账号登录"
+        description="系统不提供自助注册与找回密码入口，如需开通账号或重置密码，请联系管理员。"
+      />
+
       <a-form
         ref="formRef"
         :model="formState"
@@ -20,7 +25,6 @@
         @finish="handleLogin"
         class="login-form"
       >
-        <!-- 用户名 -->
         <a-form-item name="username">
           <a-input
             v-model:value="formState.username"
@@ -35,7 +39,6 @@
           </a-input>
         </a-form-item>
 
-        <!-- 密码 -->
         <a-form-item name="password">
           <a-input-password
             v-model:value="formState.password"
@@ -50,14 +53,12 @@
           </a-input-password>
         </a-form-item>
 
-        <!-- 记住我 -->
         <a-form-item>
           <a-checkbox v-model:checked="formState.rememberMe">
             记住我
           </a-checkbox>
         </a-form-item>
 
-        <!-- 登录按钮 -->
         <a-form-item>
           <a-button
             type="primary"
@@ -71,14 +72,12 @@
           </a-button>
         </a-form-item>
 
-        <!-- 错误信息 -->
         <div v-if="errorMessage" class="error-message">
           <exclamation-circle-outlined />
           {{ errorMessage }}
         </div>
       </a-form>
 
-      <!-- 底部信息 -->
       <div class="login-footer">
         <p>© 2026 库存CRM系统</p>
         <p class="support-info">技术支持: 400-xxx-xxxx</p>
@@ -88,63 +87,56 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { message } from 'ant-design-vue'
-import { 
-  UserOutlined, 
-  LockOutlined, 
+import { onMounted, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import {
+  ExclamationCircleOutlined,
   InboxOutlined,
-  ExclamationCircleOutlined 
+  LockOutlined,
+  UserOutlined,
 } from '@ant-design/icons-vue'
-import { useAuthStore } from '@/stores/auth'
-import type { LoginRequest } from '@/types/auth'
 import type { Rule } from 'ant-design-vue/es/form'
+import { useAuthStore } from '@/stores/auth'
+import { resolveHomePath } from '@/router/accessControl'
+import type { LoginRequest } from '@/types/auth'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const formRef = ref()
 
-// 表单数据
 const formState = reactive<LoginRequest>({
   username: '',
   password: '',
-  rememberMe: false
+  rememberMe: false,
 })
 
-// 状态
 const loading = ref(false)
 const errorMessage = ref('')
 
-// 表单验证规则
 const rules: Record<string, Rule[]> = {
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '用户名长度为3-20个字符', trigger: 'blur' }
+    { min: 3, max: 20, message: '用户名长度为3-20个字符', trigger: 'blur' },
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, max: 20, message: '密码长度为6-20个字符', trigger: 'blur' }
-  ]
+    { min: 6, max: 20, message: '密码长度为6-20个字符', trigger: 'blur' },
+  ],
 }
 
-// 处理登录
 const handleLogin = async () => {
   try {
     loading.value = true
     errorMessage.value = ''
-    
-    // 验证表单
+
     await formRef.value?.validate()
-    
-    // 调用登录
+
     const result = await authStore.login(formState)
-    
+
     if (result.success) {
-      // 登录成功后的跳转
-      const redirect = route.query.redirect as string
-      router.push(redirect || '/dashboard')
+      const redirect = route.query.redirect as string | undefined
+      router.push(redirect || resolveHomePath(authStore.userRole))
     } else {
       errorMessage.value = result.error || '登录失败'
     }
@@ -159,10 +151,9 @@ const handleLogin = async () => {
   }
 }
 
-// 页面加载时检查登录状态
 onMounted(() => {
   if (authStore.isAuthenticated) {
-    router.push('/dashboard')
+    router.push(resolveHomePath(authStore.userRole))
   }
 })
 </script>
@@ -188,32 +179,31 @@ onMounted(() => {
 
 .login-header {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 .login-logo {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 50%;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  background: linear-gradient(135deg, #1890ff, #722ed1);
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 32px;
   color: white;
-  font-size: 36px;
 }
 
 .login-title {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 600;
-  color: #333;
-  margin-bottom: 8px;
+  color: #262626;
+  margin: 0;
 }
 
-.login-subtitle {
-  color: #666;
-  font-size: 14px;
+.login-alert {
+  margin-bottom: 20px;
 }
 
 .login-form {
@@ -221,46 +211,43 @@ onMounted(() => {
 }
 
 .error-message {
-  background: #fff2f0;
-  border: 1px solid #ffccc7;
-  color: #ff4d4f;
-  padding: 12px 16px;
-  border-radius: 6px;
-  margin-bottom: 16px;
   display: flex;
   align-items: center;
   gap: 8px;
+  color: #ff4d4f;
+  background: #fff2f0;
+  border: 1px solid #ffccc7;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 16px;
+  font-size: 14px;
 }
 
 .login-footer {
   text-align: center;
-  color: #666;
-  font-size: 14px;
-  border-top: 1px solid #f0f0f0;
-  padding-top: 20px;
+  color: #8c8c8c;
+  font-size: 12px;
+}
+
+.login-footer p {
+  margin: 4px 0;
 }
 
 .support-info {
-  font-size: 12px;
-  margin-top: 4px;
-  color: #999;
+  color: #bfbfbf;
 }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
+@media (max-width: 480px) {
+  .login-container {
+    padding: 16px;
+  }
+
   .login-card {
     padding: 24px;
-    max-width: 100%;
   }
-  
-  .login-logo {
-    width: 60px;
-    height: 60px;
-    font-size: 24px;
-  }
-  
+
   .login-title {
-    font-size: 20px;
+    font-size: 24px;
   }
 }
 </style>

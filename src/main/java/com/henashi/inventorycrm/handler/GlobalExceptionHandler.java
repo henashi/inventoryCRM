@@ -2,6 +2,7 @@ package com.henashi.inventorycrm.handler;
 
 import com.henashi.inventorycrm.exception.BusinessException;
 import com.henashi.inventorycrm.exception.ResourceNotFoundException;
+import com.henashi.inventorycrm.exception.UserAlreadyExistsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -25,9 +26,6 @@ public class GlobalExceptionHandler {
 
     static Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    /**
-     * 处理业务异常
-     */
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e) {
         log.warn("业务异常: {}", e.getMessage());
@@ -43,9 +41,36 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
-    /**
-     * 处理资源不存在异常
-     */
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleUserAlreadyExistsException(UserAlreadyExistsException e) {
+        log.warn("唯一性冲突: {}", e.getMessage());
+
+        ErrorResponse error = ErrorResponse.builder()
+                .status(e.getStatus().value())
+                .message(e.getMessage())
+                .error("数据冲突")
+                .path(getCurrentRequestPath())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(e.getStatus()).body(error);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
+        log.warn("参数异常: {}", e.getMessage());
+
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message(e.getMessage())
+                .error("参数错误")
+                .path(getCurrentRequestPath())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException e) {
         log.warn("资源不存在: {}", e.getMessage());
@@ -61,9 +86,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
-    /**
-     * 处理参数验证异常
-     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(
             MethodArgumentNotValidException e) {
@@ -87,9 +109,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
-    /**
-     * 处理认证异常（401）
-     */
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException e) {
         log.warn("认证异常: {}", e.getMessage());
@@ -105,22 +124,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
-    // 处理数据完整性异常（唯一键冲突）
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(
             DataIntegrityViolationException e) {
 
-        // 1. 记录原始异常（方便排查）
         log.error("数据库完整性异常", e);
 
-        // 2. 分析异常信息，提取关键信息
         String message = e.getMessage();
         String userMessage = "数据保存失败，请检查数据唯一性";
 
         if (message.contains("uk_group_param_code")) {
             userMessage = "数据字典项已存在：相同的分组编码和参数编码组合不能重复";
         } else if (message.contains("Duplicate entry")) {
-            // 提取具体的重复值
             Pattern pattern = Pattern.compile("Duplicate entry '([^']+)'");
             Matcher matcher = pattern.matcher(message);
             if (matcher.find()) {
@@ -135,13 +150,9 @@ public class GlobalExceptionHandler {
                 .path(getCurrentRequestPath())
                 .timestamp(LocalDateTime.now())
                 .build();
-        // 3. 返回友好的错误信息
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
-    /**
-     * 处理所有未捕获的异常
-     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleAllExceptions(Exception e) {
         log.error("系统异常: ", e);
@@ -158,8 +169,6 @@ public class GlobalExceptionHandler {
     }
 
     private String getCurrentRequestPath() {
-        // 获取当前请求路径
         return ServletUriComponentsBuilder.fromCurrentRequest().toUriString();
     }
-
 }

@@ -1,7 +1,5 @@
-<!-- frontend/src/views/dashboard/Dashboard.vue -->
 <template>
   <div class="dashboard-container">
-    <!-- 顶部欢迎区域 -->
     <a-card class="welcome-card row-card mb-6">
       <div class="user-area">
         <a-avatar :size="40" class="avatar-mini">
@@ -13,39 +11,42 @@
           <div class="user-name">{{ userName }}</div>
           <div class="user-role">{{ userRoleText }}</div>
         </div>
-        <a-tooltip title="退出登录">
-          <a-button class="logout-icon" type="default" shape="circle" size="small" @click="handleLogout">
-            <logout-outlined />
+        <a-dropdown>
+          <a-button class="account-trigger" type="default">
+            账号
+            <down-outlined />
           </a-button>
-        </a-tooltip>
+          <template #overlay>
+            <a-menu @click="handleAccountMenuClick">
+              <a-menu-item key="profile">个人资料</a-menu-item>
+              <a-menu-item key="password">修改密码</a-menu-item>
+              <a-menu-divider />
+              <a-menu-item key="logout">退出登录</a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
       </div>
       <div class="flex items-center justify-between">
-          <div class="welcome-inner">
-            <div class="welcome-left">
-              <h1 class="welcome-title">欢迎回来，{{ userName }}！ <span class="wave">👋</span></h1>
-              <p class="welcome-sub">{{ greetingMessage }}，今天是 {{ currentDate }}</p>
-
-
-            </div>
+        <div class="welcome-inner">
+          <div class="welcome-left">
+            <h1 class="welcome-title">欢迎回来，{{ userName }}！ <span class="wave">👋</span></h1>
+            <p class="welcome-sub">{{ greetingMessage }}，今天是 {{ currentDate }}</p>
           </div>
+        </div>
       </div>
     </a-card>
 
-    <!-- 卡片区域（带灰色背景） -->
     <div class="cards-panel">
-      <!-- 统计卡片 -->
       <a-row :gutter="[16, 16]" class="row-card mb-6">
-        <a-col :xs="24" :sm="12" :md="6" v-for="stat in stats" :key="stat.title">
-          <a-card class="stat-card" :class="[stat.type, 'clickable']" hoverable @click="() => handleStatClick(stat)">
-            <div class="flex items-center justify-between">
-              <div>
-                <div class="text-sm text-gray-500">{{ stat.title }}</div>
-                <div class="text-2xl font-bold mt-2">{{ stat.value }}</div>
-                <div class="text-xs mt-1" :class="stat.trendClass">
-                  <caret-up-outlined v-if="stat.trend === 'up'" />
-                  <caret-down-outlined v-else />
-                  {{ stat.change }} {{ stat.unit }}
+        <a-col :xs="24" :sm="12" :md="8" v-for="stat in visibleStats" :key="stat.title">
+          <a-card class="stat-card clickable" :class="stat.type" hoverable @click="handleStatClick(stat)">
+            <div class="stat-card-content">
+              <div class="stat-copy">
+                <div class="stat-primary-line">
+                  <span class="stat-title">{{ stat.title }}</span>
+                  <span class="stat-value-inline">{{ stat.value }}</span>
                 </div>
+                <div class="stat-secondary-line text-xs" :class="stat.trendClass">{{ stat.change }}</div>
               </div>
               <div class="stat-icon" :class="stat.type">
                 <component :is="stat.icon" />
@@ -55,9 +56,7 @@
         </a-col>
       </a-row>
 
-      <!-- 图表和表格区域 -->
       <a-row :gutter="[16, 16]" class="row-card mb-6">
-        <!-- 客户增长趋势 -->
         <a-col :xs="24" :lg="16">
           <a-card title="客户增长趋势" class="h-full">
             <template #extra>
@@ -68,32 +67,23 @@
               </a-select>
             </template>
             <div class="h-64">
-              <LineChart v-if="chartData" :data="chartData" />
-              <div v-else class="flex items-center justify-center h-full">
-                <a-spin />
-              </div>
+              <LineChart :data="chartData" />
             </div>
           </a-card>
         </a-col>
 
-        <!-- 礼品等级分布 -->
         <a-col :xs="24" :lg="8">
-          <a-card title="礼品等级分布" class="h-full">
+          <a-card title="礼品等级分布" class="h-full" :loading="loading.stats">
             <div class="h-64">
-              <PieChart v-if="giftDistribution" :data="giftDistribution" />
-              <div v-else class="flex items-center justify-center h-full">
-                <a-spin />
-              </div>
+              <PieChart :data="giftDistribution" />
             </div>
           </a-card>
         </a-col>
       </a-row>
 
-      <!-- 最近客户和库存预警 -->
-      <a-row :gutter="[16, 16]" class="row-card">
-        <!-- 最近添加的客户 -->
-        <a-col :xs="24" :lg="12">
-          <a-card title="最近添加的客户" class="h-full">
+      <a-row :gutter="[16, 16]" class="row-card dashboard-equal-row">
+        <a-col v-if="showCustomerSection" :xs="24" :lg="12" class="dashboard-equal-col">
+          <a-card title="最近添加的客户" class="h-full dashboard-equal-card">
             <template #extra>
               <a-button type="link" @click="router.push('/customers')">查看全部</a-button>
             </template>
@@ -135,11 +125,10 @@
           </a-card>
         </a-col>
 
-        <!-- 库存预警 -->
-        <a-col :xs="24" :lg="12">
-          <a-card title="库存预警" class="h-full">
+        <a-col :xs="24" :lg="showCustomerSection ? 12 : 24" class="dashboard-equal-col">
+          <a-card title="低库存商品" class="h-full dashboard-equal-card">
             <template #extra>
-              <a-button type="link" @click="router.push('/inventory')">管理库存</a-button>
+              <a-button type="link" @click="router.push('/products')">查看全部</a-button>
             </template>
             <a-list
               :data-source="lowStockProducts"
@@ -148,7 +137,7 @@
               size="small"
             >
               <template #renderItem="{ item }">
-                <a-list-item class="hover:bg-gray-50 cursor-pointer" @click="viewProduct(item)">
+                <a-list-item class="hover:bg-gray-50 cursor-pointer" @click="viewLowStockProduct(item)">
                   <a-list-item-meta>
                     <template #title>
                       <div class="flex items-center justify-between">
@@ -165,12 +154,7 @@
                     </template>
                   </a-list-item-meta>
                   <template #actions>
-                    <a-button
-                      type="link"
-                      size="small"
-                      danger
-                      @click.stop="handleReplenish(item)"
-                    >
+                    <a-button v-if="showInventorySection" type="link" size="small" @click.stop="goToRestock(item)">
                       补货
                     </a-button>
                   </template>
@@ -181,155 +165,117 @@
         </a-col>
       </a-row>
 
-        <!-- 快捷操作 -->
-        <a-card title="快捷操作" class="row-card mt-6">
-        <a-row :gutter="[16, 16]">
-          <a-col
-            v-for="action in quickActions"
+      <a-card title="快捷操作" class="row-card mt-6">
+        <div class="quick-actions-grid">
+          <div
+            v-for="action in visibleQuickActions"
             :key="action.title"
-            :xs="12"
-            :sm="8"
-            :md="6"
-            :lg="4"
+            class="quick-action-grid-item"
           >
             <a-card
               hoverable
-              class="text-center quick-action-card"
+              class="quick-action-card"
               @click="handleQuickAction(action)"
             >
-              <div class="action-icon mb-2" :class="action.type">
-                <component :is="action.icon" />
+              <div class="quick-action-content">
+                <div class="action-icon" :class="action.type">
+                  <component :is="action.icon" />
+                </div>
+                <div class="quick-action-copy">
+                  <div class="quick-action-title">{{ action.title }}</div>
+                  <div class="quick-action-description">{{ action.description }}</div>
+                </div>
               </div>
-              <div class="font-medium">{{ action.title }}</div>
-              <div class="text-xs text-gray-500 mt-1">{{ action.description }}</div>
             </a-card>
-          </a-col>
-        </a-row>
+          </div>
+        </div>
       </a-card>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
 import {
-  UserOutlined,
-  TeamOutlined,
-  ShoppingOutlined,
-  InboxOutlined,
-  GiftOutlined,
-  RiseOutlined,
-  FallOutlined,
-  PhoneOutlined,
-  UserAddOutlined,
-  PlusCircleOutlined,
-  FileAddOutlined,
-  ShoppingCartOutlined,
   BarChartOutlined,
+  DownOutlined,
+  FileAddOutlined,
+  GiftOutlined,
+  InboxOutlined,
+  PhoneOutlined,
+  PlusCircleOutlined,
   SettingOutlined,
-  LogoutOutlined
+  ShoppingOutlined,
+  TeamOutlined,
+  UserAddOutlined,
+  UserOutlined,
 } from '@ant-design/icons-vue'
-import { useAuthStore } from '@/stores/auth'
-import { useCustomerStore } from '@/stores/customer'
-import { useProductStore } from '@/stores/product'
+import dayjs from 'dayjs'
+import PieChart from '@/components/charts/PieChart.vue'
+import LineChart from '@/components/charts/LineChart.vue'
 import { customerApi } from '@/api/customer'
 import { productApi } from '@/api/product'
-import { inventoryApi } from '@/api/inventory'
-import type { Customer, Product } from '@/types'
-import dayjs from 'dayjs'
+import { useAuthStore } from '@/stores/auth'
+import type { Customer, PageResult, Product } from '@/types'
+import {
+  filterDashboardStats,
+  filterQuickActions,
+  shouldShowCustomerSection,
+  shouldShowInventorySection,
+} from '@/router/accessControl'
+import {
+  buildDashboardStats,
+  buildGiftDistribution,
+  type CustomerStatistics,
+  type ProductStockStatistics,
+} from '@/utils/featureEnhancements'
 
-// 如果需要图表组件
-import LineChart from '@/components/charts/LineChart.vue'
-import PieChart from '@/components/charts/PieChart.vue'
+type DashboardStat = {
+  title: string
+  value: string
+  change: string
+  icon: unknown
+  trendClass: string
+  type: 'customers' | 'products' | 'inventory'
+}
+
+type QuickAction = {
+  title: string
+  description: string
+  icon: unknown
+  type: string
+  action: 'addCustomer' | 'addInventory' | 'createOrder' | 'distributeGift' | 'exportReport' | 'systemSettings'
+}
 
 const router = useRouter()
 const authStore = useAuthStore()
-const customerStore = useCustomerStore()
-const productStore = useProductStore()
 
-// 响应式数据
 const currentDate = ref(dayjs().format('YYYY年MM月DD日'))
 const chartPeriod = ref<'week' | 'month' | 'quarter'>('month')
 const loading = ref({
   customers: false,
   inventory: false,
-  stats: false
+  stats: false,
 })
 
-// 模拟数据
-const stats = ref([
-  {
-    title: '总客户数',
-    value: '1,248',
-    change: '+12',
-    unit: '人',
-    trend: 'up',
-    icon: TeamOutlined,
-    type: 'customers'
-  },
-  {
-    title: '活跃商品',
-    value: '86',
-    change: '+3',
-    unit: '个',
-    trend: 'up',
-    icon: ShoppingOutlined,
-    type: 'products'
-  },
-  {
-    title: '库存总量',
-    value: '2,450',
-    change: '-45',
-    unit: '件',
-    trend: 'down',
-    icon: InboxOutlined,
-    type: 'inventory'
-  },
-  {
-    title: '礼品发放',
-    value: '156',
-    change: '+23',
-    unit: '次',
-    trend: 'up',
-    icon: GiftOutlined,
-    type: 'gift-logs'
-  },
-  {
-    title: '礼品配置',
-    value: '156',
-    change: '+23',
-    unit: '次',
-    trend: 'up',
-    icon: GiftOutlined,
-    type: 'gifts'
-  },
-  {
-    title: '配置管理',
-    value: '156',
-    change: '+23',
-    unit: '次',
-    trend: 'up',
-    icon: GiftOutlined,
-    type: 'dataDicts'
-  }
-])
-
-const recentCustomers = ref<Customer[]>([
-  { id: 1, name: '张三', phone: '13800138000', giftLevel: 3, status: 1, createdAt: '2024-01-15' },
-  { id: 2, name: '李四', phone: '13900139000', giftLevel: 2, status: 1, createdAt: '2024-01-14' },
-  { id: 3, name: '王五', phone: '13700137000', giftLevel: 1, status: 1, createdAt: '2024-01-13' },
-  { id: 4, name: '赵六', phone: '13600136000', giftLevel: 0, status: 1, createdAt: '2024-01-12' },
-  { id: 5, name: '钱七', phone: '13500135000', giftLevel: 3, status: 1, createdAt: '2024-01-11' }
-])
-
-const lowStockProducts = ref<Product[]>([
-  { id: 1, name: 'iPhone 15', code: 'P001', currentStock: 5, safeStock: 10, unit: '台' },
-  { id: 2, name: '华为 Mate 60', code: 'P002', currentStock: 8, safeStock: 15, unit: '台' },
-  { id: 3, name: '小米13', code: 'P003', currentStock: 12, safeStock: 20, unit: '台' },
-  { id: 4, name: '三星 Galaxy', code: 'P004', currentStock: 3, safeStock: 8, unit: '台' }
-])
+const customerStats = ref<CustomerStatistics>({
+  totalCustomers: 0,
+  normalCustomers: 0,
+  disabledCustomers: 0,
+  giftLevelDistribution: {},
+})
+const stockStats = ref<ProductStockStatistics>({
+  totalProducts: 0,
+  activeProducts: 0,
+  lowStockProducts: 0,
+  outOfStockProducts: 0,
+  totalStockQuantity: 0,
+  totalStockValue: 0,
+})
+const recentCustomers = ref<Customer[]>([])
+const lowStockProducts = ref<Product[]>([])
 
 const chartData = ref({
   labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月'],
@@ -339,80 +285,69 @@ const chartData = ref({
       data: [65, 59, 80, 81, 56, 55, 40],
       borderColor: '#1890ff',
       backgroundColor: 'rgba(24, 144, 255, 0.1)',
-      tension: 0.4
+      tension: 0.4,
     },
     {
       label: '礼品发放',
       data: [28, 48, 40, 19, 86, 27, 90],
       borderColor: '#52c41a',
       backgroundColor: 'rgba(82, 196, 26, 0.1)',
-      tension: 0.4
-    }
-  ]
-})
-
-const giftDistribution = ref({
-  labels: ['等级1', '等级2', '等级3', '未领取'],
-  datasets: [
-    {
-      data: [300, 150, 50, 100],
-      backgroundColor: ['#ff7875', '#ffc069', '#95de64', '#d9d9d9']
-    }
-  ]
+      tension: 0.4,
+    },
+  ],
 })
 
 const giftLevelColors: Record<number, string> = {
   1: 'blue',
   2: 'green',
-  3: 'orange'
+  3: 'orange',
 }
 
-const quickActions = ref([
+const quickActions = ref<QuickAction[]>([
   {
     title: '新增客户',
     description: '快速添加新客户',
     icon: UserAddOutlined,
     type: 'primary',
-    action: 'addCustomer'
+    action: 'addCustomer',
   },
   {
     title: '商品入库',
     description: '商品进货登记',
     icon: PlusCircleOutlined,
     type: 'success',
-    action: 'addInventory'
+    action: 'addInventory',
   },
   {
     title: '创建订单',
     description: '新建销售订单',
     icon: FileAddOutlined,
     type: 'warning',
-    action: 'createOrder'
+    action: 'createOrder',
   },
   {
     title: '礼品发放',
     description: '发放客户礼品',
     icon: GiftOutlined,
     type: 'danger',
-    action: 'distributeGift'
+    action: 'distributeGift',
   },
   {
     title: '报表导出',
     description: '导出统计报表',
     icon: BarChartOutlined,
     type: 'info',
-    action: 'exportReport'
+    action: 'exportReport',
   },
   {
     title: '系统设置',
     description: '系统参数配置',
     icon: SettingOutlined,
     type: 'default',
-    action: 'systemSettings'
-  }
+    action: 'systemSettings',
+  },
 ])
 
-// 计算属性
 const userName = computed(() => authStore.userName || '管理员')
 const userRole = computed(() => authStore.userRole || 'ADMIN')
 const greetingMessage = computed(() => {
@@ -421,35 +356,74 @@ const greetingMessage = computed(() => {
   if (hour < 18) return '下午好'
   return '晚上好'
 })
+const userRoleText = computed(() => ({
+  ADMIN: '系统管理员',
+  MANAGER: '经理',
+  USER: '普通用户',
+}[userRole.value] || '用户'))
 
-const userRoleText = computed(() => {
-  const roles: Record<string, string> = {
-    'ADMIN': '系统管理员',
-    'MANAGER': '经理',
-    'USER': '普通用户'
-  }
-  return roles[userRole.value] || '用户'
+const stats = computed<DashboardStat[]>(() => {
+  const baseStats = buildDashboardStats(customerStats.value, stockStats.value)
+  const customerCard = baseStats[0]!
+  const productCard = baseStats[1]!
+  const inventoryCard = baseStats[2]!
+
+  return [
+    {
+      ...customerCard,
+      icon: TeamOutlined,
+      trendClass: 'text-green-500',
+      type: 'customers',
+    },
+    {
+      ...productCard,
+      icon: ShoppingOutlined,
+      trendClass: 'text-green-500',
+      type: 'products',
+    },
+    {
+      ...inventoryCard,
+      icon: InboxOutlined,
+      trendClass: 'text-orange-500',
+      type: 'inventory',
+    },
+  ]
 })
+const giftDistribution = computed(() => buildGiftDistribution(customerStats.value))
+const visibleStats = computed(() => filterDashboardStats(stats.value, userRole.value))
+const visibleQuickActions = computed(() => filterQuickActions(quickActions.value, userRole.value))
+const showCustomerSection = computed(() => shouldShowCustomerSection(userRole.value))
+const showInventorySection = computed(() => shouldShowInventorySection(userRole.value))
 
-const lastLogin = computed(() => {
-  const lastLoginTime = authStore.user?.lastLoginAt
-  return lastLoginTime ? dayjs(lastLoginTime).format('MM-DD HH:mm') : '--'
-})
-
-const handleLogout = () => {
-  authStore.logout()
+const handleLogout = async () => {
+  await authStore.logout()
   router.replace('/login')
 }
 
-// 方法
+const handleAccountMenuClick = ({ key }: { key: string }) => {
+  if (key === 'profile') {
+    router.push('/account')
+    return
+  }
+
+  if (key === 'password') {
+    router.push({ path: '/account', query: { tab: 'password' } })
+    return
+  }
+
+  if (key === 'logout') {
+    void handleLogout()
+  }
+}
+
 const formatDate = (dateStr?: string) => {
   if (!dateStr) return '--'
   return dayjs(dateStr).format('MM-DD')
 }
 
 const getStockColor = (product: Product) => {
-  if (product.currentStock < product.safeStock) return 'red'
-  if (product.currentStock < product.safeStock * 1.5) return 'orange'
+  if (product.currentStock <= 0) return 'red'
+  if (product.currentStock < product.safeStock) return 'orange'
   return 'green'
 }
 
@@ -457,8 +431,15 @@ const viewCustomer = (customer: Customer) => {
   router.push(`/customers/${customer.id}`)
 }
 
-const viewProduct = (product: Product) => {
-  router.push(`/products/${product.id}`)
+const viewLowStockProduct = (product: Product) => {
+  router.push(`/products/${product.code || product.name}`)
+}
+
+const goToRestock = (product: Product) => {
+  router.push({
+    path: '/inventory',
+    query: { action: 'in', productId: product.id },
+  })
 }
 
 const callCustomer = (phone: string) => {
@@ -467,42 +448,33 @@ const callCustomer = (phone: string) => {
     content: `确定要拨打 ${phone} 吗？`,
     onOk: () => {
       window.location.href = `tel:${phone}`
-    }
+    },
   })
 }
 
-const handleReplenish = (product: Product) => {
-  router.push({
-    path: '/inventory/in',
-    query: { productId: product.id }
-  })
-}
-
-const handleQuickAction = (action: any) => {
+const handleQuickAction = (action: QuickAction) => {
   switch (action.action) {
     case 'addCustomer':
-      router.push('/customers/new')
+      router.push('/customers')
       break
     case 'addInventory':
-      router.push('/inventory/in')
-      break
-    case 'createOrder':
-      router.push('/orders/new')
+      router.push({ path: '/inventory', query: { action: 'in' } })
       break
     case 'distributeGift':
-      router.push('/gifts/distribute')
+      router.push('/gift-logs')
       break
     case 'exportReport':
-      exportReport()
+      void exportReport()
       break
     case 'systemSettings':
-      router.push('/settings')
+      router.push('/data-dicts')
       break
+    default:
+      message.info('当前入口暂未开放')
   }
 }
 
-const handleStatClick = (stat: any) => {
-  if (!stat || !stat.type) return
+const handleStatClick = (stat: DashboardStat) => {
   switch (stat.type) {
     case 'customers':
       router.push('/customers')
@@ -513,55 +485,69 @@ const handleStatClick = (stat: any) => {
     case 'inventory':
       router.push('/inventory')
       break
-    case 'gifts':
-      router.push('/gifts')
-      break
-    case 'gift-logs':
-      router.push('/gift-logs')
-      break
-    case 'dataDicts':
-      router.push('/data-dicts')
-      break
-    default:
-      // fallback: 跳转到客户列表作为默认行为
-      router.push('/customers')
   }
 }
 
 const exportReport = async () => {
   try {
-    const response = await customerApi.exportCustomers({})
-    const blob = new Blob([response], { type: 'application/vnd.ms-excel' })
+    const response = await customerApi.exportCustomers({}) as unknown as Blob
+    const blob = response instanceof Blob ? response : new Blob([response], { type: 'text/csv;charset=utf-8' })
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `客户报表_${dayjs().format('YYYYMMDD')}.xlsx`
+    link.download = `客户报表_${dayjs().format('YYYYMMDD')}.csv`
     link.click()
     window.URL.revokeObjectURL(url)
-  } catch (error) {
+  } catch {
     message.error('导出失败')
   }
 }
 
-// 加载数据
+const emptyCustomerPage: PageResult<Customer> = {
+  content: [],
+  totalElements: 0,
+  totalPages: 0,
+  size: 0,
+  number: 0,
+  first: true,
+  last: true,
+  empty: true,
+}
+
 const loadDashboardData = async () => {
   try {
     loading.value.stats = true
-    loading.value.customers = true
+    loading.value.customers = showCustomerSection.value
     loading.value.inventory = true
 
-    // 并行加载数据
-    const [customersRes, productsRes] = await Promise.all([
-      customerApi.getCustomers({ page: 0, size: 5 }),
-      productApi.getProducts({ page: 0, size: 10 })
+    const customersRequest = showCustomerSection.value
+      ? customerApi.getCustomers({ page: 0, size: 5, sort: 'registeredAt', direction: 'desc' }) as unknown as Promise<PageResult<Customer>>
+      : Promise.resolve(emptyCustomerPage)
+
+    const [customerStatRes, stockStatRes, customersRes, lowStockRes] = await Promise.all([
+      customerApi.getStatistics() as unknown as Promise<CustomerStatistics>,
+      productApi.getStockStatistics() as unknown as Promise<ProductStockStatistics>,
+      customersRequest,
+      productApi.getLowStockProducts() as unknown as Promise<Product[]>,
     ])
 
-    recentCustomers.value = customersRes.content
-    // 筛选低库存商品
-    lowStockProducts.value = productsRes.content
-      .filter(p => p.currentStock < p.safeStock)
-      .slice(0, 5)
-  } catch (error) {
+    customerStats.value = {
+      totalCustomers: customerStatRes.totalCustomers || 0,
+      normalCustomers: customerStatRes.normalCustomers || 0,
+      disabledCustomers: customerStatRes.disabledCustomers || 0,
+      giftLevelDistribution: customerStatRes.giftLevelDistribution || {},
+    }
+    stockStats.value = {
+      totalProducts: stockStatRes.totalProducts || 0,
+      activeProducts: stockStatRes.activeProducts || 0,
+      lowStockProducts: stockStatRes.lowStockProducts || 0,
+      outOfStockProducts: stockStatRes.outOfStockProducts || 0,
+      totalStockQuantity: stockStatRes.totalStockQuantity || 0,
+      totalStockValue: Number(stockStatRes.totalStockValue || 0),
+    }
+    recentCustomers.value = customersRes.content || []
+    lowStockProducts.value = (lowStockRes || []).slice(0, 5)
+  } catch {
     message.error('加载数据失败')
   } finally {
     loading.value.stats = false
@@ -570,16 +556,12 @@ const loadDashboardData = async () => {
   }
 }
 
-// 定时刷新
-let refreshInterval: NodeJS.Timeout
+let refreshInterval: ReturnType<typeof setInterval> | undefined
 
-// 生命周期
 onMounted(() => {
-  loadDashboardData()
-
-  // 每5分钟自动刷新一次数据
+  void loadDashboardData()
   refreshInterval = setInterval(() => {
-    loadDashboardData()
+    void loadDashboardData()
   }, 5 * 60 * 1000)
 })
 
@@ -593,7 +575,7 @@ onUnmounted(() => {
 <style scoped>
 .dashboard-container {
   padding: 20px;
-  background: #f5f7fa; /* 将整个仪表盘容器背景改为浅灰，与 .cards-panel 保持一致 */
+  background: #f5f7fa;
   min-height: 100vh;
 }
 
@@ -607,16 +589,206 @@ onUnmounted(() => {
   padding: 16px;
 }
 
+.user-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.user-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: right;
+}
+
+.account-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .stat-card {
   border-radius: 8px;
   transition: all 0.3s;
   border: none;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  position: relative;
+  padding-right: 88px;
 }
 
-/* 给底部的各类卡片增加统一的下间距，参考 welcome-card 的视觉节奏 */
+.stat-card-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+}
+
+.stat-copy {
+  min-width: 0;
+}
+
+.stat-primary-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.stat-title {
+  min-width: 64px;
+  font-size: 13px;
+  color: #9ca3af;
+  white-space: nowrap;
+}
+
+.stat-value-inline {
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 700;
+  color: #111827;
+}
+
+.stat-secondary-line {
+  margin-top: 14px;
+}
+
 .row-card {
   margin-bottom: 16px;
+}
+
+.dashboard-equal-row {
+  align-items: stretch;
+}
+
+.dashboard-equal-col {
+  display: flex;
+}
+
+.dashboard-equal-card {
+  width: 100%;
+  height: 100%;
+}
+
+.dashboard-equal-card :deep(.ant-card-body) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  height: 100%;
+}
+
+.dashboard-equal-card :deep(.ant-list) {
+  flex: 1;
+}
+
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.quick-action-grid-item {
+  min-width: 0;
+}
+
+.quick-action-card {
+  border-radius: 14px;
+  min-height: 96px;
+  height: 100%;
+  border: 1px solid #e8eef7;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.quick-action-card :deep(.ant-card-body) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 16px 18px;
+}
+
+.quick-action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.07);
+  border-color: #d6e4ff;
+}
+
+.quick-action-content {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  column-gap: 28px;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.quick-action-copy {
+  min-width: 0;
+  width: max-content;
+  max-width: 100%;
+  justify-self: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.action-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.action-icon.primary {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.action-icon.success {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.action-icon.warning {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.action-icon.danger {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.action-icon.info {
+  background: #ecfeff;
+  color: #0891b2;
+}
+
+.action-icon.default {
+  background: #f8fafc;
+  color: #4b5563;
+}
+
+.quick-action-title {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #111827;
+}
+
+.quick-action-description {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #6b7280;
 }
 
 .stat-card:hover {
@@ -636,8 +808,8 @@ onUnmounted(() => {
   border-left: 4px solid #faad14;
 }
 
-.stat-card.gifts {
-  border-left: 4px solid #f5222d;
+.stat-card.clickable {
+  cursor: pointer;
 }
 
 .stat-icon {
@@ -648,30 +820,10 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   font-size: 24px;
-}
-
-/* 确保统计卡的图标位于右侧并在垂直方向居中 */
-.stat-card {
-  position: relative;
-  padding-right: 88px; /* 给右侧图标留白 */
-}
-
-/* 可点击卡片样式 */
-.stat-card.clickable {
-  cursor: pointer;
-}
-.stat-card.clickable:hover {
-  transform: translateY(-4px);
-}
-.stat-card > .ant-card-body > .flex {
-  align-items: center;
-}
-.stat-card .stat-icon {
   position: absolute;
   right: 20px;
   top: 50%;
   transform: translateY(-50%);
-  margin-left: 0;
 }
 
 .stat-icon.customers {
@@ -689,178 +841,19 @@ onUnmounted(() => {
   color: #faad14;
 }
 
-.stat-icon.gifts {
-  background: #fff1f0;
-  color: #f5222d;
-}
-
-.quick-action-card {
-  border: 1px solid #f0f0f0;
-  transition: all 0.3s;
-}
-
-.quick-action-card:hover {
-  border-color: #1890ff;
-  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
-}
-
-.action-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  margin: 0 auto;
-}
-
-.action-icon.primary {
-  background: #e6f7ff;
-  color: #1890ff;
-}
-
-.action-icon.success {
-  background: #f6ffed;
-  color: #52c41a;
-}
-
-.action-icon.warning {
-  background: #fff7e6;
-  color: #faad14;
-}
-
-.action-icon.danger {
-  background: #fff1f0;
-  color: #f5222d;
-}
-
-.action-icon.info {
-  background: #f0f5ff;
-  color: #2f54eb;
-}
-
-.action-icon.default {
-  background: #fafafa;
-  color: #8c8c8c;
-}
-
-/* 欢迎卡片的登出按钮样式 */
-.welcome-card {
-  position: relative;
-}
-.user-area {
-  position: absolute;
-  top: 28px; /* 与卡片内边距保持一致 */
-  right: 28px; /* 与卡片内边距保持一致 */
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.avatar-mini {
-  background: rgba(255,255,255,0.12);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.user-meta { text-align: left; color: #fff }
-.user-name { font-weight: 600; color: #fff }
-.user-role { font-size: 12px; color: rgba(255,255,255,0.85) }
-.logout-icon {
-  background: transparent;
-  border: none;
-  color: #ffffff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px;
-  width: 40px;
-  height: 40px;
-  font-size: 22px;
-  border-radius: 8px;
-}
-.logout-icon {
-  border: 1px solid rgba(255,255,255,0.14);
-}
-.logout-icon:hover {
-  background: rgba(255,255,255,0.12);
-  color: #ffffff;
-}
-.logout-icon .anticon,
-.logout-icon svg {
-  color: #ffffff !important;
-  fill: #ffffff !important;
-  stroke: #ffffff !important;
-}
-/* 小屏幕微调 */
 @media (max-width: 768px) {
-  .logout-btn {
-    top: 8px;
-    right: 8px;
-    padding: 4px 8px;
-  }
-}
-
-/* 新的欢迎卡布局 */
-.welcome-inner {
-  display: flex;
-  align-items: flex-start;
-  padding: 8px 4px 0 0;
-}
-.welcome-left {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-width: 720px;
-}
-.welcome-title {
-  font-size: 28px;
-  font-weight: 700;
-  margin: 0;
-  color: #ffffff;
-}
-.wave { font-size: 22px; margin-left:6px }
-.welcome-sub { color: rgba(255,255,255,0.9); margin:0 }
-.user-block { display:flex; align-items:center; gap:12px; margin-top:6px }
-.avatar-blue { background: rgba(255,255,255,0.1); color: #fff }
-.user-details .role { color: rgba(255,255,255,0.95); font-weight:600 }
-.user-details .last-login { color: rgba(255,255,255,0.85); font-size: 13px }
-
-/* 调整卡片内边距，使视觉更紧凑 */
-.welcome-card :deep(.ant-card-body) {
-  padding: 28px 28px 20px 28px;
-  background: linear-gradient(135deg, #6b82f7 0%, #7a4bb5 100%);
-  border-radius: 12px;
-}
-
-@media (max-width: 768px) {
-  .welcome-card :deep(.ant-card-body) {
-    padding: 18px 16px;
-  }
-  .welcome-title { font-size: 20px }
-}
-
-/* 响应式调整 */
-@media (max-width: 768px) {
-  .dashboard-container {
-    padding: 12px;
-  }
-
-  .welcome-card :deep(.ant-card-body) {
-    padding: 16px;
+  .user-area {
+    justify-content: space-between;
   }
 
   .stat-card {
-    margin-bottom: 12px;
+    padding-right: 20px;
   }
-  .stat-card {
-    padding-right: 24px; /* 小屏幕减少右侧留白，避免溢出 */
-  }
-  .stat-card .stat-icon {
+
+  .stat-icon {
     position: static;
     transform: none;
-    margin-left: 8px;
+    margin-top: 12px;
   }
 }
 </style>

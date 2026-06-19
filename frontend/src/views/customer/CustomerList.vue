@@ -1,7 +1,5 @@
-<!-- frontend/src/views/customer/CustomerList.vue -->
 <template>
   <div class="customer-list-page">
-    <!-- 页面标题和操作 -->
     <div class="page-header">
       <h1 class="page-title">客户管理</h1>
       <div class="page-actions">
@@ -11,20 +9,20 @@
           </template>
           新增客户
         </a-button>
-        <!-- <a-button @click="handleExport" :loading="exportLoading">
+        <a-button @click="showImportModal" :loading="importLoading">
+          <template #icon>
+            <import-outlined />
+          </template>
+          导入客户
+        </a-button>
+        <a-button @click="handleExport" :loading="exportLoading">
           <template #icon>
             <export-outlined />
           </template>
           导出
-        </a-button> -->
-        <!-- <a-button @click="showImportModal">
-          <template #icon>
-            <import-outlined />
-          </template>
-          导入
-        </a-button> -->
+        </a-button>
         <a-tooltip title="刷新">
-          <a-button @click="handleRefresh" :loading="isLoading">
+          <a-button @click="handleRefresh" :loading="isLoading || statsLoading">
             <template #icon>
               <reload-outlined />
             </template>
@@ -39,11 +37,9 @@
       </div>
     </div>
 
-    <!-- 搜索和筛选区域 -->
     <a-card class="search-card">
       <a-form layout="inline" :model="searchForm" @finish="handleSearch">
         <a-row :gutter="[16, 16]" style="width: 100%">
-          <!-- 搜索框 -->
           <a-col :xs="24" :sm="12" :md="8" :lg="6">
             <a-form-item label="关键词">
               <a-input
@@ -54,7 +50,6 @@
             </a-form-item>
           </a-col>
 
-          <!-- 礼品等级筛选 -->
           <a-col :xs="24" :sm="12" :md="8" :lg="5">
             <a-form-item label="礼品等级">
               <a-select
@@ -71,7 +66,6 @@
             </a-form-item>
           </a-col>
 
-          <!-- 状态筛选 -->
           <a-col :xs="24" :sm="12" :md="8" :lg="5">
             <a-form-item label="状态">
               <a-select
@@ -86,7 +80,6 @@
             </a-form-item>
           </a-col>
 
-          <!-- 时间筛选 -->
           <a-col :xs="24" :sm="12" :md="10" :lg="7">
             <a-form-item label="创建时间">
               <a-range-picker
@@ -98,7 +91,6 @@
           </a-col>
         </a-row>
 
-        <!-- 第二行：按钮行，靠右显示 -->
         <a-row style="width: 100%; margin-top: 8px">
           <a-col :xs="24" style="display: flex; justify-content: flex-end">
             <a-space>
@@ -114,7 +106,16 @@
       </a-form>
     </a-card>
 
-    <!-- 客户表格 -->
+    <a-row :gutter="[16, 16]" class="stats-row">
+      <a-col v-for="card in customerStatCards" :key="card.key" :xs="24" :sm="12" :lg="6">
+        <a-card class="stats-card" :loading="statsLoading">
+          <div class="stats-label">{{ card.label }}</div>
+          <div class="stats-value">{{ card.value }}</div>
+          <div class="stats-helper">{{ card.helper }}</div>
+        </a-card>
+      </a-col>
+    </a-row>
+
     <a-card class="table-card">
       <a-table
         :columns="columns"
@@ -122,15 +123,14 @@
         :loading="isLoading"
         :pagination="pagination"
         :row-selection="rowSelection"
-        :row-key="record => record.id!"
+        row-key="id"
         @change="handleTableChange"
         bordered
       >
-        <!-- 姓名列 -->
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'name'">
             <div class="customer-name">
-              <a-avatar :size="32" :src="record.avatar || getAvatarColor(record.name)" :style="{ backgroundColor: getCustomerColor(record.name) }">
+              <a-avatar :size="32" :style="{ backgroundColor: getCustomerColor(record.name) }">
                 {{ getFirstChar(record.name) }}
               </a-avatar>
               <div class="name-info">
@@ -155,7 +155,6 @@
             </div>
           </template>
 
-          <!-- 联系方式 -->
           <template v-else-if="column.dataIndex === 'phone'">
             <div class="contact-info">
               <div>{{ record.phone }}</div>
@@ -179,21 +178,18 @@
             </a-tag>
           </template>
 
-          <!-- 状态 -->
           <template v-else-if="column.dataIndex === 'status'">
             <a-tag :color="record.status === 1 ? 'green' : 'red'">
               {{ record.status === 1 ? '正常' : '停用' }}
             </a-tag>
           </template>
 
-          <!-- 礼品等级 -->
           <template v-else-if="column.dataIndex === 'giftLevel'">
             <a-tag :color="giftLevelColors[record.giftLevel || 0]">
               {{ getGiftLevelText(record.giftLevel || 0) }}
             </a-tag>
           </template>
 
-          <!-- 创建时间 -->
           <template v-else-if="column.dataIndex === 'registeredAt'">
             <div v-if="record.registeredAt">
               {{ formatDate(record.registeredAt) }}
@@ -201,26 +197,17 @@
             <span v-else>-</span>
           </template>
 
-          <!-- 操作列 -->
           <template v-else-if="column.dataIndex === 'actions'">
             <a-space size="small">
-              <a-button
-                type="link"
-                size="small"
-                @click="handleView(record)"
-              >
+              <a-button type="link" size="small" @click="handleView(record)">
                 查看
               </a-button>
-              <a-button
-                type="link"
-                size="small"
-                @click="handleEdit(record)"
-              >
+              <a-button type="link" size="small" @click="handleEdit(record)">
                 编辑
               </a-button>
               <a-button
-                type="link"
                 v-if="record.status === 1"
+                type="link"
                 @click="handleDisable(record)"
                 danger
               >
@@ -228,8 +215,8 @@
                 停用
               </a-button>
               <a-button
-                type="link"
                 v-else
+                type="link"
                 @click="handleEnable(record)"
               >
                 <check-outlined />
@@ -243,32 +230,11 @@
               >
                 删除
               </a-button>
-              <!-- <a-dropdown>
-                <template #overlay>
-                  <a-menu>
-                    <a-menu-item @click="handleCall(record)">
-                      <phone-outlined />
-                      拨打电话
-                    </a-menu-item>
-                    <a-menu-item @click="handleSendEmail(record)">
-                      <mail-outlined />
-                      发送邮件
-                    </a-menu-item>
-                    <a-menu-divider />
-
-                  </a-menu>
-                </template>
-                <a-button type="link" size="small">
-                  更多
-                  <down-outlined />
-                </a-button>
-              </a-dropdown> -->
             </a-space>
           </template>
         </template>
       </a-table>
 
-      <!-- 批量操作 -->
       <div v-if="selectedRowKeys.length > 0" class="batch-actions">
         <span class="selected-count">
           已选择 {{ selectedRowKeys.length }} 项
@@ -300,7 +266,101 @@
       </div>
     </a-card>
 
-    <!-- 新增/编辑客户模态框 -->
+    <a-modal
+      v-model:open="importModalVisible"
+      title="导入客户"
+      width="760px"
+      :footer="null"
+      @cancel="closeImportModal"
+    >
+      <div class="import-section">
+        <div class="import-header">
+          <div>
+            <div class="import-title">CSV 模板说明</div>
+            <div class="import-subtitle">导入结果会返回失败明细，成功数据将自动刷新当前列表与统计。</div>
+          </div>
+          <a-space>
+            <a-button size="small" :disabled="!customerImportMeta" @click="copyImportTemplateHeader">复制模板表头</a-button>
+            <label class="import-picker">
+              <input :key="importInputKey" type="file" accept=".csv,text/csv" @change="handleImportFileChange" />
+              <span>选择文件</span>
+            </label>
+            <a-button type="primary" :loading="importLoading" @click="submitImport">
+              开始导入
+            </a-button>
+          </a-space>
+        </div>
+
+        <a-alert
+          v-if="importMetaError"
+          type="warning"
+          show-icon
+          :message="importMetaError"
+          class="import-alert"
+        />
+        <a-alert
+          v-else-if="importMetaLoading"
+          type="info"
+          show-icon
+          message="正在加载后端导入模板说明..."
+          class="import-alert"
+        />
+
+        <a-alert
+          v-if="selectedImportFile"
+          type="info"
+          show-icon
+          :message="`已选择文件：${selectedImportFile.name}`"
+          class="import-alert"
+        />
+
+        <a-card v-if="customerImportMeta" size="small" class="import-meta-card">
+          <div class="meta-row">
+            <span class="meta-label">模板字段</span>
+            <a-space wrap>
+              <a-tag v-for="field in customerImportMeta.templateFields" :key="field">{{ field }}</a-tag>
+            </a-space>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">必填字段</span>
+            <a-space wrap>
+              <a-tag v-for="field in customerImportMeta.requiredFields" :key="field" color="red">{{ field }}</a-tag>
+            </a-space>
+          </div>
+          <div class="meta-row single-line">
+            <span class="meta-label">判重策略</span>
+            <span>{{ customerImportMeta.duplicateStrategy }}</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">补充说明</span>
+            <ul class="meta-list">
+              <li v-for="note in customerImportMeta.notes" :key="note">{{ note }}</li>
+            </ul>
+          </div>
+        </a-card>
+
+        <a-card v-if="customerImportResult" size="small" class="import-result-card">
+          <div class="result-summary">
+            <a-statistic title="成功导入" :value="customerImportResult.successCount" />
+            <a-statistic title="失败条数" :value="customerImportResult.failureCount" />
+          </div>
+
+          <a-table
+            v-if="customerImportResult.failureDetails.length"
+            :data-source="customerImportResult.failureDetails"
+            :pagination="false"
+            size="small"
+            row-key="rowNumber"
+          >
+            <a-table-column title="行号" data-index="rowNumber" key="rowNumber" width="80" />
+            <a-table-column title="标识" data-index="identifier" key="identifier" />
+            <a-table-column title="失败原因" data-index="reason" key="reason" />
+          </a-table>
+          <a-empty v-else description="本次导入没有失败记录" />
+        </a-card>
+      </div>
+    </a-modal>
+
     <a-modal
       v-model:open="modalVisible"
       :title="modalTitle"
@@ -318,24 +378,15 @@
         @finish="handleModalOk"
       >
         <a-form-item label="姓名" name="name">
-          <a-input
-            v-model:value="formState.name"
-            placeholder="请输入客户姓名"
-          />
+          <a-input v-model:value="formState.name" placeholder="请输入客户姓名" />
         </a-form-item>
 
         <a-form-item label="手机号" name="phone">
-          <a-input
-            v-model:value="formState.phone"
-            placeholder="请输入手机号"
-          />
+          <a-input v-model:value="formState.phone" placeholder="请输入手机号" />
         </a-form-item>
 
         <a-form-item label="邮箱" name="email">
-          <a-input
-            v-model:value="formState.email"
-            placeholder="请输入邮箱"
-          />
+          <a-input v-model:value="formState.email" placeholder="请输入邮箱" />
         </a-form-item>
 
         <a-form-item label="性别" name="gender">
@@ -374,6 +425,7 @@
             <a-select-option :value="3">等级3</a-select-option>
           </a-select>
         </a-form-item>
+
         <a-form-item label="推荐人" name="referrerId">
           <a-select
             v-model:value="formState.referrerId"
@@ -401,6 +453,7 @@
             </template>
           </a-select>
         </a-form-item>
+
         <a-form-item label="状态" name="status">
           <a-switch
             v-model:checked="formState.status"
@@ -421,7 +474,6 @@
       </a-form>
     </a-modal>
 
-    <!-- 查看客户详情抽屉 -->
     <a-drawer
       v-model:open="drawerVisible"
       title="客户详情"
@@ -431,7 +483,7 @@
       <template v-if="currentCustomer">
         <div class="customer-detail">
           <div class="detail-header">
-            <a-avatar :size="64" :src="currentCustomer.avatar || getAvatarColor(currentCustomer.name)" :style="{ backgroundColor: getCustomerColor(currentCustomer.name) }">
+            <a-avatar :size="64" :style="{ backgroundColor: getCustomerColor(currentCustomer.name) }">
               {{ getFirstChar(currentCustomer.name) }}
             </a-avatar>
             <div class="header-info">
@@ -489,10 +541,6 @@
             <a-button type="primary" @click="handleEdit(currentCustomer)" block>
               编辑
             </a-button>
-            <!-- <a-button @click="handleCall(currentCustomer)" block style="margin-top: 8px">
-              <phone-outlined />
-              拨打电话
-            </a-button> -->
           </div>
         </div>
       </template>
@@ -501,32 +549,33 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   message,
   Modal,
   type FormInstance,
   type TableProps,
-  type TableColumnType
+  type TableColumnType,
 } from 'ant-design-vue'
 import {
   PlusOutlined,
   ExportOutlined,
   ImportOutlined,
   ReloadOutlined,
-  PhoneOutlined,
-  MailOutlined,
   StopOutlined,
   CheckOutlined,
-  DownOutlined
-  ,
-  HomeOutlined
+  HomeOutlined,
 } from '@ant-design/icons-vue'
 import { useCustomerStore } from '@/stores/customer'
 import { customerApi } from '@/api/customer'
 import type { Customer, CustomerCreateDTO, PageParams } from '@/types'
 import dayjs from 'dayjs'
+import {
+  buildCustomerImportMeta,
+  type CustomerStatistics,
+  type ImportResult,
+} from '@/utils/featureEnhancements'
 
 const router = useRouter()
 const customerStore = useCustomerStore()
@@ -535,29 +584,41 @@ const referrerList = ref<Customer[]>([])
 const referrerLoading = ref(false)
 const referrerSearchKeyword = ref('')
 
-// 状态
-const isLoading = ref(false)
 const exportLoading = ref(false)
+const statsLoading = ref(false)
 const modalVisible = ref(false)
 const modalLoading = ref(false)
 const drawerVisible = ref(false)
+const importModalVisible = ref(false)
+const importLoading = ref(false)
+const importMetaLoading = ref(false)
+const importMetaError = ref('')
+const importInputKey = ref(0)
+const selectedImportFile = ref<File | null>(null)
+const customerImportTemplate = ref<ImportResult | null>(null)
+const customerImportResult = ref<ImportResult | null>(null)
 const modalType = ref<'add' | 'edit'>('add')
 const currentCustomer = ref<Customer | null>(null)
 const selectedRowKeys = ref<number[]>([])
+const customerStatistics = ref<CustomerStatistics>({
+  totalCustomers: 0,
+  normalCustomers: 0,
+  disabledCustomers: 0,
+  giftLevelDistribution: {},
+})
 
-// 表格列定义
 const columns: TableColumnType[] = [
   {
     title: '客户信息',
     dataIndex: 'name',
     key: 'name',
-    width: 200
+    width: 200,
   },
   {
     title: '联系方式',
     dataIndex: 'phone',
     key: 'phone',
-    width: 150
+    width: 150,
   },
   {
     title: '性别',
@@ -566,52 +627,50 @@ const columns: TableColumnType[] = [
     width: 80,
     filters: [
       { text: '男', value: 1 },
-      { text: '女', value: 0 }
-    ]
+      { text: '女', value: 0 },
+    ],
   },
   {
     title: '生日',
     dataIndex: 'birthday',
     key: 'birthday',
-    width: 120
+    width: 120,
   },
   {
     title: '礼品等级',
     dataIndex: 'giftLevel',
     key: 'giftLevel',
-    width: 100
+    width: 100,
   },
   {
     title: '状态',
     dataIndex: 'status',
     key: 'status',
-    width: 100
+    width: 100,
   },
   {
     title: '注册日期',
     dataIndex: 'registeredAt',
     key: 'registeredAt',
     width: 150,
-    sorter: true
+    sorter: true,
   },
   {
     title: '操作',
     dataIndex: 'actions',
     key: 'actions',
     width: 200,
-    fixed: 'right' as const
-  }
+    fixed: 'right' as const,
+  },
 ]
 
-// 搜索表单
 const searchForm = reactive({
   keyword: '',
   giftLevel: undefined as number | undefined,
   status: undefined as 0 | 1 | undefined,
-  dateRange: [] as any[]
+  dateRange: [] as any[],
 })
 
-// 新增/编辑表单
 const formState = reactive<CustomerCreateDTO & { status: 0 | 1 }>({
   name: '',
   phone: '',
@@ -622,111 +681,190 @@ const formState = reactive<CustomerCreateDTO & { status: 0 | 1 }>({
   giftLevel: 0,
   status: 1,
   remark: '',
-  referrerId: undefined
+  referrerId: undefined,
 })
 
-// 表单验证规则
 const rules = {
   name: [
     { required: true, message: '请输入客户姓名', trigger: 'blur' },
-    { min: 2, max: 20, message: '姓名长度2-20个字符', trigger: 'blur' }
+    { min: 2, max: 20, message: '姓名长度2-20个字符', trigger: 'blur' },
   ],
   phone: [
     { required: true, message: '请输入手机号', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
+    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' },
   ],
   email: [
-    { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }
+    { type: 'email', message: '邮箱格式不正确', trigger: 'blur' },
   ],
-  birthday: [
-    { required: false, message: '请选择生日', trigger: 'change' }
-  ]
 }
 
-// 计算属性
 const customers = computed(() => customerStore.customers)
+const isLoading = computed(() => customerStore.isLoading)
 const pagination = computed(() => ({
   current: customerStore.pagination.page,
   pageSize: customerStore.pagination.size,
   total: customerStore.pagination.total,
-  pageSizeOptions: ['5', '10', '20'], // 可选的每页条数
+  pageSizeOptions: ['5', '10', '20'],
   showSizeChanger: true,
   showQuickJumper: true,
-  showTotal: (total: number) => `共 ${total} 条`
+  showTotal: (total: number) => `共 ${total} 条`,
 }))
-
 const rowSelection = computed<TableProps['rowSelection']>(() => ({
   selectedRowKeys: selectedRowKeys.value,
-  onChange: (selectedKeys: any[]) => {
-    selectedRowKeys.value = selectedKeys
+  onChange: (selectedKeys) => {
+    selectedRowKeys.value = selectedKeys.map((key) => Number(key))
   },
-  getCheckboxProps: (record: Customer) => ({
-    disabled: record.status === 0
-  })
 }))
-
 const modalTitle = computed(() => modalType.value === 'add' ? '新增客户' : '编辑客户')
 const hasDisabledSelected = computed(() =>
-  selectedRowKeys.value.some(key => {
-    const customer = customers.value.find(c => c.id === key)
+  selectedRowKeys.value.some((key) => {
+    const customer = customers.value.find((item) => item.id === key)
     return customer?.status === 0
-  })
+  }),
 )
+const customerImportMeta = computed(() => buildCustomerImportMeta(customerImportResult.value || customerImportTemplate.value || undefined))
+const customerStatCards = computed(() => {
+  const distribution = customerStatistics.value.giftLevelDistribution || {}
+  return [
+    {
+      key: 'totalCustomers',
+      label: '总客户数',
+      value: customerStatistics.value.totalCustomers,
+      helper: `正常 ${customerStatistics.value.normalCustomers} / 停用 ${customerStatistics.value.disabledCustomers}`,
+    },
+    {
+      key: 'normalCustomers',
+      label: '正常客户',
+      value: customerStatistics.value.normalCustomers,
+      helper: `普通客户 ${distribution[0] || 0}`,
+    },
+    {
+      key: 'giftLevel2',
+      label: '等级 2 客户',
+      value: distribution[2] || 0,
+      helper: `等级 1 ${distribution[1] || 0} / 等级 3 ${distribution[3] || 0}`,
+    },
+    {
+      key: 'disabledCustomers',
+      label: '停用客户',
+      value: customerStatistics.value.disabledCustomers,
+      helper: '导入成功后自动刷新统计',
+    },
+  ]
+})
 
-// 礼品等级颜色映射
 const giftLevelColors: Record<number, string> = {
   0: 'default',
   1: 'blue',
   2: 'green',
-  3: 'orange'
+  3: 'orange',
 }
 
-// 方法
 const getFirstChar = (name: string) => name.charAt(0).toUpperCase()
-const getAvatarColor = (name: string) => {
-  const colors = ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#13c2c2']
+const getCustomerColor = (name: string) => {
+  const colors = ['#1890ff', '#52c41a', '#faad14', '#f5222d']
   const index = name.charCodeAt(0) % colors.length
   return colors[index]
 }
-
-const getGiftLevelText = (level: number) => {
-  const texts = ['普通客户', '等级1', '等级2', '等级3']
-  return texts[level] || '普通客户'
-}
-
+const getGiftLevelText = (level: number) => ['普通客户', '等级1', '等级2', '等级3'][level] || '普通客户'
 const formatDate = (dateStr?: string, format?: string) => {
   if (!dateStr) return '-'
-  // 如果没有传入format参数，使用默认格式
-  const formatStr = format || 'YYYY-MM-DD'
-  return dayjs(dateStr).format(formatStr)
+  return dayjs(dateStr).format(format || 'YYYY-MM-DD')
+}
+const getGenderText = (gender: 0 | 1 | undefined | null): string => {
+  if (gender === 1) return '男'
+  if (gender === 0) return '女'
+  return '未知'
+}
+const calculateAge = (birthday: string): number => {
+  const today = new Date()
+  const birthDate = new Date(birthday)
+  let age = today.getFullYear() - birthDate.getFullYear()
+  const monthDiff = today.getMonth() - birthDate.getMonth()
+
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--
+  }
+
+  return age
 }
 
-// 加载数据
+const buildActiveSearchParams = (page?: number, size?: number): PageParams => ({
+  page: page ?? customerStore.pagination.page - 1,
+  size: size ?? customerStore.pagination.size,
+  keyword: searchForm.keyword,
+  giftLevel: searchForm.giftLevel,
+  status: searchForm.status,
+  dateRange: searchForm.dateRange,
+})
+
+const downloadCustomersAsCsv = (records: Customer[], fileName: string) => {
+  const rows = [
+    ['姓名', '手机号', '邮箱', '性别', '礼品等级', '状态', '生日', '地址', '推荐人', '备注'],
+    ...records.map((record) => [
+      record.name,
+      record.phone,
+      record.email || '',
+      getGenderText(record.gender),
+      getGiftLevelText(record.giftLevel),
+      record.status === 1 ? '正常' : '停用',
+      record.birthday || '',
+      record.address || '',
+      record.referrerName || '',
+      record.remark || '',
+    ]),
+  ]
+  const csv = `\uFEFF${rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\r\n')}`
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = fileName
+  link.click()
+  window.URL.revokeObjectURL(url)
+}
+
 const loadCustomers = async (params?: PageParams) => {
   try {
-    console.log('Loading customers with params:', params)
     const filteredParams = Object.fromEntries(
-      Object.entries(params || {}).filter(([_, v]) => v != null && v !== '')
+      Object.entries(params || {}).filter(([_, value]) => value != null && value !== ''),
     )
     if (filteredParams.sort == null) {
       filteredParams.sort = 'registeredAt'
       filteredParams.direction = 'desc'
     }
-    console.log('Loading customers with params:', filteredParams)
     await customerStore.loadCustomers(filteredParams)
-  } catch (error) {
+  } catch {
     message.error('加载客户列表失败')
   }
 }
 
-// 搜索
-const handleSearch = () => {
-  console.log(searchForm)
-  selectedRowKeys.value = []
-  loadCustomers({ page: 0, ...searchForm })
+const loadCustomerStatistics = async () => {
+  try {
+    statsLoading.value = true
+    const stats = await customerApi.getStatistics() as unknown as CustomerStatistics
+    customerStatistics.value = {
+      totalCustomers: stats.totalCustomers || 0,
+      normalCustomers: stats.normalCustomers || 0,
+      disabledCustomers: stats.disabledCustomers || 0,
+      giftLevelDistribution: stats.giftLevelDistribution || {},
+    }
+  } catch {
+    message.error('加载客户统计失败')
+  } finally {
+    statsLoading.value = false
+  }
 }
 
-// 重置搜索
+const refreshCustomerData = async () => {
+  await Promise.all([loadCustomers(buildActiveSearchParams()), loadCustomerStatistics()])
+}
+
+const handleSearch = () => {
+  selectedRowKeys.value = []
+  loadCustomers(buildActiveSearchParams(0))
+}
+
 const handleReset = () => {
   searchForm.keyword = ''
   searchForm.giftLevel = undefined
@@ -735,43 +873,38 @@ const handleReset = () => {
   handleSearch()
 }
 
-// 表格变化
-const handleTableChange: TableProps['onChange'] = (pagination, filters, sorter) => {
-  console.log(pagination, filters, sorter)
-  const params: any = {
-    page: pagination.current! - 1,
-    size: pagination.pageSize
+const handleTableChange: TableProps['onChange'] = (tablePagination, filters, sorter) => {
+  const params: Record<string, unknown> = {
+    ...buildActiveSearchParams((tablePagination.current || 1) - 1, tablePagination.pageSize),
   }
 
   if (filters.gender && filters.gender.length > 0 && filters.gender.length < 2) {
     params.gender = filters.gender[0]
   }
 
-  if (filters.status) {
+  if (filters.status && filters.status.length > 0) {
     params.status = filters.status[0]
   }
 
-  if (sorter && sorter.field) {
-    params.sort = sorter.field
-    params.direction = sorter.order === 'ascend' ? 'asc' : 'desc'
+  const activeSorter = Array.isArray(sorter) ? sorter[0] : sorter
+  if (activeSorter?.field) {
+    params.sort = activeSorter.field
+    params.direction = activeSorter.order === 'ascend' ? 'asc' : 'desc'
   }
-  console.log("Table changed with params:", params)
+
   loadCustomers(params)
 }
 
-// 刷新
-const handleRefresh = () => {
-  loadCustomers()
+const handleRefresh = async () => {
+  await refreshCustomerData()
   message.success('刷新成功')
 }
 
-// 查看详情
 const handleView = (record: Customer) => {
   currentCustomer.value = record
   drawerVisible.value = true
 }
 
-// 编辑
 const handleEdit = async (record: Customer) => {
   modalType.value = 'edit'
   currentCustomer.value = record
@@ -786,20 +919,19 @@ const handleEdit = async (record: Customer) => {
     address: record.address || '',
     giftLevel: record.giftLevel || 0,
     status: record.status,
-    remark: record.remark || ''
+    remark: record.remark || '',
   })
-  // 如果当前推荐人ID不在列表中，尝试查询并添加
-  if (formState.referrerId && !referrerList.value.find(r => r.id === formState.referrerId)) {
-    console.log('Current referrer ID not in list, fetching...');
-    const referrer = await customerStore.findCustomerById(formState.referrerId);
+
+  if (formState.referrerId && !referrerList.value.find((item) => item.id === formState.referrerId)) {
+    const referrer = await customerStore.findCustomerById(formState.referrerId)
     if (referrer) {
-      referrerList.value = [referrer, ...referrerList.value];
+      referrerList.value = [referrer, ...referrerList.value]
     }
   }
+
   modalVisible.value = true
 }
 
-// 删除
 const handleDelete = (record: Customer) => {
   Modal.confirm({
     title: '确认删除',
@@ -811,29 +943,14 @@ const handleDelete = (record: Customer) => {
       try {
         await customerStore.deleteCustomer(record.id!)
         message.success('删除成功')
-        loadCustomers()
-      } catch (error) {
+        await refreshCustomerData()
+      } catch {
         message.error('删除失败')
       }
-    }
+    },
   })
 }
 
-// 拨打电话
-const handleCall = (record: Customer) => {
-  window.location.href = `tel:${record.phone}`
-}
-
-// 发送邮件
-const handleSendEmail = (record: Customer) => {
-  if (record.email) {
-    window.location.href = `mailto:${record.email}`
-  } else {
-    message.warning('该客户没有邮箱')
-  }
-}
-
-// 启用/停用
 const handleDisable = (record: Customer) => {
   Modal.confirm({
     title: '确认停用',
@@ -845,11 +962,11 @@ const handleDisable = (record: Customer) => {
       try {
         await customerStore.updateCustomer(record.id!, { status: 0 })
         message.success('停用成功')
-        loadCustomers()
-      } catch (error) {
+        await refreshCustomerData()
+      } catch {
         message.error('停用失败')
       }
-    }
+    },
   })
 }
 
@@ -863,15 +980,14 @@ const handleEnable = (record: Customer) => {
       try {
         await customerStore.updateCustomer(record.id!, { status: 1 })
         message.success('启用成功')
-        loadCustomers()
-      } catch (error) {
+        await refreshCustomerData()
+      } catch {
         message.error('启用失败')
       }
-    }
+    },
   })
 }
 
-// 显示新增模态框
 const showAddModal = () => {
   modalType.value = 'add'
   formRef.value?.resetFields()
@@ -880,17 +996,16 @@ const showAddModal = () => {
     phone: '',
     email: '',
     gender: 1,
-    referrerId: null,
-    birthday: undefined as string | undefined,
+    referrerId: undefined,
+    birthday: undefined,
     address: '',
     giftLevel: 0,
     status: 1,
-    remark: ''
+    remark: '',
   })
   modalVisible.value = true
 }
 
-// 模态框确定
 const handleModalOk = async () => {
   try {
     await formRef.value?.validate()
@@ -905,43 +1020,47 @@ const handleModalOk = async () => {
     }
 
     formRef.value?.resetFields()
-    loadCustomers()
     modalVisible.value = false
-  } catch (error) {
-    console.error('保存失败:', error)
+    await refreshCustomerData()
+  } catch {
+    message.error('保存失败')
   } finally {
     modalLoading.value = false
   }
 }
 
-// 模态框取消
 const handleModalCancel = () => {
   modalVisible.value = false
   formRef.value?.resetFields()
 }
 
-// 导出
 const handleExport = async () => {
   try {
     exportLoading.value = true
     const response = await customerStore.exportCustomers(searchForm)
-    const blob = new Blob([response], { type: 'application/vnd.ms-excel' })
+    const blob = response instanceof Blob ? response : new Blob([response], { type: 'text/csv;charset=utf-8' })
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `客户列表_${dayjs().format('YYYYMMDDHHmmss')}.xlsx`
+    link.download = `客户列表_${dayjs().format('YYYYMMDDHHmmss')}.csv`
     link.click()
     window.URL.revokeObjectURL(url)
-  } catch (error) {
+  } catch {
     message.error('导出失败')
   } finally {
     exportLoading.value = false
   }
 }
 
-// 批量操作
 const handleBatchExport = () => {
-  message.info('批量导出功能开发中')
+  const records = customers.value.filter((customer) => customer.id && selectedRowKeys.value.includes(customer.id))
+  if (!records.length) {
+    message.warning('请先选择客户')
+    return
+  }
+
+  downloadCustomersAsCsv(records, `客户列表_选中_${dayjs().format('YYYYMMDDHHmmss')}.csv`)
+  message.success('已导出选中客户')
 }
 
 const handleBatchEnable = async () => {
@@ -949,8 +1068,8 @@ const handleBatchEnable = async () => {
     await customerStore.batchUpdateStatus(selectedRowKeys.value, 1)
     message.success('批量启用成功')
     clearSelection()
-    loadCustomers()
-  } catch (error) {
+    await refreshCustomerData()
+  } catch {
     message.error('批量启用失败')
   }
 }
@@ -967,11 +1086,11 @@ const handleBatchDisable = async () => {
         await customerStore.batchUpdateStatus(selectedRowKeys.value, 0)
         message.success('批量停用成功')
         clearSelection()
-        loadCustomers()
-      } catch (error) {
+        await refreshCustomerData()
+      } catch {
         message.error('批量停用失败')
       }
-    }
+    },
   })
 }
 
@@ -989,31 +1108,12 @@ const handleBatchDelete = () => {
         }
         message.success('批量删除成功')
         clearSelection()
-        loadCustomers()
-      } catch (error) {
+        await refreshCustomerData()
+      } catch {
         message.error('批量删除失败')
       }
-    }
+    },
   })
-}
-
-const getGenderText = (gender: 0 | 1 | undefined | null): string => {
-  if (gender === 1) return '男'
-  if (gender === 0) return '女'
-  return '未知'
-}
-
-const calculateAge = (birthday: string): number => {
-  const today = new Date()
-  const birthDate = new Date(birthday)
-  let age = today.getFullYear() - birthDate.getFullYear()
-  const monthDiff = today.getMonth() - birthDate.getMonth()
-
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    age--
-  }
-
-  return age
 }
 
 const handleBack = () => {
@@ -1024,63 +1124,137 @@ const clearSelection = () => {
   selectedRowKeys.value = []
 }
 
-// 导入模态框
-const showImportModal = () => {
-  message.info('导入功能开发中')
+const resetImportState = () => {
+  selectedImportFile.value = null
+  customerImportTemplate.value = null
+  customerImportResult.value = null
+  importMetaError.value = ''
+  importInputKey.value += 1
 }
 
-// 初始化
-onMounted(() => {
-  loadCustomers()
-})
+const loadImportTemplateMeta = async () => {
+  try {
+    importMetaLoading.value = true
+    importMetaError.value = ''
+    const result = await customerApi.getImportTemplate() as unknown as ImportResult
+    customerImportTemplate.value = result
+  } catch {
+    customerImportTemplate.value = null
+    importMetaError.value = '导入模板说明加载失败，请稍后重试'
+  } finally {
+    importMetaLoading.value = false
+  }
+}
 
-// 搜索推荐人
+const showImportModal = async () => {
+  importModalVisible.value = true
+  resetImportState()
+  await loadImportTemplateMeta()
+}
+
+const closeImportModal = () => {
+  importModalVisible.value = false
+  resetImportState()
+}
+
+const handleImportFileChange = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) {
+    return
+  }
+
+  if (!file.name.toLowerCase().endsWith('.csv')) {
+    message.warning('请选择 CSV 文件')
+    target.value = ''
+    return
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    message.warning('导入文件不能超过 5MB')
+    target.value = ''
+    return
+  }
+
+  selectedImportFile.value = file
+  customerImportResult.value = null
+}
+
+const submitImport = async () => {
+  if (!customerImportMeta.value && !importMetaLoading.value) {
+    await loadImportTemplateMeta()
+  }
+
+  if (!selectedImportFile.value) {
+    message.warning('请先选择待导入的 CSV 文件')
+    return
+  }
+
+  try {
+    importLoading.value = true
+    const result = await customerApi.importCustomers(selectedImportFile.value) as unknown as ImportResult
+    customerImportResult.value = result
+    message.success(`导入完成：成功 ${result.successCount} 条，失败 ${result.failureCount} 条`)
+    await refreshCustomerData()
+  } catch {
+    message.error('导入失败')
+  } finally {
+    importLoading.value = false
+  }
+}
+
+const copyImportTemplateHeader = async () => {
+  if (!customerImportMeta.value) {
+    message.warning('导入模板说明尚未就绪')
+    return
+  }
+
+  try {
+    await navigator.clipboard.writeText(customerImportMeta.value.templateFields.join(','))
+    message.success('模板表头已复制')
+  } catch {
+    message.warning('复制失败，请手动复制模板字段')
+  }
+}
+
 const handleReferrerSearch = async (keyword: string) => {
-  console.log('Searching referrers with keyword:', keyword)
   referrerSearchKeyword.value = keyword
 
   try {
     referrerLoading.value = true
-    // 调用搜索接口，这里假设你的后端支持按关键词搜索客户
     if (!keyword.trim()) {
-      // 空关键词时显示最近使用的推荐人或热门推荐
       const response = await customerApi.getCustomers({
         page: 0,
         size: 5,
         direction: 'desc',
-        sort: 'registeredAt'  // 按创建时间倒序，显示最新客户
-      })
+        sort: 'registeredAt',
+      }) as unknown as { content: Customer[] }
       referrerList.value = response.content || []
-    } else {
-      // 有关键词时正常搜索
-      const response = await customerApi.getCustomers({
-        keyword: keyword,
-        page: 0,
-        size: 5
-      })
-      referrerList.value = response.content || []
+      return
     }
-  } catch (error) {
-    console.error('搜索推荐人失败:', error)
+
+    const response = await customerApi.getCustomers({
+      keyword,
+      page: 0,
+      size: 5,
+    }) as unknown as { content: Customer[] }
+    referrerList.value = response.content || []
+  } catch {
     referrerList.value = []
   } finally {
     referrerLoading.value = false
   }
 }
 
-// 获取焦点时加载默认列表
 const handleReferrerFocus = async () => {
   if (referrerList.value.length <= 1 && !referrerSearchKeyword.value) {
-    console.log('Loading default referrer list on focus')
     await handleReferrerSearch('')
   }
 }
 
-const getCustomerColor = (name: string) => {
-  const colors = ['#1890ff', '#52c41a', '#faad14', '#f5222d']
-  const index = name.charCodeAt(0) % colors.length
-  return colors[index]
-}
+onMounted(async () => {
+  await Promise.all([loadCustomers(), loadCustomerStatistics()])
+})
 </script>
 
 <style scoped>
@@ -1105,6 +1279,7 @@ const getCustomerColor = (name: string) => {
 .page-actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .add-btn {
@@ -1112,13 +1287,31 @@ const getCustomerColor = (name: string) => {
   border: none;
 }
 
-.search-card {
+.search-card,
+.stats-row,
+.table-card {
   margin-bottom: 16px;
-  border-radius: 8px;
 }
 
-.table-card {
-  border-radius: 8px;
+.stats-card {
+  min-height: 120px;
+}
+
+.stats-label {
+  color: #666;
+  font-size: 13px;
+}
+
+.stats-value {
+  margin-top: 8px;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.stats-helper {
+  margin-top: 8px;
+  color: #999;
+  font-size: 12px;
 }
 
 .customer-name {
@@ -1238,23 +1431,98 @@ const getCustomerColor = (name: string) => {
   margin-top: 16px;
 }
 
-/* 响应式设计 */
+.import-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.import-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.import-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.import-subtitle {
+  color: #666;
+  margin-top: 4px;
+}
+
+.import-picker {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 15px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.import-picker input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.import-alert,
+.import-meta-card,
+.import-result-card {
+  width: 100%;
+}
+
+.meta-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.meta-row:last-child {
+  margin-bottom: 0;
+}
+
+.meta-row.single-line {
+  align-items: center;
+}
+
+.meta-label {
+  min-width: 72px;
+  color: #666;
+}
+
+.meta-list {
+  margin: 0;
+  padding-left: 16px;
+  color: #666;
+}
+
+.result-summary {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 16px;
+}
+
 @media (max-width: 768px) {
-  .page-header {
+  .page-header,
+  .batch-actions,
+  .import-header {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    align-items: stretch;
   }
 
   .page-actions {
     width: 100%;
-    flex-wrap: wrap;
-  }
-
-  .batch-actions {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
   }
 }
 </style>

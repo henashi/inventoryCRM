@@ -1,22 +1,35 @@
 <template>
   <div class="gift-log-page">
     <div class="page-header">
-      <h1 class="page-title">礼品发放</h1>
+      <div>
+        <h1 class="page-title">礼品发放</h1>
+        <p class="page-subtitle">支持查看发放详情；删除仅对管理员开放。</p>
+      </div>
       <div class="page-actions">
         <a-button @click="handleRefresh" :loading="isLoading">
           <reload-outlined />
           刷新
         </a-button>
-        <a-button @click="handleAdd" type="primary" style="margin-left:8px">
+        <a-button @click="handleAdd" type="primary" style="margin-left: 8px">
           <gift-outlined />
           发放
         </a-button>
-        <a-button @click="handleBack" style="margin-left:8px">
+        <a-button @click="handleBack" style="margin-left: 8px">
           <left-outlined />
           返回
         </a-button>
       </div>
     </div>
+
+    <a-alert
+      v-if="!canDeleteCurrentGiftLog"
+      class="page-alert"
+      type="info"
+      show-icon
+      message="删除权限已收口"
+      description="当前账号可以查看礼品日志详情并继续发放待处理记录，删除入口仅对管理员显示。"
+    />
+
     <a-card class="table-card">
       <a-table
         :columns="columns"
@@ -27,52 +40,55 @@
         :rules="rules"
         :label-col="{ span: 6 }"
         :wrapper-col="{ span: 16 }"
-        @change="loadGiftLogs"
+        @change="handleTableChange"
         row-key="id"
       >
         <template #bodyCell="{ column, record }">
-          <template v-if="column.dataIndex === 'gift'">
-            {{ record.gift.name }}
-          </template>
-          <template v-else-if="column.dataIndex === 'customer'">
-            {{ record.customer.name }}
-          </template>
-          <template v-else-if="column.dataIndex === 'quantity'">
-            {{ record.quantity }}
-          </template>
-          <template v-else-if="column.dataIndex === 'createdTime'">
+          <template v-if="column.dataIndex === 'createdTime'">
             {{ formatDateTime(record.createdTime) }}
           </template>
           <template v-else-if="column.dataIndex === 'issueTime'">
             {{ formatDateTime(record.issueTime) }}
           </template>
-          <template v-if="column.dataIndex === 'status'">
-            <a-tag :color="record.status === 'PENDING' ? 'orange' : 'green'">
-              {{ record.status === 'PENDING' ? '待发放' : '已发放' }}
+          <template v-else-if="column.dataIndex === 'status'">
+            <a-tag :color="record.status === 'PENDING' ? 'orange' : record.status === 'CANCELLED' ? 'red' : 'green'">
+              {{ getStatusText(record.status) }}
             </a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'issueNotes'">
             <a-tooltip :title="record.issueNotes">
-              <span>{{ record.issueNotes }}</span>
+              <span>{{ record.issueNotes || '--' }}</span>
             </a-tooltip>
           </template>
         </template>
-        <template v-slot:action="{ record }">
-          <!-- <a-button type="link" @click="router.push(`/gift/${record.id}`)">
-            查看详情
-          </a-button> -->
-          <a-button
-            type="link"
-            size="small"
-            @click="handleIssuePendingLog(record)"
-            v-if="record.status === 'PENDING'"
-          >
-            发放
-          </a-button>
-        </template>
 
+        <template #action="{ record }">
+          <a-space :size="4">
+            <a-button type="link" size="small" @click="handleGiftLogDetail(record)">
+              详情
+            </a-button>
+            <a-button
+              v-if="record.status === 'PENDING'"
+              type="link"
+              size="small"
+              @click="handleIssuePendingLog(record)"
+            >
+              发放
+            </a-button>
+            <a-button
+              v-if="canDeleteCurrentGiftLog"
+              type="link"
+              size="small"
+              danger
+              @click="handleDeleteGiftLog(record)"
+            >
+              删除
+            </a-button>
+          </a-space>
+        </template>
       </a-table>
     </a-card>
+
     <a-modal
       v-model:visible="modalVisible"
       title="发放礼品"
@@ -90,11 +106,11 @@
           <a-select
             v-model:value="formState.giftId"
             placeholder="请选择礼品"
-            allow-clear:value="{{ formState.giftId===null }}"
-            show-search:value="{{ formState.giftId===null }}"
+            allow-clear
+            show-search
             :filter-option="filterGiftOption"
-            :disabled="modelType==='edit'"
-            @-change="handleGiftChange"
+            :disabled="modelType === 'edit'"
+            @change="handleGiftChange"
           >
             <a-select-option v-for="gift in giftOptions" :key="gift.id" :value="gift.id">
               {{ gift.name }} {{ gift.code }}
@@ -105,10 +121,10 @@
           <a-select
             v-model:value="formState.customerId"
             placeholder="请选择领取人"
-            allow-clear:value="{{ formState.customerId===null }}"
-            show-search:value="{{ formState.customerId===null }}"
+            allow-clear
+            show-search
             :filter-option="filterCustomerOption"
-            :disabled="modelType==='edit'"
+            :disabled="modelType === 'edit'"
           >
             <a-select-option v-for="customer in customerOptions" :key="customer.id" :value="customer.id">
               {{ customer.name }} {{ customer.phone }}
@@ -116,48 +132,76 @@
           </a-select>
         </a-form-item>
         <a-form-item label="发放数量" name="quantity">
-          <a-input-number v-model:value="formState.quantity" style="width: 100%"
-            :disabled="formState.limitEnabled" />
+          <a-input-number v-model:value="formState.quantity" style="width: 100%" :disabled="formState.limitEnabled" />
         </a-form-item>
         <a-form-item label="发放说明" name="issueNotes">
-          <a-textarea v-model:value="formState.issueNotes" placeholder="请输入发放说明" :maxlength="50" show-count/>
+          <a-textarea v-model:value="formState.issueNotes" placeholder="请输入发放说明" :maxlength="50" show-count />
         </a-form-item>
-        <!-- <a-form-item label="备注" name="remark">
-          <a-textarea v-model:value="formState.remark" placeholder="请输入备注信息" :maxlength="200" show-count/>
-        </a-form-item> -->
       </a-form>
     </a-modal>
+
+    <a-drawer v-model:open="detailVisible" title="礼品日志详情" width="560" :destroy-on-close="true">
+      <a-spin :spinning="detailLoading">
+        <a-empty v-if="!detailGiftLog" description="暂无日志详情" />
+        <a-descriptions v-else :column="1" bordered size="small">
+          <a-descriptions-item label="礼品名称">{{ detailGiftLog.giftName }}</a-descriptions-item>
+          <a-descriptions-item label="领取人">{{ detailGiftLog.customerName }}</a-descriptions-item>
+          <a-descriptions-item label="发放状态">{{ getStatusText(detailGiftLog.status) }}</a-descriptions-item>
+          <a-descriptions-item label="发放数量">{{ detailGiftLog.quantity }}</a-descriptions-item>
+          <a-descriptions-item label="处理说明">{{ detailGiftLog.issueNotes || '--' }}</a-descriptions-item>
+          <a-descriptions-item label="操作人">{{ detailGiftLog.operator || '--' }}</a-descriptions-item>
+          <a-descriptions-item label="备注">{{ detailGiftLog.remark || '--' }}</a-descriptions-item>
+          <a-descriptions-item label="发放时间">{{ formatDateTime(detailGiftLog.issuedAt) }}</a-descriptions-item>
+          <a-descriptions-item label="创建时间">{{ formatDateTime(detailGiftLog.createdTime) }}</a-descriptions-item>
+          <a-descriptions-item label="更新时间">{{ formatDateTime(detailGiftLog.updatedTime) }}</a-descriptions-item>
+        </a-descriptions>
+      </a-spin>
+    </a-drawer>
   </div>
 </template>
+
 <script lang="ts" setup>
 import dayjs from 'dayjs'
-import { ref, reactive, onMounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { useGiftStore } from '@/stores/gift';
-import { useCustomerStore } from '@/stores/customer';
-import { useGiftLogStore } from '@/stores/giftLog';
-import { message } from 'ant-design-vue';
+import { computed, onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { Modal, message } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
-import type { GiftLogDTO, PageParams, Gift } from '@/types';
-import { ReloadOutlined, GiftOutlined, LeftOutlined } from '@ant-design/icons-vue';
+import { GiftOutlined, LeftOutlined, ReloadOutlined } from '@ant-design/icons-vue'
+import { useAuthStore } from '@/stores/auth'
+import { useCustomerStore } from '@/stores/customer'
+import { useGiftLogStore } from '@/stores/giftLog'
+import { useGiftStore } from '@/stores/gift'
+import { canDeleteGiftLog } from '@/router/accessControl'
+import type { GiftLogDTO, PageParams } from '@/types'
+import { buildServerPageParams, toServerPage } from '@/utils/pagination'
 
-const router = useRouter();
-const giftStore = useGiftStore();
-const customerStore = useCustomerStore();
-const giftLogStore = useGiftLogStore();
-const isLoading = ref(false);
-const modalVisible = ref(false);
+type GiftLogFormState = GiftLogDTO & {
+  limitEnabled: boolean
+}
+
+const router = useRouter()
+const authStore = useAuthStore()
+const giftStore = useGiftStore()
+const customerStore = useCustomerStore()
+const giftLogStore = useGiftLogStore()
+const isLoading = ref(false)
+const modalVisible = ref(false)
 const formRef = ref<FormInstance>()
-const modelType = ref<'add' | 'edit'>('add');
-const currentGiftLog = ref<GiftLogDTO | null>(null);
-const currentGift = ref<Gift | null>(null);
-const dataSource = computed(() => giftLogStore.giftLogList);
-const pagination = reactive({
-  ...giftLogStore.pagination, // 总条数
+const modelType = ref<'add' | 'edit'>('add')
+const currentGiftLog = ref<GiftLogDTO | null>(null)
+const dataSource = computed(() => giftLogStore.giftLogList)
+const detailVisible = ref(false)
+const detailLoading = ref(false)
+const detailGiftLog = ref<GiftLogDTO | null>(null)
+
+const pagination = computed(() => ({
+  current: giftLogStore.pagination.page,
+  pageSize: giftLogStore.pagination.size,
+  total: giftLogStore.pagination.total,
   showTotal: (total: number) => `共 ${total} 条`,
-  showSizeChanger: true, // 显示可改变每页数量
-  showQuickJumper: true, // 显示快速跳转
-});
+  showSizeChanger: true,
+  showQuickJumper: true,
+}))
 
 const columns = [
   { title: '礼品名称', dataIndex: 'giftName', key: 'giftName' },
@@ -170,52 +214,86 @@ const columns = [
     title: '操作',
     key: 'action',
     fixed: 'right',
-    width: 200,
+    width: 240,
     slots: { customRender: 'action' },
   },
-];
+]
 
-const formState = reactive<GiftLogDTO>({
-  id: null, // ID
-  giftId: null, // 礼品ID
-  giftName: '', // 礼品名称
-  customerId: null, // 领取人ID
-  customerName: '', // 领取人姓名
-  quantity: 1, // 发放数量
-  issueNotes: '', // 处理说明
-  remark: '', // 备注
-  issuedAt: '', // 发放时间
-  operator: '', // 操作人
-  status: 'PENDING', // 状态
-  createdTime: '', // 创建时间
-  updatedTime: '', // 更新时间
-  limitEnabled: false, // 是否限制
-});
+const formState = reactive<GiftLogFormState>({
+  id: null,
+  giftId: null,
+  giftName: '',
+  customerId: null,
+  customerName: '',
+  quantity: 1,
+  issueNotes: '',
+  remark: '',
+  issuedAt: '',
+  operator: '',
+  status: 'PENDING',
+  createdTime: '',
+  updatedTime: '',
+  limitEnabled: false,
+})
 
 const rules = {
   giftId: [{ required: true, message: '请选择关联礼品', trigger: 'change' }],
   customerId: [{ required: true, message: '请选择领取人', trigger: 'change' }],
   quantity: [{ required: true, message: '请输入发放数量', trigger: 'change' }],
-  issueNotes: [
-    // { required: true, message: '请输入处理说明', trigger: 'blur' },
-    { max: 50, message: '处理说明不能超过50字', trigger: 'blur' },
-  ]
-};
+  issueNotes: [{ max: 50, message: '处理说明不能超过50字', trigger: 'blur' }],
+}
 
-const handleRefresh = () => {
-  loadGiftLogs();
-};
+const canDeleteCurrentGiftLog = computed(() => canDeleteGiftLog(authStore.userRole))
+
+const getStatusText = (status: GiftLogDTO['status']) => {
+  switch (status) {
+    case 'PENDING':
+      return '待发放'
+    case 'CANCELLED':
+      return '已取消'
+    default:
+      return '已发放'
+  }
+}
+
+const resetFormState = () => {
+  Object.assign(formState, {
+    id: null,
+    giftId: null,
+    giftName: '',
+    customerId: null,
+    customerName: '',
+    quantity: 1,
+    issueNotes: '',
+    remark: '',
+    issuedAt: '',
+    operator: '',
+    status: 'PENDING',
+    createdTime: '',
+    updatedTime: '',
+    limitEnabled: false,
+  })
+}
+
+const handleRefresh = async () => {
+  await loadGiftLogs({
+    page: toServerPage(giftLogStore.pagination.page),
+    size: giftLogStore.pagination.size,
+  })
+  message.success('刷新成功')
+}
 
 const handleAdd = () => {
-  modelType.value = 'add';
-  modalVisible.value = true;
-};
+  modelType.value = 'add'
+  resetFormState()
+  modalVisible.value = true
+}
 
 const handleIssuePendingLog = (record: GiftLogDTO) => {
-  currentGiftLog.value = record;
-  modelType.value = 'edit';
-  modalVisible.value = true;
-  const result = findGiftLimitData(record.giftId!);
+  currentGiftLog.value = record
+  modelType.value = 'edit'
+  modalVisible.value = true
+  const result = findGiftLimitData(record.giftId!)
   Object.assign(formState, {
     giftId: currentGiftLog.value?.giftId || null,
     customerId: currentGiftLog.value?.customerId || null,
@@ -224,91 +302,129 @@ const handleIssuePendingLog = (record: GiftLogDTO) => {
     remark: currentGiftLog.value?.remark || '',
     status: 'ISSUED',
     limitEnabled: result.limitEnabled,
-  });
-};
+  })
+}
+
+const handleGiftLogDetail = async (record: GiftLogDTO) => {
+  detailVisible.value = true
+  detailLoading.value = true
+  detailGiftLog.value = null
+
+  try {
+    detailGiftLog.value = await giftLogStore.getGiftLogDetail(record.id!)
+  } catch {
+    message.error('加载礼品日志详情失败')
+  } finally {
+    detailLoading.value = false
+  }
+}
+
+const handleDeleteGiftLog = (record: GiftLogDTO) => {
+  Modal.confirm({
+    title: '删除礼品日志',
+    content: `确定要删除礼品日志“${record.giftName} / ${record.customerName}”吗？删除仅影响管理视角展示，请以后端校验语义为准。`,
+    okText: '确认删除',
+    okButtonProps: { danger: true },
+    cancelText: '取消',
+    onOk: async () => {
+      try {
+        await giftLogStore.deleteGiftLog(record.id!)
+        await loadGiftLogs({
+          page: toServerPage(giftLogStore.pagination.page),
+          size: giftLogStore.pagination.size,
+        })
+        message.success('礼品日志已删除')
+        if (detailGiftLog.value?.id === record.id) {
+          detailVisible.value = false
+          detailGiftLog.value = null
+        }
+      } catch (error: any) {
+        message.error(error?.response?.data?.message || '删除礼品日志失败')
+      }
+    },
+  })
+}
 
 const handleBack = () => {
-  router.push('/');
-};
+  router.push('/')
+}
 
-const handleGiftChange = (value: number) => {
-  const result = findGiftLimitData(value);
-  formState.limitEnabled = result.limitEnabled;
-  formState.quantity = result.limitPerPerson;
-  Object.assign(formState, {
-    ...formState,
-    limitEnabled: result.limitEnabled,
-    quantity: result.limitPerPerson,
-  });
-};
+const handleGiftChange = (value: number | null) => {
+  if (value == null) {
+    formState.limitEnabled = false
+    formState.quantity = 1
+    return
+  }
+
+  const result = findGiftLimitData(value)
+  formState.limitEnabled = result.limitEnabled
+  formState.quantity = result.limitPerPerson
+}
 
 const handleModalOk = async () => {
   try {
     if (!formRef.value) {
-      message.error('表单未加载');
-      return;
+      message.error('表单未加载')
+      return
     }
-    await formRef.value.validate();
-    if (modelType.value === 'add') {
-      await giftLogStore.createGiftLog(formState);
-      message.success('礼品发放成功');
-    } else {
 
-      // 编辑逻辑（如果需要）
-      await giftLogStore.updateGiftLog(currentGiftLog.value!.id, formState);
-      message.success('礼品发放成功');
+    await formRef.value.validate()
+    if (modelType.value === 'add') {
+      await giftLogStore.createGiftLog(formState)
+      message.success('礼品发放成功')
+    } else if (currentGiftLog.value?.id) {
+      await giftLogStore.updateGiftLog(currentGiftLog.value.id, formState)
+      message.success('礼品发放成功')
     }
-  } catch (error) {
-    console.error('表单验证失败:', error);
-    message.error('请检查表单输入');
+  } catch {
+    message.error('请检查表单输入')
+    return
   }
-  finally {
-    modalVisible.value = false;
-    formRef.value?.resetFields();
-    loadGiftLogs();
-  }
-};
+
+  modalVisible.value = false
+  formRef.value?.resetFields()
+  resetFormState()
+  await loadGiftLogs({
+    page: toServerPage(giftLogStore.pagination.page),
+    size: giftLogStore.pagination.size,
+  })
+}
 
 const handleModalCancel = () => {
-  modalVisible.value = false;
-  formRef.value?.resetFields();
-};
+  modalVisible.value = false
+  formRef.value?.resetFields()
+  resetFormState()
+}
 
 const filterGiftOption = (input: string, option: any) => {
-  return (
-    option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
-  );
-};
+  const label = typeof option?.children === 'string' ? option.children : ''
+  return label.toLowerCase().includes(input.toLowerCase())
+}
 
 const findGiftLimitData = (id: number) => {
-  const response = giftStore.gifts.find(gift => gift.id === id);
+  const response = giftStore.gifts.find(gift => gift.id === id)
   return {
-    limitEnabled: response?.limitEnabled,
-    limitPerPerson: response?.limitPerPerson
+    limitEnabled: response?.limitEnabled ?? false,
+    limitPerPerson: response?.limitPerPerson ?? 1,
   }
-};
+}
 
 const giftOptions = computed(() => {
   return giftStore.gifts.map(gift => ({
     id: gift.id,
     name: gift.name,
     code: gift.code,
-  }));
-});
+  }))
+})
 
 const filterCustomerOption = (input: string, option: any) => {
-  return (
-    option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
-  );
-};
-
-const formatDateTime = (dateStr: string) => {
-  return formatDate(dateStr, 'YYYY-MM-DD HH:mm:ss')
+  const label = typeof option?.children === 'string' ? option.children : ''
+  return label.toLowerCase().includes(input.toLowerCase())
 }
 
-const formatDate = (dateStr: string, format = 'YYYY-MM-dd') => {
-  if (!dateStr) return ''
-  return dayjs(dateStr).format(format)
+const formatDateTime = (dateStr?: string) => {
+  if (!dateStr) return '--'
+  return dayjs(dateStr).format('YYYY-MM-DD HH:mm:ss')
 }
 
 const customerOptions = computed(() => {
@@ -316,32 +432,34 @@ const customerOptions = computed(() => {
     id: customer.id,
     name: customer.name,
     phone: customer.phone,
-  }));
+  }))
 })
 
 const loadGiftLogs = async (params?: PageParams) => {
-  console.log('加载礼品数据，参数:', params)
   try {
-    const queryParams: PageParams = {
-      page: params?.page || 0,
-      size: params?.size || 10,
-    }
-    isLoading.value = true;
-    await giftLogStore.loadGiftLogs(queryParams);
-  } catch (error) {
-    message.error('加载礼品数据失败');
+    isLoading.value = true
+    await giftLogStore.loadGiftLogs({
+      page: params?.page ?? 0,
+      size: params?.size ?? 10,
+    })
+  } catch {
+    message.error('加载礼品日志失败')
+  } finally {
+    isLoading.value = false
   }
-  finally {
-    isLoading.value = false;
-  }
-};
+}
+
+const handleTableChange = (tablePagination: { current?: number; pageSize?: number }) => {
+  void loadGiftLogs(buildServerPageParams(tablePagination, giftLogStore.pagination.size))
+}
 
 onMounted(() => {
-  loadGiftLogs();
-  giftStore.loadGifts({ page: 0, size: 100 }); // 加载前100个礼品用于选择
-  customerStore.loadCustomers({ page: 0, size: 100 }); // 加载前100个客户用于选择
-});
+  void loadGiftLogs()
+  void giftStore.loadGifts({ page: 0, size: 100 })
+  void customerStore.loadCustomers({ page: 0, size: 100 })
+})
 </script>
+
 <style scoped>
 .gift-log-page {
   padding: 20px;
@@ -351,6 +469,27 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
   margin-bottom: 20px;
+}
+
+.page-title {
+  margin: 0;
+}
+
+.page-subtitle {
+  margin: 8px 0 0;
+  color: #8c8c8c;
+}
+
+.page-alert {
+  margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 </style>

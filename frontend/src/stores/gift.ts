@@ -2,6 +2,7 @@ import {defineStore} from 'pinia'
 import {ref} from 'vue'
 import {giftApi} from '@/api/gift'
 import type {Gift, GiftCreateDTO, GiftUpdateDTO, PageParams} from '@/types'
+import { toServerPage, toUiPage } from '@/utils/pagination'
 
 export const useGiftStore = defineStore('gift', () => {
   const gifts = ref<Gift[]>([])
@@ -16,7 +17,7 @@ export const useGiftStore = defineStore('gift', () => {
     const res = await giftApi.loadGifts(params)
     gifts.value = res.content
     pagination.value = {
-      page: res.number,
+      page: toUiPage(res.number),
       size: res.size,
       total: res.totalElements
     }
@@ -24,17 +25,17 @@ export const useGiftStore = defineStore('gift', () => {
 
   const createGift = async (gift: GiftCreateDTO) => {
     await giftApi.createGift(gift)
-    await loadGifts({page: pagination.value.page - 1, size: pagination.value.size})
+    await loadGifts({ page: toServerPage(pagination.value.page), size: pagination.value.size })
   }
 
   const updateGift = async (id: number, gift: GiftUpdateDTO) => {
     await giftApi.updateGift(id, gift)
-    await loadGifts({page: pagination.value.page - 1, size: pagination.value.size})
+    await loadGifts({ page: toServerPage(pagination.value.page), size: pagination.value.size })
   }
 
   const deleteGift = async (id: number) => {
     await giftApi.deleteGift(id)
-    await loadGifts({page: pagination.value.page - 1, size: pagination.value.size})
+    await loadGifts({ page: toServerPage(pagination.value.page), size: pagination.value.size })
   }
 
   const getGift = async (id: number) => {

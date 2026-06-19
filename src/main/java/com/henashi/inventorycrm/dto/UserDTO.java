@@ -1,6 +1,7 @@
 package com.henashi.inventorycrm.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.time.LocalDateTime;
 
 public record UserDTO(
@@ -9,6 +10,12 @@ public record UserDTO(
 
         @Schema(description = "用户名")
         String username,
+
+        @Schema(description = "真实姓名")
+        String realName,
+
+        @Schema(description = "邮箱")
+        String email,
 
         @Schema(description = "角色")
         String role,
@@ -20,7 +27,7 @@ public record UserDTO(
         LocalDateTime lastLoginAt,
 
         @Schema(description = "创建时间")
-        LocalDateTime createdTime,
+        LocalDateTime createdAt,
 
         @Schema(description = "备注")
         String remark) {

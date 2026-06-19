@@ -252,7 +252,7 @@
         :data-source="inventoryLogs"
         :loading="isLoading"
         :pagination="pagination"
-        :row-key="record => record.id"
+        row-key="id"
         @change="handleTableChange"
         :scroll="{ x: 1000 }"
       >
@@ -269,8 +269,8 @@
           <template v-else-if="column.dataIndex === 'productInfo'">
             <div class="product-info">
               <div class="product-name">
-                <a-tag :color="getOperationTypeColor(record.type)" size="small">
-                  {{ getSimplifyTypeText(record.type) }}
+                <a-tag :color="getOperationTypeColor(record.logType)" size="small">
+                  {{ getSimplifyTypeText(record.logType) }}
                 </a-tag>
                 {{ record.productName }}
               </div>
@@ -280,8 +280,8 @@
 
           <!-- 操作类型 -->
           <template v-else-if="column.dataIndex === 'type'">
-            <a-tag :color="getOperationTypeColor(record.type)">
-              {{ getOperationTypeText(record.type) }}
+            <a-tag :color="getOperationTypeColor(record.logType)">
+              {{ getOperationTypeText(record.logType) }}
             </a-tag>
           </template>
 
@@ -319,8 +319,8 @@
 
           <!-- 操作状态 -->
           <template v-else-if="column.dataIndex === 'status'">
-            <a-tag :color="record.status === 'SUCCESS' ? 'green' : 'red'">
-              {{ record.status === 'SUCCESS' ? '成功' : '失败' }}
+            <a-tag :color="record.success ? 'green' : 'red'">
+              {{ record.success ? '成功' : '失败' }}
             </a-tag>
             <!-- <div v-if="!record.success && record.errorMessage" class="error-msg">
               {{ record.errorMessage }}
@@ -338,10 +338,10 @@
                 详情
               </a-button>
               <a-button
-                v-if="record.type === 'CREATE'"
+                v-if="record.logType === 'CREATE'"
                 type="link"
                 size="small"
-                @click="handleViewProduct(record.productCode)"
+                @click="handleViewProduct(record.productId)"
               >
                 查看商品
               </a-button>
@@ -372,8 +372,8 @@
               {{ currentLog.operator }}
             </a-descriptions-item>
             <a-descriptions-item label="操作类型" span="3">
-              <a-tag :color="getOperationTypeColor(currentLog.type)">
-                {{ getOperationTypeText(currentLog.type) }}
+              <a-tag :color="getOperationTypeColor(currentLog.logType)">
+                {{ getOperationTypeText(currentLog.logType) }}
               </a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="操作状态" span="3">
@@ -434,7 +434,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
   ReloadOutlined,
@@ -445,9 +445,10 @@ import {
 import dayjs from 'dayjs'
 import { useInventoryLogStore } from '@/stores/inventoryLog'
 import { useProductStore } from '@/stores/product'
-import type { InventoryLogRecord, PageParams } from '@/types'
+import type { InventoryLog, PageParams } from '@/types'
 
 const router = useRouter()
+const route = useRoute()
 const inventoryLogStore = useInventoryLogStore()
 const productStore = useProductStore()
 
@@ -455,7 +456,7 @@ const productStore = useProductStore()
 const isLoading = ref(false)
 const exportLoading = ref(false)
 const detailVisible = ref(false)
-const currentLog = ref<InventoryLogRecord | null>(null)
+const currentLog = ref<InventoryLog | null>(null)
 
 // 搜索表单
 const searchForm = reactive({
@@ -545,7 +546,7 @@ const stats = computed(() => ({
 }))
 
 const handleBack = () => {
-  router.push('/')
+  router.push('/dashboard')
 }
 
 // 方法
@@ -700,24 +701,23 @@ const handleTableChange = (pag: any, filters: any, sorter: any) => {
 }
 
 // 查看详情
-const handleViewDetail = (record: InventoryLogRecord) => {
+const handleViewDetail = (record: InventoryLog) => {
   currentLog.value = record
   detailVisible.value = true
 }
 
 // 查看商品
-const handleViewProduct = (code: string) => {
-  console.log(`查看商品: ${code}`)
-  router.push({ path: `/products/${code}`,
-        query: {
-          code,      // 目标ID
-        } })
+const handleViewProduct = (productId: number) => {
+  router.push(`/inventory/${productId}`)
 }
 
-// 初始化
 onMounted(() => {
+  const productId = Number(route.query.productId)
+  if (productId) {
+    searchForm.productId = productId
+  }
+
   loadLogs()
-  // 加载商品列表用于筛选
   productStore.loadProducts({ page: 0, size: 100 })
 })
 </script>

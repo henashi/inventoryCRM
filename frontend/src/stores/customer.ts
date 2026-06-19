@@ -2,10 +2,41 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { customerApi } from '@/api/customer'
-import type { Customer, CustomerCreateDTO, PageParams, PageResult } from '@/types'
+import type { Customer, CustomerCreateDTO, CustomerUpdateDTO, PageParams } from '@/types'
+
+const formatDateValue = (value: any) => {
+  if (!value) return undefined
+  if (typeof value === 'string') return value.slice(0, 10)
+  if (typeof value?.format === 'function') return value.format('YYYY-MM-DD')
+  if (value instanceof Date) return value.toISOString().split('T')[0]
+  return undefined
+}
+
+const buildCustomerQueryParams = (params?: PageParams) => {
+  const queryParams: any = {
+    page: params?.page,
+    size: params?.size,
+    keyword: params?.keyword,
+    giftLevel: params?.giftLevel,
+    status: params?.status,
+    gender: params?.gender,
+    sort: params?.sort,
+    direction: params?.direction,
+    startDate: params?.startDate,
+    endDate: params?.endDate
+  }
+
+  if (params?.dateRange && Array.isArray(params.dateRange) && params.dateRange.length === 2) {
+    queryParams.startDate = formatDateValue(params.dateRange[0])
+    queryParams.endDate = formatDateValue(params.dateRange[1])
+  }
+
+  return Object.fromEntries(
+    Object.entries(queryParams).filter(([_, value]) => value !== undefined && value !== null && value !== '')
+  )
+}
 
 export const useCustomerStore = defineStore('customer', () => {
-  // 状态
   const customers = ref<Customer[]>([])
   const currentCustomer = ref<Customer | null>(null)
   const isLoading = ref(false)
@@ -17,7 +48,6 @@ export const useCustomerStore = defineStore('customer', () => {
   })
   const searchKeyword = ref('')
 
-  // Getter
   const totalCustomers = computed(() => total.value)
   const activeCustomers = computed(() =>
     customers.value.filter(c => c.status === 1).length
@@ -39,13 +69,10 @@ export const useCustomerStore = defineStore('customer', () => {
     }))
   )
 
-  // Actions
   const loadCustomers = async (params?: PageParams) => {
     try {
       isLoading.value = true
-      console.log('params', params)
-      // Build query params: prefer explicit params passed in, fallback to store state
-      const queryParams: any = {
+      const queryParams = buildCustomerQueryParams({
         page: params?.page ?? (pagination.value.page - 1),
         size: params?.size ?? pagination.value.size,
         keyword: params?.keyword ?? (searchKeyword.value || undefined),
@@ -53,22 +80,17 @@ export const useCustomerStore = defineStore('customer', () => {
         status: params?.status,
         gender: params?.gender,
         sort: params?.sort,
-        direction: params?.direction
-      }
+        direction: params?.direction,
+        startDate: params?.startDate,
+        endDate: params?.endDate,
+        dateRange: params?.dateRange
+      })
 
-      // Support passing date range as an array [start, end]
-      if (params?.dateRange && Array.isArray(params.dateRange) && params.dateRange.length === 2) {
-        queryParams.startDate = params.dateRange[0].toISOString().split('T')[0];
-        queryParams.endDate = params.dateRange[1].toISOString().split('T')[0];
-      }
-
-      // If caller provided a keyword param, keep it in store so filteredCustomers and future calls can reuse
       if (params?.keyword !== undefined) {
         searchKeyword.value = params.keyword
       }
-      console.log('queryParams', queryParams)
 
-      const response: PageResult<Customer> = await customerApi.getCustomers(queryParams)
+      const response = await customerApi.getCustomers(queryParams)
 
       customers.value = response.content
       total.value = response.totalElements
@@ -118,7 +140,7 @@ export const useCustomerStore = defineStore('customer', () => {
     }
   }
 
-  const updateCustomer = async (id: number, data: Partial<CustomerCreateDTO>) => {
+  const updateCustomer = async (id: number, data: Partial<CustomerUpdateDTO>) => {
     try {
       isLoading.value = true
       const updatedCustomer = await customerApi.updateCustomer(id, data)
@@ -129,7 +151,7 @@ export const useCustomerStore = defineStore('customer', () => {
       }
 
       if (currentCustomer.value?.id === id) {
-        currentCustomer.value = updatedCustomer
+        currentCustomer.value = { ...currentCustomer.value, ...updatedCustomer }
       }
 
       return updatedCustomer
@@ -153,6 +175,15 @@ export const useCustomerStore = defineStore('customer', () => {
     }
   }
 
+  const exportCustomers = async (params?: any) => {
+    return customerApi.exportCustomers(buildCustomerQueryParams(params))
+  }
+
+  const batchUpdateStatus = async (ids: number[], status: 0 | 1) => {
+    await customerApi.batchUpdateStatus(ids, status)
+    await loadCustomers()
+  }
+
   const setSearchKeyword = (keyword: string) => {
     searchKeyword.value = keyword
   }
@@ -173,27 +204,24 @@ export const useCustomerStore = defineStore('customer', () => {
   }
 
   return {
-    // State
     customers,
     currentCustomer,
     isLoading,
     total,
     pagination,
     searchKeyword,
-
-    // Getter
     totalCustomers,
     activeCustomers,
     filteredCustomers,
     customerOptions,
-
-    // Actions
     loadCustomers,
     getCustomer,
     findCustomerById,
     addCustomer,
     updateCustomer,
     deleteCustomer,
+    exportCustomers,
+    batchUpdateStatus,
     setSearchKeyword,
     clearCurrentCustomer,
     reset
