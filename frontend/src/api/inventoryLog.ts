@@ -1,23 +1,23 @@
 import request from './request'
-import type { InventoryLog,  PageParams, PageResult } from '@/types'
+import { mapPageContent, normalizeInventoryLog } from './contracts'
+import type { InventoryLog, InventoryLogStats, PageResult } from '@/types'
 
 export const inventoryLogApi = {
-  // 获取日志列表
-  getLogs: (params?: any) =>
-    request.get<PageResult<InventoryLog>>('/inventory-logs', { params }),
+  getLogs: async (params?: Record<string, unknown>) => {
+    const page = await request.get<PageResult<InventoryLog>>('/inventory-logs', { params })
+    return mapPageContent(page, normalizeInventoryLog)
+  },
 
-  // 获取统计信息
-  getStats: (params?: any) =>
-    request.get<any>('/inventory-logs/stats'),
+  getStats: (params?: Record<string, unknown>) =>
+    request.get<InventoryLogStats>('/inventory-logs/stats', { params }),
 
-  // 导出日志
-  exportLogs: (params?: any) =>
+  exportLogs: (params?: Record<string, unknown>) =>
     request.get('/inventory-logs/export', {
       params,
-      responseType: 'blob'
+      responseType: 'blob',
     }),
 
-  // 获取日志详情
-  getLogDetail: (id: number) =>
-    request.get<InventoryLog>(`/inventory-logs/${id}`)
+  getLogDetail: async (id: number) => normalizeInventoryLog(
+    await request.get<InventoryLog>(`/inventory-logs/${id}`),
+  ),
 }

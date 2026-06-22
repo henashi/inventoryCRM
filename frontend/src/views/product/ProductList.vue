@@ -29,7 +29,7 @@
     </div>
 
     <a-card class="search-card">
-      <a-form layout="inline" :model="searchForm" @finish="handleSearch">
+      <a-form class="search-form" layout="inline" :model="searchForm" @finish="handleSearch">
         <a-row :gutter="[16, 16]" style="width: 100%">
           <a-col :xs="24" :sm="12" :md="8">
             <a-form-item label="关键词">
@@ -83,9 +83,11 @@
     <a-row :gutter="[16, 16]" class="summary-row">
       <a-col v-for="card in productSummaryCards" :key="card.key" :xs="24" :sm="8">
         <a-card class="summary-card" :loading="statsLoading" @click="handleSummaryCardClick(card.key)">
-          <div class="summary-title">{{ card.title }}</div>
-          <div class="summary-value">{{ card.value }}</div>
-          <div class="summary-helper">{{ card.helper }}</div>
+          <div class="summary-primary-line">
+            <span class="summary-title">{{ card.title }}</span>
+            <span class="summary-value-inline">{{ card.value }}</span>
+          </div>
+          <div class="summary-secondary-line">{{ card.helper }}</div>
         </a-card>
       </a-col>
     </a-row>
@@ -114,6 +116,7 @@
         :pagination="pagination"
         row-key="id"
         @change="handleTableChange"
+        size="middle"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'name'">
@@ -1058,6 +1061,469 @@ onMounted(async () => {
 .product-code {
   font-size: 12px;
   color: #666;
+}
+
+.page-header {
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.page-title {
+  line-height: 1.2;
+}
+
+.page-actions {
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.search-card {
+  margin-bottom: 14px;
+  overflow: hidden;
+  border-radius: 14px;
+}
+
+.search-card :deep(.ant-card-body) {
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.search-form :deep(.ant-form-item) {
+  width: 100%;
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.search-form :deep(.ant-form-item-control) {
+  flex: 1;
+  min-width: 0;
+}
+
+.search-card :deep(.ant-form-item-label) {
+  padding-bottom: 4px;
+}
+
+.search-card :deep(.ant-form-item-label > label) {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.search-card :deep(.ant-row:first-child) {
+  align-items: flex-end;
+}
+
+.search-card :deep(.ant-row) {
+  row-gap: 12px;
+}
+
+.search-card :deep(.ant-row:last-child) {
+  margin-top: 4px;
+}
+
+.search-card :deep(.ant-space) {
+  gap: 8px;
+  width: 100%;
+}
+
+.search-card :deep(.ant-form-item-control-input-content) {
+  min-width: 0;
+}
+
+.search-card :deep(.ant-form-item-control-input-content > .ant-space) {
+  width: 100%;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-card :deep(.ant-input),
+.search-card :deep(.ant-select-selector),
+.search-card :deep(.ant-input-affix-wrapper),
+.search-card :deep(.ant-btn),
+.page-actions :deep(.ant-btn) {
+  min-height: 34px;
+  font-size: 13px;
+  border-radius: 8px;
+  border-color: #d1d5db;
+  box-shadow: none;
+}
+
+.search-card :deep(.ant-input:hover),
+.search-card :deep(.ant-input-affix-wrapper:hover),
+.search-card :deep(.ant-select-selector:hover),
+.page-actions :deep(.ant-btn:hover) {
+  border-color: #9ca3af;
+}
+
+.search-card :deep(.ant-input:focus),
+.search-card :deep(.ant-input-affix-wrapper-focused),
+.search-card :deep(.ant-select-focused .ant-select-selector) {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.14);
+}
+
+.search-card :deep(.ant-select),
+.search-card :deep(.ant-input-affix-wrapper) {
+  width: 100%;
+}
+
+.search-card :deep(.ant-btn) {
+  padding-inline: 16px;
+}
+
+.search-card :deep(.ant-btn-primary),
+.page-actions :deep(.ant-btn-primary) {
+  border: none;
+  color: #fff;
+  background-image: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+}
+
+.search-card :deep(.ant-btn-primary:hover),
+.page-actions :deep(.ant-btn-primary:hover) {
+  background-color: #1d4ed8;
+}
+
+.search-card :deep(.ant-btn-default),
+.page-actions :deep(.ant-btn-default) {
+  color: #374151;
+  background: #fff;
+}
+
+.summary-row {
+  margin-bottom: 14px;
+  align-items: stretch;
+}
+
+.summary-row :deep(.ant-col) {
+  display: block;
+  min-width: 0;
+}
+
+.summary-row .summary-card {
+  width: 100%;
+}
+
+.summary-card {
+  position: relative;
+  cursor: pointer;
+  min-height: 84px;
+  overflow: hidden;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  box-shadow: 0 10px 24px -22px rgba(37, 99, 235, 0.55);
+}
+
+.summary-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, #60a5fa 0%, #818cf8 100%);
+}
+
+.summary-card::after {
+  content: '';
+  position: absolute;
+  top: -28px;
+  right: -18px;
+  width: 86px;
+  height: 86px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.18) 0%, rgba(96, 165, 250, 0) 72%);
+  pointer-events: none;
+}
+
+.summary-row :deep(.ant-col:nth-child(2)) .summary-card {
+  border-color: #fde68a;
+  background: linear-gradient(180deg, #ffffff 0%, #fffaf2 100%);
+  box-shadow: 0 10px 24px -22px rgba(245, 158, 11, 0.45);
+}
+
+.summary-row :deep(.ant-col:nth-child(2)) .summary-card::before {
+  background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.summary-row :deep(.ant-col:nth-child(2)) .summary-card::after {
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.18) 0%, rgba(251, 191, 36, 0) 72%);
+}
+
+.summary-row :deep(.ant-col:nth-child(3)) .summary-card {
+  border-color: #dcfce7;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fff9 100%);
+  box-shadow: 0 10px 24px -22px rgba(34, 197, 94, 0.5);
+}
+
+.summary-row :deep(.ant-col:nth-child(3)) .summary-card::before {
+  background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%);
+}
+
+.summary-row :deep(.ant-col:nth-child(3)) .summary-card::after {
+  background: radial-gradient(circle, rgba(74, 222, 128, 0.18) 0%, rgba(74, 222, 128, 0) 72%);
+}
+
+.summary-card :deep(.ant-card-body) {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 12px 16px 13px;
+  border-radius: 14px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.summary-primary-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.summary-title {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+  position: relative;
+  z-index: 1;
+}
+
+.summary-value-inline {
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 700;
+  color: #111827;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  position: relative;
+  z-index: 1;
+}
+
+.summary-secondary-line {
+  margin-top: 6px;
+  width: 100%;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  z-index: 1;
+}
+
+.table-card {
+  margin-bottom: 0;
+  overflow: hidden;
+  border-radius: 14px;
+}
+
+.table-card :deep(.ant-card-body) {
+  padding: 12px 16px 16px;
+  border-radius: 14px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.table-card :deep(.ant-table-thead > tr > th),
+.table-card :deep(.ant-table-tbody > tr > td) {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  line-height: 1.45;
+  border-color: #f3f4f6;
+}
+
+.table-card :deep(.ant-table-thead > tr > th) {
+  background: #fafafa;
+  color: #4b5563;
+  font-size: 13px;
+}
+
+.table-card :deep(.ant-table) {
+  min-width: 1024px;
+}
+
+.table-card :deep(.ant-table-content) {
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.table-card :deep(.ant-table-content::-webkit-scrollbar) {
+  height: 8px;
+}
+
+.table-card :deep(.ant-table-content::-webkit-scrollbar-thumb) {
+  background: rgba(156, 163, 175, 0.4);
+  border-radius: 999px;
+}
+
+.table-card :deep(.ant-table-content::-webkit-scrollbar-track) {
+  background: transparent;
+}
+
+.table-card :deep(.ant-table-pagination.ant-pagination) {
+  margin-top: 14px;
+  margin-bottom: 0;
+  gap: 8px;
+}
+
+.table-card :deep(.ant-pagination-item),
+.table-card :deep(.ant-pagination-prev),
+.table-card :deep(.ant-pagination-next),
+.table-card :deep(.ant-pagination-options-size-changer .ant-select-selector),
+.table-card :deep(.ant-pagination-options-quick-jumper input) {
+  min-height: 32px;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.table-card :deep(.ant-pagination-item-active) {
+  border-color: #93c5fd;
+  background: #f9fafb;
+}
+
+.table-card :deep(.ant-pagination-item-active a) {
+  color: #2563eb;
+}
+
+.table-card :deep(.ant-pagination-options) {
+  margin-left: 12px;
+  flex-wrap: wrap;
+}
+
+.table-card :deep(.ant-pagination-options-size-changer),
+.table-card :deep(.ant-pagination-options-quick-jumper) {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.table-card :deep(.ant-pagination-item),
+.table-card :deep(.ant-pagination-prev),
+.table-card :deep(.ant-pagination-next) {
+  margin-right: 0;
+}
+
+.table-card :deep(.ant-pagination-total-text),
+.table-card :deep(.ant-pagination-options-quick-jumper) {
+  white-space: nowrap;
+  color: #6b7280;
+}
+
+.table-card :deep(.ant-pagination-options-quick-jumper input) {
+  width: 48px;
+  text-align: center;
+}
+
+.table-card :deep(.ant-select-selector) {
+  min-width: 96px;
+}
+
+.table-card :deep(.ant-table-tbody > tr:hover > td) {
+  background: #fafcff;
+}
+
+.table-card :deep(.ant-table-thead > tr > th:first-child),
+.table-card :deep(.ant-table-tbody > tr > td:first-child) {
+  padding-left: 12px;
+}
+
+.table-card :deep(.ant-table-thead > tr > th:last-child),
+.table-card :deep(.ant-table-tbody > tr > td:last-child) {
+  padding-right: 12px;
+  min-width: 220px;
+  position: sticky;
+  right: 0;
+  background: #fff;
+}
+
+.table-card :deep(.ant-table-content table > thead > tr > th:first-child),
+.table-card :deep(.ant-table-content table > tbody > tr > td:first-child) {
+  min-width: 180px;
+}
+
+.table-card :deep(.ant-table-content table > thead > tr > th:nth-child(5)),
+.table-card :deep(.ant-table-content table > tbody > tr > td:nth-child(5)) {
+  min-width: 110px;
+}
+
+.table-card :deep(.ant-table-content table > thead > tr > th:nth-child(6)),
+.table-card :deep(.ant-table-content table > tbody > tr > td:nth-child(6)) {
+  min-width: 90px;
+}
+
+.table-card :deep(.ant-table-tbody > tr:hover > td:last-child) {
+  background: #fafcff;
+}
+
+.table-card :deep(.ant-space) {
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.table-card :deep(.ant-space-item) {
+  display: inline-flex;
+  min-width: 0;
+}
+
+.table-card :deep(.ant-btn-link) {
+  padding-inline: 4px;
+  min-height: auto;
+  font-size: 12px;
+  background: transparent;
+}
+
+.table-card :deep(.ant-btn-link:first-child) {
+  padding-left: 0;
+}
+
+.table-card :deep(.ant-btn-link:last-child) {
+  padding-right: 0;
+}
+
+.table-card :deep(.ant-btn-link:hover) {
+  background: transparent;
+}
+
+.table-card :deep(.ant-btn-link.danger) {
+  color: #ef4444;
+}
+
+.table-card :deep(.ant-btn-link.danger:hover) {
+  color: #dc2626;
+}
+
+.table-card :deep(.ant-tag) {
+  margin-inline-end: 0;
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.table-card :deep(.ant-table-tbody > tr > td .product-info),
+.table-card :deep(.ant-table-tbody > tr > td .product-details) {
+  width: 100%;
+  min-width: 0;
+}
+
+.table-card :deep(.ant-table-tbody > tr > td .product-name),
+.table-card :deep(.ant-table-tbody > tr > td .product-code) {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table-card :deep(.ant-table-tbody > tr > td .price) {
+  color: #ef4444;
+  font-weight: 500;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .price {

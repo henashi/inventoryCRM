@@ -69,6 +69,22 @@ type FocusOverlay = {
   lineColor: string
 }
 
+type PieSeriesSnapshot = {
+  center?: Array<string | number>
+  radius?: Array<string | number> | string | number
+}
+
+type PieChartEventParams = {
+  componentType?: string
+  seriesType?: string
+  dataIndex?: number
+  name?: string | number
+  value?: unknown
+  percent?: number | string
+  color?: unknown
+  event?: unknown
+}
+
 const props = withDefaults(defineProps<Props>(), {
   data: () => ({ labels: [], datasets: [] }),
   options: () => ({}),
@@ -90,9 +106,9 @@ const textMeasureCanvas = document.createElement('canvas')
 const textMeasureContext = textMeasureCanvas.getContext('2d')
 
 const getDatasetColors = () => {
-  const dataset = props.data.datasets[0] || { backgroundColor: [] }
+  const dataset = props.data.datasets[0]
 
-  return dataset.backgroundColor || [
+  return dataset?.backgroundColor || [
     '#1890ff', '#52c41a', '#faad14', '#f5222d',
     '#722ed1', '#13c2c2', '#eb2f96', '#fa8c16',
   ]
@@ -124,12 +140,12 @@ const updateViewportSize = () => {
 }
 
 const getSeriesData = () => {
-  const dataset = props.data.datasets[0] || { data: [] }
+  const dataset = props.data.datasets[0]
   const colors = getDatasetColors()
 
   return props.data.labels.map((label, index) => ({
     name: label,
-    value: dataset.data[index] || 0,
+    value: dataset?.data[index] || 0,
     itemStyle: {
       color: colors[index % colors.length],
     },
@@ -175,7 +191,8 @@ const getChartGeometry = () => {
   }
 
   const rect = chartRef.value.getBoundingClientRect()
-  const option = chartInstance?.getOption()?.series?.[0] as any
+  const series = chartInstance?.getOption()?.series
+  const option = Array.isArray(series) ? series[0] as PieSeriesSnapshot | undefined : undefined
   const center = Array.isArray(option?.center) ? option.center : ['50%', '50%']
   const radius = Array.isArray(option?.radius) ? option.radius[1] ?? option.radius[0] : option?.radius ?? '68%'
   const centerX = typeof center[0] === 'string' && center[0].endsWith('%')
@@ -197,33 +214,16 @@ const getChartGeometry = () => {
   }
 }
 
-const updateFocusOverlay = async (params: any) => {
-  if (!chartRef.value || !chartInstance || params?.componentType !== 'series' || params?.seriesType !== 'pie') {
-    return
-  }
-
-  activeDataIndex.value = typeof params.dataIndex === 'number' ? params.dataIndex : null
-  updateChart()
-
-  const text = `${params.name}: ${params.value || 0} (${formatPercent(Number(params.percent) || 0)}%)`
-  focusOverlay.value = {
-    text,
-    textX: 0,
-    textY: 0,
-    textAnchor: 'start',
-    linePoints: '',
-    lineColor: params.color || '#111827',
-  }
-
-  await nextTick()
-
+const syncFocusOverlay = (params: PieChartEventParams, text: string, index: number | null) => {
   const geometry = getChartGeometry()
-  if (!geometry) {
+  if (!geometry || activeDataIndex.value !== index) {
     return
   }
 
   const { rect, centerX, centerY, outerRadius } = geometry
-  const zrEvent = params.event || {}
+  const zrEvent = typeof params.event === 'object' && params.event !== null
+    ? params.event as { offsetX?: number; offsetY?: number }
+    : {}
   const offsetX = typeof zrEvent.offsetX === 'number' ? zrEvent.offsetX : rect.width * 0.5
   const offsetY = typeof zrEvent.offsetY === 'number' ? zrEvent.offsetY : rect.height * 0.5
   const anchorX = rect.left + offsetX
@@ -272,8 +272,33 @@ const updateFocusOverlay = async (params: any) => {
     textY,
     textAnchor,
     linePoints,
-    lineColor: params.color || '#111827',
+    lineColor: typeof params.color === 'string' ? params.color : '#111827',
   }
+}
+
+const updateFocusOverlay = (params: PieChartEventParams) => {
+  if (!chartRef.value || !chartInstance || params.componentType !== 'series' || params.seriesType !== 'pie') {
+    return
+  }
+
+  const lineColor = typeof params.color === 'string' ? params.color : '#111827'
+  const nextActiveIndex = typeof params.dataIndex === 'number' ? params.dataIndex : null
+  activeDataIndex.value = nextActiveIndex
+  updateChart()
+
+  const text = `${params.name || ''}: ${params.value || 0} (${formatPercent(Number(params.percent) || 0)}%)`
+  focusOverlay.value = {
+    text,
+    textX: 0,
+    textY: 0,
+    textAnchor: 'start',
+    linePoints: '',
+    lineColor,
+  }
+
+  void nextTick(() => {
+    syncFocusOverlay(params, text, nextActiveIndex)
+  })
 }
 
 const bindChartEvents = () => {
@@ -297,8 +322,8 @@ const updateChart = () => {
     return
   }
 
-  const dataset = props.data.datasets[0] || { radius: ['50%', '68%'] }
-  const defaultRadius = dataset.radius || ['50%', '68%']
+  const dataset = props.data.datasets[0]
+  const defaultRadius = dataset?.radius || ['50%', '68%']
 
   const options = {
     tooltip: {

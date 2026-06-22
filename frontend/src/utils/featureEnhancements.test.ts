@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildCategoryFilterState,
+  buildConfigCategoryStats,
+  buildCustomerDetailBackTarget,
   buildCustomerImportMeta,
   buildDashboardStats,
+  buildDashboardTrendChart,
   buildGiftDistribution,
+  buildOperationLogSummary,
   buildProductImportMeta,
   buildProductListSummary,
+  resolveGiftLogFilterState,
   resolveProductListParams,
 } from './featureEnhancements'
 
@@ -113,5 +118,86 @@ describe('featureEnhancements', () => {
     expect(resolveProductListParams({ keyword: '', category: undefined }, 'outOfStock')).toEqual({
       stockStatus: 'outOfStock',
     })
+  })
+
+  it('resolves customer detail back target from source hints', () => {
+    expect(buildCustomerDetailBackTarget({ from: 'dashboard' })).toBe('/dashboard')
+    expect(buildCustomerDetailBackTarget({ from: 'customer-detail', customerId: '12' })).toBe('/customers/12')
+    expect(buildCustomerDetailBackTarget({})).toBe('/customers')
+  })
+
+  it('turns route query into explicit gift log customer context state', () => {
+    expect(resolveGiftLogFilterState({ customerId: '7', customerName: '张三', from: 'customer-detail' })).toEqual({
+      customerId: 7,
+      customerName: '张三',
+      hasCustomerContext: true,
+      contextLabel: '客户“张三”',
+      source: 'customer-detail',
+    })
+
+    expect(resolveGiftLogFilterState({ customerId: '0', customerName: '   ' })).toEqual({
+      customerId: undefined,
+      customerName: '',
+      hasCustomerContext: false,
+      contextLabel: '',
+      source: 'standalone',
+    })
+  })
+
+  it('builds live dashboard trend data from real customer and gift log records', () => {
+    const chart = buildDashboardTrendChart({
+      period: 'week',
+      now: '2026-06-22T12:00:00',
+      customers: [
+        { registeredAt: '2026-06-22T09:00:00' },
+        { registeredAt: '2026-06-21T10:00:00' },
+        { registeredAt: '2026-06-21T11:00:00' },
+      ],
+      giftLogs: [
+        { createdTime: '2026-06-22T13:00:00' },
+        { createdTime: '2026-06-20T13:00:00' },
+      ],
+    })
+
+    expect(chart.labels).toHaveLength(7)
+    expect(chart.datasets[0]).toEqual(expect.objectContaining({ label: '新增客户' }))
+    expect(chart.datasets[1]).toEqual(expect.objectContaining({ label: '礼品发放' }))
+    expect(chart.datasets[0]!.data.at(-2)).toBe(2)
+    expect(chart.datasets[0]!.data.at(-1)).toBe(1)
+    expect(chart.datasets[1]!.data.at(-3)).toBe(1)
+    expect(chart.datasets[1]!.data.at(-1)).toBe(1)
+  })
+
+  it('summarizes recent operation logs for admin overview', () => {
+    const summary = buildOperationLogSummary([
+      { module: '客户管理', status: 1, operator: 'Alice', executionTime: 120, operationTime: '2026-06-22T09:00:00' },
+      { module: '库存管理', status: 0, operator: 'Bob', executionTime: 240, operationTime: '2026-06-22T10:00:00' },
+      { module: '库存管理', status: 1, operator: 'Carol', executionTime: 60, operationTime: '2026-06-22T08:00:00' },
+    ])
+
+    expect(summary).toEqual({
+      total: 3,
+      successCount: 2,
+      failureCount: 1,
+      successRate: 66.7,
+      avgExecutionTime: 140,
+      latestModule: '库存管理',
+      latestOperator: 'Bob',
+    })
+  })
+
+  it('builds config category stats from current configuration records', () => {
+    const stats = buildConfigCategoryStats([
+      { groupCode: 'gift', groupName: '礼品规则', status: 'ACTIVE', updatedTime: '2026-06-20T09:00:00' },
+      { groupCode: 'gift', groupName: '礼品规则', status: 'PAUSED', updatedTime: '2026-06-21T09:00:00' },
+      { configGroup: 'security', configKey: 'jwt.expire', updatedAt: '2026-06-22T09:00:00' },
+      { configGroup: 'security', configKey: 'refresh.expire', updatedAt: '2026-06-18T09:00:00' },
+      { configGroup: 'security', configKey: 'password.rule', updatedAt: '2026-06-19T09:00:00' },
+    ])
+
+    expect(stats).toEqual([
+      expect.objectContaining({ key: 'security', label: 'security', count: 3, activeCount: 3, latestUpdatedAt: '2026-06-22T09:00:00' }),
+      expect.objectContaining({ key: 'gift', label: '礼品规则', count: 2, activeCount: 1, latestUpdatedAt: '2026-06-21T09:00:00' }),
+    ])
   })
 })

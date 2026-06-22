@@ -1,77 +1,72 @@
-// frontend/src/api/product.ts
 import request from './request'
+import { mapPageContent, normalizeProduct } from './contracts'
 import type {
+  PageParams,
+  PageResult,
   Product,
   ProductCreateDTO,
   ProductUpdateDTO,
-  PageParams,
-  PageResult
 } from '@/types'
 
 export const productApi = {
-  // 获取商品列表
-  getProducts: (params?: PageParams) =>
-    request.get<PageResult<Product>>('/products', { params }),
+  getProducts: async (params?: PageParams) => {
+    const page = await request.get<PageResult<Product>>('/products', { params })
+    return mapPageContent(page, normalizeProduct)
+  },
 
-  // 获取商品详情
-  getProduct: (id: number) =>
-    request.get<Product>(`/products/${id}`),
+  getProduct: async (id: number) => normalizeProduct(
+    await request.get<Product>(`/products/${id}`),
+  ),
 
-  // 创建商品
-  createProduct: (data: ProductCreateDTO) =>
-    request.post<Product>('/products', data),
+  createProduct: async (data: ProductCreateDTO) => normalizeProduct(
+    await request.post<Product>('/products', data),
+  ),
 
-  // 更新商品
-  updateProduct: (id: number, data: Partial<ProductUpdateDTO>) =>
-    request.patch<Product>(`/products/${id}`, data),
+  updateProduct: async (id: number, data: Partial<ProductUpdateDTO>) => normalizeProduct(
+    await request.patch<Product>(`/products/${id}`, data),
+  ),
 
-  // 删除商品
   deleteProduct: (id: number) =>
     request.delete(`/products/${id}`),
 
-  // 搜索商品
   searchProducts: (keyword: string) =>
     request.get<Product[]>('/products/search', {
-      params: { keyword }
+      params: { keyword },
     }),
 
-  // 更新库存
-  updateStock: (id: number, quantity: number, type: 'IN' | 'OUT') =>
-    request.patch<Product>(`/products/${id}/stock`, { quantity, type }),
+  updateStock: async (id: number, quantity: number, type: 'IN' | 'OUT') => normalizeProduct(
+    await request.patch<Product>(`/products/${id}/stock`, { quantity, type }),
+  ),
 
-  // 导出商品
-  exportProducts: (params?: any) =>
+  exportProducts: (params?: Record<string, unknown>) =>
     request.get('/products/export', {
       params,
-      responseType: 'blob'
+      responseType: 'blob',
     }),
 
-  // 获取导入模板信息
   getImportTemplate: () =>
     request.get('/products/import/template'),
 
-  // 导入商品
   importProducts: (file: File) => {
     const formData = new FormData()
     formData.append('file', file)
     return request.post('/products/import', formData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
-      }
+        'Content-Type': 'multipart/form-data',
+      },
     })
   },
 
-  // 获取库存统计
   getStockStatistics: () =>
     request.get('/products/stock/statistics'),
 
-  // 获取商品分类
   getCategories: () =>
     request.get<string[]>('/products/categories'),
 
-  // 获取低库存商品
-  getLowStockProducts: (threshold?: number) =>
-    request.get<Product[]>('/products/low-stock', {
-      params: { threshold }
+  getLowStockProducts: async (threshold?: number) => {
+    const products = await request.get<Product[]>('/products/low-stock', {
+      params: { threshold },
     })
+    return products.map(normalizeProduct)
+  },
 }

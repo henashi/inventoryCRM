@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 
-const componentSource = readFileSync(resolve(__dirname, 'InventoryOverview.vue'), 'utf-8')
+const componentSource = readFileSync(new URL('./InventoryOverview.vue', import.meta.url), 'utf-8')
 
 describe('InventoryOverview layout', () => {
   it('keeps all five header actions in one responsive group with 商品入库 directly before 返回仪表盘', () => {

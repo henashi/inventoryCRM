@@ -21,6 +21,44 @@
       </div>
     </div>
 
+    <a-card class="filter-card">
+      <a-form layout="inline">
+        <a-form-item label="客户筛选">
+          <a-select
+            v-model:value="giftLogFilter.customerId"
+            placeholder="全部客户"
+            allow-clear
+            show-search
+            style="width: 280px"
+            :filter-option="filterCustomerOption"
+            @change="handleCustomerFilterChange"
+          >
+            <a-select-option v-for="customer in customerOptions" :key="customer.id" :value="customer.id">
+              {{ customer.name }} {{ customer.phone }}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-space>
+            <a-button type="primary" @click="handleApplyFilters">应用筛选</a-button>
+            <a-button @click="handleResetFilters">清空筛选</a-button>
+            <a-tag v-if="routeCustomerContext.hasCustomerContext" color="blue">
+              来自客户上下文
+            </a-tag>
+          </a-space>
+        </a-form-item>
+      </a-form>
+    </a-card>
+
+    <a-alert
+      v-if="activeCustomerFilterLabel"
+      class="page-alert"
+      type="info"
+      show-icon
+      :message="`当前仅展示${activeCustomerFilterLabel}的礼品记录`"
+      description="筛选已收口到页面状态，后续可在此继续扩展更多显式筛选条件。"
+    />
+
     <a-alert
       v-if="!canDeleteCurrentGiftLog"
       class="page-alert"
@@ -124,7 +162,7 @@
             allow-clear
             show-search
             :filter-option="filterCustomerOption"
-            :disabled="modelType === 'edit'"
+            :disabled="modelType === 'edit' || !!activeCustomerId"
           >
             <a-select-option v-for="customer in customerOptions" :key="customer.id" :value="customer.id">
               {{ customer.name }} {{ customer.phone }}
@@ -163,28 +201,30 @@
 <script lang="ts" setup>
 import dayjs from 'dayjs'
 import { computed, onMounted, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { Modal, message } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
 import { GiftOutlined, LeftOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import { useAuthStore } from '@/stores/auth'
-import { useCustomerStore } from '@/stores/customer'
+import { customerApi } from '@/api/customer'
 import { useGiftLogStore } from '@/stores/giftLog'
 import { useGiftStore } from '@/stores/gift'
 import { canDeleteGiftLog } from '@/router/accessControl'
-import type { GiftLogDTO, PageParams } from '@/types'
+import type { Customer, GiftLogDTO, PageParams } from '@/types'
 import { buildServerPageParams, toServerPage } from '@/utils/pagination'
+import { resolveGiftLogFilterState } from '@/utils/featureEnhancements'
 
 type GiftLogFormState = GiftLogDTO & {
   limitEnabled: boolean
 }
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const giftStore = useGiftStore()
-const customerStore = useCustomerStore()
 const giftLogStore = useGiftLogStore()
 const isLoading = ref(false)
+const customers = ref<Customer[]>([])
 const modalVisible = ref(false)
 const formRef = ref<FormInstance>()
 const modelType = ref<'add' | 'edit'>('add')
@@ -193,6 +233,12 @@ const dataSource = computed(() => giftLogStore.giftLogList)
 const detailVisible = ref(false)
 const detailLoading = ref(false)
 const detailGiftLog = ref<GiftLogDTO | null>(null)
+const routeCustomerContext = resolveGiftLogFilterState(route.query as Record<string, unknown>)
+
+const giftLogFilter = reactive({
+  customerId: routeCustomerContext.customerId,
+  customerName: routeCustomerContext.customerName,
+})
 
 const pagination = computed(() => ({
   current: giftLogStore.pagination.page,
@@ -243,6 +289,8 @@ const rules = {
   issueNotes: [{ max: 50, message: '处理说明不能超过50字', trigger: 'blur' }],
 }
 
+const activeCustomerId = computed(() => giftLogFilter.customerId)
+const activeCustomerFilterLabel = computed(() => giftLogFilter.customerName ? `客户“${giftLogFilter.customerName}”` : '')
 const canDeleteCurrentGiftLog = computed(() => canDeleteGiftLog(authStore.userRole))
 
 const getStatusText = (status: GiftLogDTO['status']) => {
@@ -283,9 +331,21 @@ const handleRefresh = async () => {
   message.success('刷新成功')
 }
 
+const applyCustomerPreset = () => {
+  if (!activeCustomerId.value) {
+    return
+  }
+
+  Object.assign(formState, {
+    customerId: activeCustomerId.value,
+    customerName: giftLogFilter.customerName,
+  })
+}
+
 const handleAdd = () => {
   modelType.value = 'add'
   resetFormState()
+  applyCustomerPreset()
   modalVisible.value = true
 }
 
@@ -346,6 +406,21 @@ const handleDeleteGiftLog = (record: GiftLogDTO) => {
 }
 
 const handleBack = () => {
+  if (routeCustomerContext.source === 'customer-detail' && routeCustomerContext.customerId) {
+    router.push(`/customers/${routeCustomerContext.customerId}`)
+    return
+  }
+
+  if (routeCustomerContext.source === 'dashboard') {
+    router.push('/dashboard')
+    return
+  }
+
+  if (routeCustomerContext.source === 'customers') {
+    router.push('/customers')
+    return
+  }
+
   router.push('/')
 }
 
@@ -394,6 +469,7 @@ const handleModalCancel = () => {
   modalVisible.value = false
   formRef.value?.resetFields()
   resetFormState()
+  applyCustomerPreset()
 }
 
 const filterGiftOption = (input: string, option: any) => {
@@ -428,12 +504,31 @@ const formatDateTime = (dateStr?: string) => {
 }
 
 const customerOptions = computed(() => {
-  return customerStore.customers.map(customer => ({
+  return customers.value.map(customer => ({
     id: customer.id,
     name: customer.name,
     phone: customer.phone,
   }))
 })
+
+const syncFilterCustomerName = () => {
+  const matchedCustomer = customers.value.find((customer) => customer.id === giftLogFilter.customerId)
+  giftLogFilter.customerName = matchedCustomer?.name || ''
+}
+
+const handleCustomerFilterChange = () => {
+  syncFilterCustomerName()
+}
+
+const handleApplyFilters = async () => {
+  await loadGiftLogs({ page: 0, size: giftLogStore.pagination.size })
+}
+
+const handleResetFilters = async () => {
+  giftLogFilter.customerId = undefined
+  giftLogFilter.customerName = ''
+  await loadGiftLogs({ page: 0, size: giftLogStore.pagination.size })
+}
 
 const loadGiftLogs = async (params?: PageParams) => {
   try {
@@ -441,6 +536,7 @@ const loadGiftLogs = async (params?: PageParams) => {
     await giftLogStore.loadGiftLogs({
       page: params?.page ?? 0,
       size: params?.size ?? 10,
+      customerId: activeCustomerId.value,
     })
   } catch {
     message.error('加载礼品日志失败')
@@ -449,14 +545,35 @@ const loadGiftLogs = async (params?: PageParams) => {
   }
 }
 
+const loadCustomersForOptions = async () => {
+  try {
+    const response = await customerApi.getCustomers({ page: 0, size: 100 }) as unknown as { content: Customer[] }
+    customers.value = response.content || []
+  } catch {
+    customers.value = []
+  }
+}
+
 const handleTableChange = (tablePagination: { current?: number; pageSize?: number }) => {
   void loadGiftLogs(buildServerPageParams(tablePagination, giftLogStore.pagination.size))
 }
 
-onMounted(() => {
-  void loadGiftLogs()
-  void giftStore.loadGifts({ page: 0, size: 100 })
-  void customerStore.loadCustomers({ page: 0, size: 100 })
+onMounted(async () => {
+  await Promise.allSettled([
+    loadGiftLogs(),
+    giftStore.loadGifts({ page: 0, size: 100 }),
+    loadCustomersForOptions(),
+  ])
+
+  syncFilterCustomerName()
+  applyCustomerPreset()
+
+  if (route.query.openCreate === '1') {
+    handleAdd()
+    const nextQuery = { ...route.query }
+    delete nextQuery.openCreate
+    await router.replace({ query: nextQuery })
+  }
 })
 </script>
 
@@ -482,6 +599,7 @@ onMounted(() => {
   color: #8c8c8c;
 }
 
+.filter-card,
 .page-alert {
   margin-bottom: 16px;
 }

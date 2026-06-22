@@ -58,7 +58,7 @@
 
       <a-row :gutter="[16, 16]" class="row-card mb-6">
         <a-col :xs="24" :lg="16">
-          <a-card title="客户增长趋势" class="h-full">
+          <a-card title="客户增长趋势" class="h-full" :loading="loading.trend">
             <template #extra>
               <a-select v-model:value="chartPeriod" size="small" style="width: 100px">
                 <a-select-option value="week">本周</a-select-option>
@@ -110,7 +110,7 @@
                     </template>
                     <template #description>
                       <div class="text-gray-500 text-sm">
-                        {{ item.phone }} • {{ formatDate(item.createdAt) }}
+                        {{ item.phone }} • {{ formatDate(item.createdAt || item.registeredAt) }}
                       </div>
                     </template>
                   </a-list-item-meta>
@@ -195,7 +195,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
 import {
@@ -216,9 +216,10 @@ import dayjs from 'dayjs'
 import PieChart from '@/components/charts/PieChart.vue'
 import LineChart from '@/components/charts/LineChart.vue'
 import { customerApi } from '@/api/customer'
+import { giftLogApi } from '@/api/giftLog'
 import { productApi } from '@/api/product'
 import { useAuthStore } from '@/stores/auth'
-import type { Customer, PageResult, Product } from '@/types'
+import type { Customer, GiftLogDTO, PageResult, Product } from '@/types'
 import {
   filterDashboardStats,
   filterQuickActions,
@@ -227,9 +228,11 @@ import {
 } from '@/router/accessControl'
 import {
   buildDashboardStats,
+  buildDashboardTrendChart,
   buildGiftDistribution,
   type CustomerStatistics,
   type ProductStockStatistics,
+  type TrendPeriod,
 } from '@/utils/featureEnhancements'
 
 type DashboardStat = {
@@ -253,11 +256,12 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const currentDate = ref(dayjs().format('YYYY年MM月DD日'))
-const chartPeriod = ref<'week' | 'month' | 'quarter'>('month')
+const chartPeriod = ref<TrendPeriod>('month')
 const loading = ref({
   customers: false,
   inventory: false,
   stats: false,
+  trend: false,
 })
 
 const customerStats = ref<CustomerStatistics>({
@@ -276,26 +280,14 @@ const stockStats = ref<ProductStockStatistics>({
 })
 const recentCustomers = ref<Customer[]>([])
 const lowStockProducts = ref<Product[]>([])
+const trendCustomers = ref<Customer[]>([])
+const trendGiftLogs = ref<GiftLogDTO[]>([])
 
-const chartData = ref({
-  labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月'],
-  datasets: [
-    {
-      label: '新增客户',
-      data: [65, 59, 80, 81, 56, 55, 40],
-      borderColor: '#1890ff',
-      backgroundColor: 'rgba(24, 144, 255, 0.1)',
-      tension: 0.4,
-    },
-    {
-      label: '礼品发放',
-      data: [28, 48, 40, 19, 86, 27, 90],
-      borderColor: '#52c41a',
-      backgroundColor: 'rgba(82, 196, 26, 0.1)',
-      tension: 0.4,
-    },
-  ],
-})
+const chartData = computed(() => buildDashboardTrendChart({
+  period: chartPeriod.value,
+  customers: trendCustomers.value,
+  giftLogs: trendGiftLogs.value,
+}))
 
 const giftLevelColors: Record<number, string> = {
   1: 'blue',
@@ -395,6 +387,17 @@ const visibleQuickActions = computed(() => filterQuickActions(quickActions.value
 const showCustomerSection = computed(() => shouldShowCustomerSection(userRole.value))
 const showInventorySection = computed(() => shouldShowInventorySection(userRole.value))
 
+const resolveTrendRequestSize = (period: TrendPeriod) => {
+  switch (period) {
+    case 'week':
+      return 30
+    case 'quarter':
+      return 240
+    default:
+      return 120
+  }
+}
+
 const handleLogout = async () => {
   await authStore.logout()
   router.replace('/login')
@@ -428,7 +431,10 @@ const getStockColor = (product: Product) => {
 }
 
 const viewCustomer = (customer: Customer) => {
-  router.push(`/customers/${customer.id}`)
+  router.push({
+    path: `/customers/${customer.id}`,
+    query: { from: 'dashboard' },
+  })
 }
 
 const viewLowStockProduct = (product: Product) => {
@@ -455,22 +461,20 @@ const callCustomer = (phone: string) => {
 const handleQuickAction = (action: QuickAction) => {
   switch (action.action) {
     case 'addCustomer':
-      router.push('/customers')
+      router.push({ path: '/customers', query: { openCreate: '1' } })
       break
     case 'addInventory':
       router.push({ path: '/inventory', query: { action: 'in' } })
       break
     case 'distributeGift':
-      router.push('/gift-logs')
+      router.push({ path: '/gift-logs', query: { openCreate: '1', from: 'dashboard' } })
       break
     case 'exportReport':
       void exportReport()
       break
     case 'systemSettings':
-      router.push('/data-dicts')
+      router.push('/admin')
       break
-    default:
-      message.info('当前入口暂未开放')
   }
 }
 
@@ -514,7 +518,28 @@ const emptyCustomerPage: PageResult<Customer> = {
   empty: true,
 }
 
-const loadDashboardData = async () => {
+const loadTrendData = async () => {
+  try {
+    loading.value.trend = true
+    const size = resolveTrendRequestSize(chartPeriod.value)
+
+    const [customersRes, giftLogsRes] = await Promise.all([
+      customerApi.getCustomers({ page: 0, size, sort: 'registeredAt', direction: 'desc' }) as unknown as Promise<PageResult<Customer>>,
+      giftLogApi.loadGiftLogs({ page: 0, size }) as unknown as Promise<PageResult<GiftLogDTO>>,
+    ])
+
+    trendCustomers.value = customersRes.content || []
+    trendGiftLogs.value = giftLogsRes.content || []
+  } catch {
+    trendCustomers.value = []
+    trendGiftLogs.value = []
+    message.warning('趋势图数据暂未加载，已保留其他看板数据')
+  } finally {
+    loading.value.trend = false
+  }
+}
+
+const loadDashboardOverview = async () => {
   try {
     loading.value.stats = true
     loading.value.customers = showCustomerSection.value
@@ -556,6 +581,10 @@ const loadDashboardData = async () => {
   }
 }
 
+const loadDashboardData = async () => {
+  await Promise.all([loadDashboardOverview(), loadTrendData()])
+}
+
 let refreshInterval: ReturnType<typeof setInterval> | undefined
 
 onMounted(() => {
@@ -563,6 +592,10 @@ onMounted(() => {
   refreshInterval = setInterval(() => {
     void loadDashboardData()
   }, 5 * 60 * 1000)
+})
+
+watch(chartPeriod, () => {
+  void loadTrendData()
 })
 
 onUnmounted(() => {

@@ -1,27 +1,22 @@
 import request from './request'
+import { mapPageContent, normalizeDataDict, sanitizeDataDictPayload } from './contracts'
 import type { DataDict, DataDictCreateDTO, DataDictUpdateDTO, PageResult } from '@/types'
 
 export const dataDictApi = {
-
-  // 获取配置列表
-  loadDataDicts: (params?: any) => {
-    console.log('API加载配置数据，参数:', params)
-    return request.get<PageResult<DataDict>>('/data-dict', { params })
+  loadDataDicts: async (params?: Record<string, unknown>) => {
+    const page = await request.get<PageResult<DataDict>>('/data-dict', { params })
+    return mapPageContent(page, normalizeDataDict)
   },
 
-  // 获取配置详情
-  getDataDict: (id: number) => request.get<DataDict>(`/data-dict/${id}`),
+  getDataDict: async (id: number) => normalizeDataDict(
+    await request.get<DataDict>(`/data-dict/${id}`),
+  ),
 
-  // 新增配置
-  createDataDict: (data: DataDictCreateDTO) => request.post('/data-dict', data),
+  createDataDict: (data: DataDictCreateDTO) => request.post('/data-dict', sanitizeDataDictPayload(data)),
 
-  // 更新配置
-  updateDataDict: (id: number, data: DataDictUpdateDTO) => request.patch(`/data-dict/${id}`, data),
+  updateDataDict: (id: number, data: DataDictUpdateDTO) => request.patch(`/data-dict/${id}`, sanitizeDataDictPayload(data)),
 
-  // 生失效配置
   updateDataDictStatus: (id: number, enable: boolean) => request.patch(`/data-dict/status/${id}/${enable}`),
 
-  // 删除配置
   deleteDataDict: (id: number) => request.delete(`/data-dict/${id}`),
-
 }
