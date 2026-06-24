@@ -15,6 +15,12 @@
           </template>
           导入客户
         </a-button>
+        <a-button @click="goToAIScoring">
+          <template #icon>
+            <bulb-outlined />
+          </template>
+          AI 评分
+        </a-button>
         <a-button @click="handleExport" :loading="exportLoading">
           <template #icon>
             <export-outlined />
@@ -565,6 +571,7 @@ import {
   PlusOutlined,
   ExportOutlined,
   ImportOutlined,
+  BulbOutlined,
   ReloadOutlined,
   StopOutlined,
   CheckOutlined,
@@ -1126,6 +1133,10 @@ const handleBatchDelete = () => {
 
 const handleBack = () => {
   router.push('/')
+}
+
+const goToAIScoring = () => {
+  router.push('/ai/customers/scores')
 }
 
 const clearSelection = () => {

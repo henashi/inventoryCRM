@@ -559,6 +559,99 @@ export interface InventoryLogExportConfig {
   fileName?: string
 }
 
+// ===== AI 预测相关类型 =====
+
+/** 每日出库记录 */
+export interface DailyOutRecord {
+  date: string
+  quantity: number
+}
+
+/** 商品预测结果 */
+export interface StockPrediction {
+  productId: number
+  productCode: string
+  productName: string
+  category?: string
+  unit: string
+  currentStock: number
+  safeStock: number
+  avgDailyOut7d: number
+  avgDailyOut30d: number
+  estimatedDaysToEmpty: number
+  estimatedDaysToSafe: number
+  suggestedRestockQty: number
+  alertLevel: 'DANGER' | 'WARNING' | 'NORMAL'
+  alertReason?: string
+  /** OLS 回归斜率（>0 表示出库加速） */
+  slope?: number
+  /** OLS 回归 R²（拟合优度 0~1） */
+  rSquared?: number
+  /** 趋势方向: UP / DOWN / STABLE */
+  trendDirection?: string
+  dailyOutRecords: DailyOutRecord[]
+}
+
+/** 库存预警信息 */
+export interface StockAlert {
+  productId: number
+  productCode: string
+  productName: string
+  currentStock: number
+  safeStock: number
+  avgDailyOut: number
+  estimatedDaysToEmpty: number
+  suggestedRestockQty: number
+  alertLevel: 'DANGER' | 'WARNING'
+  alertReason: string
+}
+
+/** 预测概览统计 */
+export interface PredictionSummary {
+  totalPredicted: number
+  dangerCount: number
+  warningCount: number
+  normalCount: number
+  totalSuggestedRestockQty: number
+  executionTimeMs: number
+}
+
+/** 手动触发预测结果 */
+export interface AiRunResult {
+  success: boolean
+  executionTimeMs: number
+  totalPredicted: number
+  dangerCount: number
+  warningCount: number
+}
+
+// ===== 客户评分 & 礼品推荐类型 =====
+
+/** 客户评分结果（含六维雷达） */
+export interface CustomerScore {
+  customerId: number
+  customerName: string
+  phone: string
+  giftLevel: number
+  totalScore: number
+  segment: 'HIGH_VALUE' | 'GROWING' | 'INACTIVE'
+  dimensionScores: Record<string, number>
+  isBirthdaySoon: boolean
+  birthday?: string
+  daysToBirthday?: number
+  status: string
+}
+
+/** 礼品推荐结果 */
+export interface GiftRecommendation {
+  giftId: number
+  giftName: string
+  giftCode: string
+  giftType: string
+  matchScore: number
+  reason: string
+}
+
 // 类型守卫函数
 export function isInventoryLog(obj: any): obj is InventoryLog {
   return obj && typeof obj === 'object' && 'id' in obj && 'productId' in obj && 'logType' in obj

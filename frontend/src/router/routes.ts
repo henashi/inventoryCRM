@@ -47,6 +47,18 @@ export const appRoutes: RouteRecordRaw[] = [
   },
   ...inventoryModuleRoutes,
   {
+    path: '/ai/customers/scores',
+    name: 'CustomerScoring',
+    component: () => import('../views/customer/CustomerScoring.vue'),
+    meta: { requiresAuth: true, title: 'AI 客户评分', roles: getFeatureRoles('ai') }
+  },
+  {
+    path: '/ai/customers/gift-recommendations',
+    name: 'GiftRecommendation',
+    component: () => import('../views/gift/GiftRecommendation.vue'),
+    meta: { requiresAuth: true, title: 'AI 礼品推荐', roles: getFeatureRoles('ai') }
+  },
+  {
     path: '/gifts',
     name: 'GiftList',
     component: () => import('../views/gift/GiftList.vue'),
