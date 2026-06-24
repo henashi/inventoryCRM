@@ -15,6 +15,12 @@
           </template>
           导入客户
         </a-button>
+        <a-button @click="goToAIScoring">
+          <template #icon>
+            <bulb-outlined />
+          </template>
+          AI 评分
+        </a-button>
         <a-button @click="handleExport" :loading="exportLoading">
           <template #icon>
             <export-outlined />
@@ -38,7 +44,7 @@
     </div>
 
     <a-card class="search-card">
-      <a-form layout="inline" :model="searchForm" @finish="handleSearch">
+      <a-form class="search-form" layout="inline" :model="searchForm" @finish="handleSearch">
         <a-row :gutter="[16, 16]" style="width: 100%">
           <a-col :xs="24" :sm="12" :md="8" :lg="6">
             <a-form-item label="关键词">
@@ -109,9 +115,11 @@
     <a-row :gutter="[16, 16]" class="stats-row">
       <a-col v-for="card in customerStatCards" :key="card.key" :xs="24" :sm="12" :lg="6">
         <a-card class="stats-card" :loading="statsLoading">
-          <div class="stats-label">{{ card.label }}</div>
-          <div class="stats-value">{{ card.value }}</div>
-          <div class="stats-helper">{{ card.helper }}</div>
+          <div class="stats-primary-line">
+            <span class="stats-title">{{ card.label }}</span>
+            <span class="stats-value-inline">{{ card.value }}</span>
+          </div>
+          <div class="stats-secondary-line">{{ card.helper }}</div>
         </a-card>
       </a-col>
     </a-row>
@@ -125,6 +133,7 @@
         :row-selection="rowSelection"
         row-key="id"
         @change="handleTableChange"
+        size="middle"
         bordered
       >
         <template #bodyCell="{ column, record }">
@@ -550,7 +559,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import {
   message,
   Modal,
@@ -562,6 +571,7 @@ import {
   PlusOutlined,
   ExportOutlined,
   ImportOutlined,
+  BulbOutlined,
   ReloadOutlined,
   StopOutlined,
   CheckOutlined,
@@ -578,6 +588,7 @@ import {
 } from '@/utils/featureEnhancements'
 
 const router = useRouter()
+const route = useRoute()
 const customerStore = useCustomerStore()
 const formRef = ref<FormInstance>()
 const referrerList = ref<Customer[]>([])
@@ -901,8 +912,12 @@ const handleRefresh = async () => {
 }
 
 const handleView = (record: Customer) => {
-  currentCustomer.value = record
-  drawerVisible.value = true
+  if (!record.id) {
+    message.warning('当前客户缺少详情标识，无法打开详情页')
+    return
+  }
+
+  router.push(`/customers/${record.id}`)
 }
 
 const handleEdit = async (record: Customer) => {
@@ -1120,6 +1135,10 @@ const handleBack = () => {
   router.push('/')
 }
 
+const goToAIScoring = () => {
+  router.push('/ai/customers/scores')
+}
+
 const clearSelection = () => {
   selectedRowKeys.value = []
 }
@@ -1254,6 +1273,13 @@ const handleReferrerFocus = async () => {
 
 onMounted(async () => {
   await Promise.all([loadCustomers(), loadCustomerStatistics()])
+
+  if (route.query.openCreate === '1') {
+    showAddModal()
+    const nextQuery = { ...route.query }
+    delete nextQuery.openCreate
+    await router.replace({ query: nextQuery })
+  }
 })
 </script>
 
@@ -1266,13 +1292,15 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+  gap: 12px;
 }
 
 .page-title {
   font-size: 20px;
   font-weight: 600;
   color: #333;
+  line-height: 1.2;
   margin: 0;
 }
 
@@ -1280,6 +1308,8 @@ onMounted(async () => {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .add-btn {
@@ -1293,30 +1323,167 @@ onMounted(async () => {
   margin-bottom: 16px;
 }
 
-.stats-card {
-  min-height: 120px;
+.search-card :deep(.ant-card-body) {
+  padding: 16px 20px;
 }
 
-.stats-label {
-  color: #666;
+.search-form :deep(.ant-form-item) {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.search-form :deep(.ant-form-item-control) {
+  flex: 1;
+  min-width: 0;
+}
+
+.search-card :deep(.ant-form-item-label > label) {
+  color: #6b7280;
   font-size: 13px;
 }
 
-.stats-value {
-  margin-top: 8px;
-  font-size: 28px;
-  font-weight: 700;
+.search-card :deep(.ant-input),
+.search-card :deep(.ant-picker),
+.search-card :deep(.ant-select-selector),
+.search-card :deep(.ant-btn),
+.page-actions :deep(.ant-btn) {
+  min-height: 34px;
+  font-size: 13px;
+  border-radius: 8px;
 }
 
-.stats-helper {
-  margin-top: 8px;
-  color: #999;
+.table-card :deep(.ant-card-body) {
+  padding: 12px 16px 16px;
+}
+
+.table-card :deep(.ant-table-thead > tr > th),
+.table-card :deep(.ant-table-tbody > tr > td) {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.table-card :deep(.ant-table-pagination.ant-pagination) {
+  margin-bottom: 0;
+}
+
+.table-card :deep(.ant-table) {
+  min-width: 1080px;
+}
+
+.stats-card {
+  position: relative;
+  min-height: 84px;
+  overflow: hidden;
+  border: 1px solid #dbeafe;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  box-shadow: 0 10px 24px -22px rgba(37, 99, 235, 0.55);
+}
+
+.stats-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, #60a5fa 0%, #818cf8 100%);
+}
+
+.stats-card::after {
+  content: '';
+  position: absolute;
+  top: -28px;
+  right: -18px;
+  width: 86px;
+  height: 86px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.18) 0%, rgba(96, 165, 250, 0) 72%);
+  pointer-events: none;
+}
+
+.stats-row :deep(.ant-col:nth-child(2)) .stats-card {
+  border-color: #dcfce7;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fff9 100%);
+  box-shadow: 0 10px 24px -22px rgba(34, 197, 94, 0.5);
+}
+
+.stats-row :deep(.ant-col:nth-child(2)) .stats-card::before {
+  background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%);
+}
+
+.stats-row :deep(.ant-col:nth-child(2)) .stats-card::after {
+  background: radial-gradient(circle, rgba(74, 222, 128, 0.18) 0%, rgba(74, 222, 128, 0) 72%);
+}
+
+.stats-row :deep(.ant-col:nth-child(3)) .stats-card {
+  border-color: #fde68a;
+  background: linear-gradient(180deg, #ffffff 0%, #fffaf2 100%);
+  box-shadow: 0 10px 24px -22px rgba(245, 158, 11, 0.45);
+}
+
+.stats-row :deep(.ant-col:nth-child(3)) .stats-card::before {
+  background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.stats-row :deep(.ant-col:nth-child(3)) .stats-card::after {
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.18) 0%, rgba(251, 191, 36, 0) 72%);
+}
+
+.stats-row :deep(.ant-col:nth-child(4)) .stats-card {
+  border-color: #e9d5ff;
+  background: linear-gradient(180deg, #ffffff 0%, #fbf7ff 100%);
+  box-shadow: 0 10px 24px -22px rgba(168, 85, 247, 0.45);
+}
+
+.stats-row :deep(.ant-col:nth-child(4)) .stats-card::before {
+  background: linear-gradient(90deg, #c084fc 0%, #8b5cf6 100%);
+}
+
+.stats-row :deep(.ant-col:nth-child(4)) .stats-card::after {
+  background: radial-gradient(circle, rgba(192, 132, 252, 0.2) 0%, rgba(192, 132, 252, 0) 72%);
+}
+
+.stats-card :deep(.ant-card-body) {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 12px 16px 13px;
+}
+
+.stats-primary-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.stats-title {
+  color: #64748b;
   font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.stats-value-inline {
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 700;
+  color: #111827;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-secondary-line {
+  margin-top: 6px;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .customer-name {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
 }
 

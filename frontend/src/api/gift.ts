@@ -1,24 +1,24 @@
 import request from './request'
+import { mapPageContent, normalizeGift, sanitizeGiftPayload } from './contracts'
 import type { Gift, GiftCreateDTO, GiftUpdateDTO, PageResult } from '@/types'
 
 export const giftApi = {
-
-  // 获取礼品列表
-  loadGifts: (params?: any) => {
-    console.log('API加载礼品数据，参数:', params)
-    return request.get<PageResult<Gift>>('/gifts', { params })
+  loadGifts: async (params?: Record<string, unknown>) => {
+    const page = await request.get<PageResult<Gift>>('/gifts', { params })
+    return mapPageContent(page, normalizeGift)
   },
 
-  // 获取礼品详情
-  getGift: (id: number) => request.get<Gift>(`/gifts/${id}`),
+  getGift: async (id: number) => normalizeGift(
+    await request.get<Gift>(`/gifts/${id}`),
+  ),
 
-  // 新增礼品
-  createGift: (data: GiftCreateDTO) => request.post('/gifts', data),
+  createGift: async (data: GiftCreateDTO) => normalizeGift(
+    await request.post<Gift>('/gifts', sanitizeGiftPayload(data)),
+  ),
 
-  // 更新礼品
-  updateGift: (id: number, data: GiftUpdateDTO) => request.put(`/gifts/${id}`, data),
+  updateGift: async (id: number, data: GiftUpdateDTO) => normalizeGift(
+    await request.put<Gift>(`/gifts/${id}`, sanitizeGiftPayload(data)),
+  ),
 
-  // 删除礼品
   deleteGift: (id: number) => request.delete(`/gifts/${id}`),
-
 }

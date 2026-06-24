@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 
-const componentSource = readFileSync(resolve(__dirname, 'AccountCenter.vue'), 'utf-8')
+const componentSource = readFileSync(new URL('./AccountCenter.vue', import.meta.url), 'utf-8')
 
 describe('AccountCenter layout', () => {
   it('formats account timestamps to seconds on the frontend', () => {

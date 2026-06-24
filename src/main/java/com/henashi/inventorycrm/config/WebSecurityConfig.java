@@ -106,6 +106,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/inventory/**").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers("/api/inventories", "/api/inventories/**").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/ai/**").hasAnyRole("USER", "MANAGER", "ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter,

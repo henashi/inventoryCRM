@@ -9,6 +9,12 @@ export const inventoryModuleRoutes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, title: '库存总览', roles: getFeatureRoles('inventory') }
   },
   {
+    path: '/inventory/predictions',
+    name: 'StockPrediction',
+    component: () => import('../views/inventory/StockPrediction.vue'),
+    meta: { requiresAuth: true, title: 'AI 库存预测', roles: getFeatureRoles('ai') }
+  },
+  {
     path: '/inventory/logs',
     name: 'InventoryLogs',
     component: () => import('../views/inventory/InventoryLogList.vue'),

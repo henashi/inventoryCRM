@@ -1,30 +1,29 @@
 import request from './request'
+import { mapPageContent, normalizeGiftLog, sanitizeGiftLogPayload } from './contracts'
 import type { GiftLogDTO, PageResult } from '@/types'
 
 export const giftLogApi = {
-
-  // 获取礼品日志列表
-  loadGiftLogs: (params: any) => {
-    return request.get<PageResult<GiftLogDTO>>(`/gift-logs`, { params })
+  loadGiftLogs: async (params?: Record<string, unknown>) => {
+    const page = await request.get<PageResult<GiftLogDTO>>('/gift-logs', { params })
+    return mapPageContent(page, normalizeGiftLog)
   },
 
-  // 获取礼品日志详情
-  getGiftLogDetail: (id: number) => {
-    return request.get<GiftLogDTO>(`/gift-logs/${id}`)
+  getLogsByCustomerId: async (customerId: number, params?: Record<string, unknown>) => {
+    const page = await request.get<PageResult<GiftLogDTO>>(`/gift-logs/customer/${customerId}`, { params })
+    return mapPageContent(page, normalizeGiftLog)
   },
 
-  // 删除礼品日志
-  deleteGiftLog: (id: number) => {
-    return request.delete(`/gift-logs/${id}`)
-  },
+  getGiftLogDetail: async (id: number) => normalizeGiftLog(
+    await request.get<GiftLogDTO>(`/gift-logs/${id}`),
+  ),
 
-  // 新增礼品日志
-  addGiftLog: (data: GiftLogDTO) => {
-    return request.post(`/gift-logs`, data)
-  },
+  deleteGiftLog: (id: number) => request.delete(`/gift-logs/${id}`),
 
-  // 更新礼品日志
-  updateGiftLog: (id: number, data: GiftLogDTO) => {
-    return request.patch(`/gift-logs/${id}`, data)
-  },
+  addGiftLog: async (data: GiftLogDTO & { limitEnabled?: boolean }) => normalizeGiftLog(
+    await request.post<GiftLogDTO>('/gift-logs', sanitizeGiftLogPayload(data)),
+  ),
+
+  updateGiftLog: async (id: number, data: GiftLogDTO & { limitEnabled?: boolean }) => normalizeGiftLog(
+    await request.patch<GiftLogDTO>(`/gift-logs/${id}`, sanitizeGiftLogPayload(data)),
+  ),
 }

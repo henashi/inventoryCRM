@@ -9,6 +9,7 @@ export type FeatureKey =
   | 'data-dicts'
   | 'admin'
   | 'account'
+  | 'ai'
 
 const defaultHomePath = '/dashboard'
 const giftCatalogManagers: AppRole[] = ['ADMIN', 'MANAGER']
@@ -24,6 +25,7 @@ const featureRoles: Record<FeatureKey, AppRole[]> = {
   'data-dicts': ['ADMIN'],
   admin: ['ADMIN'],
   account: ['ADMIN', 'MANAGER', 'USER'],
+  ai: ['ADMIN', 'MANAGER'],
 }
 
 const quickActionFeatures = {

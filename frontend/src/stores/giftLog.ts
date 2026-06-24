@@ -1,7 +1,7 @@
-import {defineStore} from 'pinia'
-import {ref} from 'vue'
-import {giftLogApi} from '@/api/giftLog'
-import type {GiftLogDTO, PageParams} from '@/types'
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import { giftLogApi } from '@/api/giftLog'
+import type { GiftLogDTO, PageParams } from '@/types'
 import { toUiPage } from '@/utils/pagination'
 
 export const useGiftLogStore = defineStore('giftLog', () => {
@@ -9,16 +9,20 @@ export const useGiftLogStore = defineStore('giftLog', () => {
   const pagination = ref({
     page: 1,
     size: 10,
-    total: 0
+    total: 0,
   })
 
-  const loadGiftLogs = async (params: PageParams) => {
-    const res = await giftLogApi.loadGiftLogs(params)
+  const loadGiftLogs = async (params: PageParams & { customerId?: number }) => {
+    const { customerId, ...pageParams } = params
+    const res = customerId
+      ? await giftLogApi.getLogsByCustomerId(customerId, pageParams)
+      : await giftLogApi.loadGiftLogs(pageParams)
+
     giftLogList.value = res.content
     pagination.value = {
       page: toUiPage(res.number),
       size: res.size,
-      total: res.totalElements
+      total: res.totalElements,
     }
   }
 
@@ -37,6 +41,7 @@ export const useGiftLogStore = defineStore('giftLog', () => {
   const getGiftLogDetail = async (id: number) => {
     return await giftLogApi.getGiftLogDetail(id)
   }
+
   return {
     giftLogList,
     pagination,
@@ -44,6 +49,6 @@ export const useGiftLogStore = defineStore('giftLog', () => {
     deleteGiftLog,
     createGiftLog,
     updateGiftLog,
-    getGiftLogDetail
+    getGiftLogDetail,
   }
 })

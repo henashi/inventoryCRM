@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 
-const componentSource = readFileSync(resolve(__dirname, 'Dashboard.vue'), 'utf-8')
+const componentSource = readFileSync(new URL('./Dashboard.vue', import.meta.url), 'utf-8')
 
 describe('Dashboard layout', () => {
   it('keeps recent customers and low-stock cards at the same desktop height', () => {
