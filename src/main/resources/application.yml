@@ -66,6 +66,11 @@ management:
     health:
       show-details: always
 
+ai:
+  api-key: ${AI_API_KEY:}
+  provider: deepseek
+  model: deepseek-chat
+
 logging:
   level:
     org.hibernate.SQL: DEBUG

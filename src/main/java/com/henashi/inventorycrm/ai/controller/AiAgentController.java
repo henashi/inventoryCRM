@@ -2,7 +2,10 @@ package com.henashi.inventorycrm.ai.controller;
 
 import com.henashi.inventorycrm.ai.CustomerScoringAgent;
 import com.henashi.inventorycrm.ai.GiftRecommendationService;
+import com.henashi.inventorycrm.ai.NLQueryAgent;
 import com.henashi.inventorycrm.ai.StockPredictionAgent;
+import com.henashi.inventorycrm.ai.dto.ChatRequestDTO;
+import com.henashi.inventorycrm.ai.dto.ChatResponseDTO;
 import com.henashi.inventorycrm.ai.dto.CustomerScoreDTO;
 import com.henashi.inventorycrm.ai.dto.GiftRecommendationDTO;
 import com.henashi.inventorycrm.ai.dto.PredictionSummaryDTO;
@@ -39,6 +42,7 @@ public class AiAgentController {
     private final StockPredictionAgent predictionAgent;
     private final CustomerScoringAgent scoringAgent;
     private final GiftRecommendationService recommendationService;
+    private final NLQueryAgent nlQueryAgent;
 
     @GetMapping("/predictions")
     @Operation(summary = "查询所有商品库存预测（分页）", description = "返回所有商品的预测结果，按预警级别排序，支持关键词搜索")
@@ -134,5 +138,13 @@ public class AiAgentController {
         result.put("success", true);
         result.put("executionTimeMs", elapsed);
         return ResponseEntity.ok(result);
+    }
+
+    // ==================== AI 聊天助手 ====================
+
+    @PostMapping("/chat")
+    @Operation(summary = "AI 自然语言聊天", description = "用户用自然语言提问，AI 识别意图→查询数据库→返回回答")
+    public ChatResponseDTO chat(@RequestBody ChatRequestDTO request) {
+        return nlQueryAgent.processWithHistory(request);
     }
 }

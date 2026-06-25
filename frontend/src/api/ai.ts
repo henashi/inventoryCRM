@@ -43,4 +43,10 @@ export const aiApi = {
   /** 手动触发全量客户评分 */
   runCustomerScoring: () =>
     request.post<{ success: boolean; executionTimeMs: number }>('/ai/customers/run-scoring'),
+
+  // ===== AI 聊天助手 =====
+
+  /** 发送消息给 AI 助手 */
+  chat: (message: string) =>
+    request.post<{ reply: string; fallback: boolean }>('/ai/chat', { message }),
 }

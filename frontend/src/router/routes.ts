@@ -53,6 +53,12 @@ export const appRoutes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, title: 'AI 客户评分', roles: getFeatureRoles('ai') }
   },
   {
+    path: '/ai/assistant',
+    name: 'AiAssistant',
+    component: () => import('../views/ai/AiAssistant.vue'),
+    meta: { requiresAuth: true, title: 'AI 运营助手', roles: getFeatureRoles('ai') }
+  },
+  {
     path: '/ai/customers/gift-recommendations',
     name: 'GiftRecommendation',
     component: () => import('../views/gift/GiftRecommendation.vue'),

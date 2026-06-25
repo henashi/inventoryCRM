@@ -9,6 +9,7 @@
         <a-button @click="openAlertsDrawer">低库存预警</a-button>
         <a-button :loading="exportLoading" @click="handleExport">导出快照</a-button>
         <a-button @click="goToPredictions">🤖 AI 预测</a-button>
+        <a-button @click="goToAssistant">💬 AI 助手</a-button>
         <a-button @click="goToLogs">库存日志</a-button>
         <a-button class="header-action-primary" type="primary" @click="openAction('in')">商品入库</a-button>
         <a-button class="header-action-back" @click="goToDashboard">返回仪表盘</a-button>
@@ -303,6 +304,10 @@ const goToLogs = () => {
 
 const goToPredictions = () => {
   router.push('/inventory/predictions')
+}
+
+const goToAssistant = () => {
+  router.push('/ai/assistant')
 }
 
 const goToDetail = (inventory: Inventory) => {
