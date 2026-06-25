@@ -38,6 +38,7 @@ public interface GiftLogMapper {
 
     @Mapping(source = "customerId", target = "customer", qualifiedByName = "idToCustomer")
     @Mapping(source = "giftId", target = "gift", qualifiedByName = "idToGift")
+    @Mapping(source = "status", target = "giftLogStatus")
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     GiftLog partialUpdate(GiftLogUpdateDTO giftLogDTO, @MappingTarget GiftLog giftLog);
 

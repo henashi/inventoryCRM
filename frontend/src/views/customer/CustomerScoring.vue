@@ -1,65 +1,71 @@
 <template>
-  <div class="scoring-page">
+  <div class="page-container">
     <div class="page-header">
-      <div class="page-header-main">
-        <h1 class="page-title">🤖 AI 客户评分</h1>
-        <div class="page-subtitle">六维加权评分模型自动评估客户价值，精准匹配礼品推荐</div>
+      <div>
+        <h1 class="page-title">客户评分</h1>
+        <div class="page-subtitle">基于多维度指标的客户价值评估</div>
       </div>
       <div class="page-header-actions">
-        <a-button :loading="runningScoring" type="primary" @click="handleRunScoring">
+        <a-button @click="goBack">返回客户列表</a-button>
+        <a-button @click="goToRecommendations">礼品推荐</a-button>
+        <a-button type="primary" :loading="runningScoring" @click="handleRunScoring">
           <template #icon><SyncOutlined /></template>
-          全量评分
+          执行评分
         </a-button>
-        <a-button @click="goToRecommendations">🎁 礼品推荐</a-button>
       </div>
     </div>
 
-    <!-- 分段统计卡片 -->
     <a-row :gutter="[16, 16]" class="mb-6">
-      <a-col :xs="8" :sm="6">
-        <a-card class="segment-card segment-high" :bordered="false">
-          <div class="seg-value">{{ segmentCounts.high }}</div>
-          <div class="seg-label">🥇 高价值客户</div>
-          <div class="seg-hint">≥ 80 分</div>
+      <a-col :xs="8" :sm="8">
+        <a-card class="stat-card stat-high" :bordered="false">
+          <div class="stat-body">
+            <div class="stat-inner">
+              <div class="stat-label">高价值客户</div>
+              <div class="stat-value">{{ segmentCounts.high }}</div>
+            </div>
+          </div>
+          <div class="stat-footer">≥ 80 分</div>
         </a-card>
       </a-col>
-      <a-col :xs="8" :sm="6">
-        <a-card class="segment-card segment-growing" :bordered="false">
-          <div class="seg-value">{{ segmentCounts.growing }}</div>
-          <div class="seg-label">🌱 成长客户</div>
-          <div class="seg-hint">60-79 分</div>
+      <a-col :xs="8" :sm="8">
+        <a-card class="stat-card stat-growing" :bordered="false">
+          <div class="stat-body">
+            <div class="stat-inner">
+              <div class="stat-label">成长客户</div>
+              <div class="stat-value">{{ segmentCounts.growing }}</div>
+            </div>
+          </div>
+          <div class="stat-footer">60 ~ 79 分</div>
         </a-card>
       </a-col>
-      <a-col :xs="8" :sm="6">
-        <a-card class="segment-card segment-inactive" :bordered="false">
-          <div class="seg-value">{{ segmentCounts.inactive }}</div>
-          <div class="seg-label">💤 待激活客户</div>
-          <div class="seg-hint">&lt; 60 分</div>
+      <a-col :xs="8" :sm="8">
+        <a-card class="stat-card stat-inactive" :bordered="false">
+          <div class="stat-body">
+            <div class="stat-inner">
+              <div class="stat-label">待激活客户</div>
+              <div class="stat-value">{{ segmentCounts.inactive }}</div>
+            </div>
+          </div>
+          <div class="stat-footer">&lt; 60 分</div>
         </a-card>
       </a-col>
-      <a-col :xs="24" :sm="6">
-        <a-card class="segment-card segment-birthday" :bordered="false" @click="showBirthdayOnly = !showBirthdayOnly" :style="{ cursor: 'pointer' }">
-          <div class="seg-value">🎂 {{ birthdayCustomers.length }}</div>
-          <div class="seg-label">未来7天生日的客户</div>
-          <div class="seg-hint">点击{{ showBirthdayOnly ? '取消' : '' }}筛选</div>
-        </a-card>
-      </a-col>
+
     </a-row>
 
-    <!-- 分段过滤标签 -->
-    <a-card :bordered="false" class="mb-6">
-      <a-radio-group v-model:value="segmentFilter" button-style="solid" @change="handleFilterChange">
-        <a-radio-button value="ALL">全部</a-radio-button>
-        <a-radio-button value="HIGH_VALUE">🥇 高价值</a-radio-button>
-        <a-radio-button value="GROWING">🌱 成长</a-radio-button>
-        <a-radio-button value="INACTIVE">💤 待激活</a-radio-button>
-      </a-radio-group>
-    </a-card>
-
-    <a-row :gutter="16">
-      <!-- 左侧：评分排行榜 -->
+<a-row :gutter="16" class="equal-row">
       <a-col :xs="24" :lg="14">
-        <a-card title="评分排行榜" :bordered="false">
+        <a-card :bordered="false">
+          <template #title>
+            <span>评分排行</span>
+          </template>
+          <div class="card-toolbar">
+            <a-radio-group v-model:value="segmentFilter" size="small" button-style="solid" @change="handleFilterChange">
+              <a-radio-button value="ALL">全部</a-radio-button>
+              <a-radio-button value="HIGH_VALUE">高价值</a-radio-button>
+              <a-radio-button value="GROWING">成长</a-radio-button>
+              <a-radio-button value="INACTIVE">待激活</a-radio-button>
+            </a-radio-group>
+          </div>
           <a-table
             row-key="customerId"
             :columns="columns"
@@ -67,30 +73,30 @@
             :pagination="pagination"
             :loading="loading.table"
             size="small"
-            :scroll="{ y: 480 }"
+            :scroll="{ x: 600 }"
             @change="handleTableChange"
-            @row-click="handleRowClick"
-            :row-class="(record: CustomerScore) => record.customerId === selectedCustomerId ? 'selected-row' : ''"
+            :row-class="(_r: CustomerScore) => _r.customerId === selectedCustomerId ? 'row-selected' : ''"
+            :custom-row="(record) => ({ onClick: () => handleRowClick(record) })"
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'rank'">
-                {{ getRank(record) }}
+                <span class="rank-num">{{ getRank(record) }}</span>
               </template>
               <template v-if="column.key === 'customer'">
                 <div>
-                  <div class="font-medium">{{ record.customerName }}</div>
-                  <div class="text-xs text-gray-400">{{ record.phone }}</div>
+                  <div class="name-cell">{{ record.customerName }}</div>
+                  <div class="meta-cell">{{ record.phone }}</div>
                 </div>
               </template>
               <template v-if="column.key === 'score'">
-                <div class="score-cell">
+                <div class="score-bar">
                   <a-progress
                     :percent="record.totalScore"
                     :stroke-color="getScoreColor(record.totalScore)"
                     :show-info="false"
                     size="small"
                   />
-                  <span class="score-value" :style="{ color: getScoreColor(record.totalScore) }">
+                  <span class="score-text" :style="{ color: getScoreColor(record.totalScore) }">
                     {{ record.totalScore }}
                   </span>
                 </div>
@@ -102,44 +108,40 @@
                 <a-rate :value="record.giftLevel" :count="3" disabled />
               </template>
               <template v-if="column.key === 'birthday'">
-                <span v-if="record.isBirthdaySoon" class="birthday-badge">🎂 {{ record.daysToBirthday }}天后</span>
-                <span v-else class="text-gray-400">—</span>
+                
               </template>
             </template>
           </a-table>
         </a-card>
       </a-col>
 
-      <!-- 右侧：雷达图 -->
-      <a-col :xs="24" :lg="10">
-        <a-card title="六维评分雷达图" :bordered="false">
-          <template #extra>
-            <a-tag v-if="selectedCustomer" :color="getSegmentColor(selectedCustomer.segment)">
-              {{ getSegmentLabel(selectedCustomer.segment) }}
-            </a-tag>
+      <a-col :xs="24" :lg="10" >
+        <a-card :bordered="false" class="radar-card">
+          <template #title>
+            <span>维度分析</span>
+            <template v-if="selectedCustomer">
+              <a-tag :color="getSegmentColor(selectedCustomer.segment)" class="ml-2">
+                {{ getSegmentLabel(selectedCustomer.segment) }}
+              </a-tag>
+            </template>
           </template>
-          <div v-if="selectedCustomer" class="radar-container">
+          <div v-if="selectedCustomer" class="radar-body">
             <div class="radar-chart" ref="radarRef"></div>
-            <a-descriptions :column="1" size="small" class="mt-4">
-              <a-descriptions-item label="客户">
-                {{ selectedCustomer.customerName }} ({{ selectedCustomer.phone }})
-              </a-descriptions-item>
-              <a-descriptions-item label="总分">
-                <span :style="{ color: getScoreColor(selectedCustomer.totalScore), fontWeight: 600 }">
-                  {{ selectedCustomer.totalScore }}
-                </span>
-              </a-descriptions-item>
-              <a-descriptions-item label="礼品等级">
-                {{ getGiftLevelLabel(selectedCustomer.giftLevel) }}
-              </a-descriptions-item>
-              <a-descriptions-item label="生日提醒">
-                <span v-if="selectedCustomer.isBirthdaySoon">🎂 {{ selectedCustomer.daysToBirthday }} 天后生日</span>
-                <span v-else>无</span>
-              </a-descriptions-item>
-            </a-descriptions>
+            <a-divider style="margin: 8px 0" />
+            <div class="dim-breakdown">
+              <div v-for="(score, key) in selectedCustomer.dimensionScores" :key="key" class="dim-row">
+                <span class="dim-name">{{ getDimLabel(key as string) }}</span>
+                <a-progress
+                  :percent="score"
+                  :stroke-color="getScoreColor(score)"
+                  :format="() => Math.round(score) + '分'"
+                  size="small"
+                />
+              </div>
+            </div>
           </div>
           <div v-else class="radar-empty">
-            <a-empty description="请从左侧选择一个客户" />
+            <a-empty description="点击左侧客户查看详情" />
           </div>
         </a-card>
       </a-col>
@@ -165,17 +167,13 @@ const displayList = ref<CustomerScore[]>([])
 const selectedCustomerId = ref<number | null>(null)
 const selectedCustomer = ref<CustomerScore | null>(null)
 const segmentFilter = ref<string>('ALL')
-const showBirthdayOnly = ref(false)
-
 const loading = ref({ table: false })
 const runningScoring = ref(false)
 
 const segmentCounts = ref({ high: 0, growing: 0, inactive: 0 })
-const birthdayCustomers = ref<any[]>([])
-
 const pagination = ref({
   current: 1,
-  pageSize: 8,
+  pageSize: 5,
   total: 0,
   showSizeChanger: false,
   showTotal: (total: number) => `共 ${total} 人`,
@@ -183,25 +181,25 @@ const pagination = ref({
 
 const columns = [
   { title: '#', key: 'rank', width: 40 },
-  { title: '客户', key: 'customer', width: 160 },
+  { title: '客户', key: 'customer', width: 150 },
   { title: '总分', key: 'score', width: 120 },
-  { title: '分段', key: 'segment', width: 90 },
+  { title: '分段', key: 'segment', width: 80 },
   { title: '礼品等级', key: 'giftLevel', width: 100 },
-  { title: '生日', key: 'birthday', width: 80 },
+  
 ]
 
-const getRank = (record: CustomerScore) => {
+function getRank(record: CustomerScore) {
   const idx = allScores.value.findIndex(s => s.customerId === record.customerId)
   return idx >= 0 ? idx + 1 : '-'
 }
 
-const getScoreColor = (score: number) => {
+function getScoreColor(score: number) {
   if (score >= 80) return '#52c41a'
   if (score >= 60) return '#faad14'
   return '#f5222d'
 }
 
-const getSegmentColor = (seg: string) => {
+function getSegmentColor(seg: string) {
   switch (seg) {
     case 'HIGH_VALUE': return 'green'
     case 'GROWING': return 'orange'
@@ -209,7 +207,7 @@ const getSegmentColor = (seg: string) => {
   }
 }
 
-const getSegmentLabel = (seg: string) => {
+function getSegmentLabel(seg: string) {
   switch (seg) {
     case 'HIGH_VALUE': return '高价值'
     case 'GROWING': return '成长'
@@ -218,69 +216,60 @@ const getSegmentLabel = (seg: string) => {
   }
 }
 
-const getGiftLevelLabel = (level: number) => {
-  const map = ['未领取', '一级', '二级', '三级']
-  return map[level] || `等级${level}`
+function getGiftLevelLabel(level: number) {
+  return ['未领取', '一级', '二级', '三级'][level] || `等级${level}`
 }
 
-const loadData = async () => {
+async function loadData() {
   loading.value.table = true
   try {
-    const [pageRes, birthdayRes] = await Promise.all([
-      aiApi.getCustomerScores({ page: 0, size: 999 }),
-      aiApi.getUpcomingBirthdayCustomers(),
-    ])
+    const pageRes = await aiApi.getCustomerScores({ page: 0, size: 999 })
     allScores.value = pageRes.content
-    birthdayCustomers.value = birthdayRes
-
     segmentCounts.value = {
       high: allScores.value.filter(s => s.segment === 'HIGH_VALUE').length,
       growing: allScores.value.filter(s => s.segment === 'GROWING').length,
       inactive: allScores.value.filter(s => s.segment === 'INACTIVE').length,
     }
-
     applyFilters()
   } catch {
-    message.error('加载评分数据失败')
+    message.error('加载失败')
   } finally {
     loading.value.table = false
   }
 }
 
-const applyFilters = () => {
+function applyFilters() {
   let filtered = allScores.value
   if (segmentFilter.value !== 'ALL') {
     filtered = filtered.filter(s => s.segment === segmentFilter.value)
   }
-  if (showBirthdayOnly.value) {
-    filtered = filtered.filter(s => s.isBirthdaySoon)
-  }
+
   pagination.value.total = filtered.length
   const start = (pagination.value.current - 1) * pagination.value.pageSize
   displayList.value = filtered.slice(start, start + pagination.value.pageSize)
 }
 
-const handleFilterChange = () => {
+function handleFilterChange() {
   pagination.value.current = 1
   applyFilters()
 }
 
-const handleTableChange = (pag: { current?: number }) => {
+function handleTableChange(pag: { current?: number }) {
   if (pag.current) pagination.value.current = pag.current
   applyFilters()
 }
 
-const handleRowClick = (record: CustomerScore) => {
-  selectedCustomerId.value = record.customerId
+
+function handleRowClick(record: CustomerScore) {
+selectedCustomerId.value = record.customerId
   selectedCustomer.value = record
-  nextTick(() => renderRadar(record))
 }
 
-const handleRunScoring = async () => {
+async function handleRunScoring() {
   runningScoring.value = true
   try {
     const result = await aiApi.runCustomerScoring()
-    message.success(`全量评分完成，耗时 ${result.executionTimeMs}ms`)
+    message.success(`评分完成，耗时 ${result.executionTimeMs}ms`)
     await loadData()
   } catch {
     message.error('评分执行失败')
@@ -289,11 +278,15 @@ const handleRunScoring = async () => {
   }
 }
 
-const goToRecommendations = () => {
+function goToRecommendations() {
   router.push('/ai/customers/gift-recommendations')
 }
 
-const renderRadar = (customer: CustomerScore) => {
+function goBack() {
+  router.push('/customers')
+}
+
+function renderRadar(customer: CustomerScore) {
   if (!radarRef.value) return
   if (radarChart) radarChart.dispose()
 
@@ -321,29 +314,29 @@ const renderRadar = (customer: CustomerScore) => {
   })
 }
 
-const getDimLabel = (key: string): string => {
+function getDimLabel(key: string): string {
   const map: Record<string, string> = {
-    giftLevel: '客户等级',
+    totalSpent: '消费总额',
+    frequency: '消费频率',
     recency: '活跃度',
+    giftLevel: '客户等级',
     tenure: '注册时长',
-    frequency: '领取频率',
     referral: '推荐贡献',
-    birthday: '生日临近',
   }
   return map[key] || key
 }
 
-watch(showBirthdayOnly, () => {
-  pagination.value.current = 1
-  applyFilters()
+watch(selectedCustomer, (val) => {
+  if (val) nextTick(() => renderRadar(val))
 })
+
 
 onMounted(() => { loadData() })
 onUnmounted(() => { if (radarChart) radarChart.dispose() })
 </script>
 
 <style scoped>
-.scoring-page {
+.page-container {
   padding: 20px;
   background: #f5f7fa;
   min-height: 100vh;
@@ -356,32 +349,54 @@ onUnmounted(() => { if (radarChart) radarChart.dispose() })
 }
 .page-title { font-size: 24px; font-weight: 700; margin: 0; color: #111827; }
 .page-subtitle { font-size: 14px; color: #6b7280; margin-top: 4px; }
+.page-header-actions { display: flex; gap: 8px; flex-shrink: 0; }
 .mb-6 { margin-bottom: 16px; }
-.font-medium { font-weight: 500; }
-.text-xs { font-size: 12px; }
-.text-gray-400 { color: #9ca3af; }
+.ml-2 { margin-left: 8px; }
 
-.segment-card { border-radius: 8px; text-align: center; }
-.segment-card :deep(.ant-card-body) { padding: 16px; }
-.seg-value { font-size: 28px; font-weight: 700; line-height: 1.2; }
-.seg-label { font-size: 14px; margin-top: 4px; }
-.seg-hint { font-size: 11px; color: #9ca3af; margin-top: 2px; }
-.segment-high .seg-value { color: #52c41a; }
-.segment-growing .seg-value { color: #fa8c16; }
-.segment-inactive .seg-value { color: #f5222d; }
-.segment-birthday:hover { border-color: #1890ff; }
-.segment-birthday .seg-value { color: #1890ff; }
+.stat-card { border-radius: 8px; border-left: 4px solid transparent; cursor: default; }
+.stat-card :deep(.ant-card-body) { padding: 0; }
+.stat-body { padding: 16px 20px 12px; }
+.stat-inner { display: flex; justify-content: space-between; align-items: baseline; }
+.stat-value { font-size: 28px; font-weight: 700; line-height: 1.2; }
+.stat-label { font-size: 14px; color: #6b7280; }
+.stat-footer { padding: 6px 20px; font-size: 12px; color: #9ca3af; border-top: 1px solid #f0f0f0; }
+.stat-high { border-left-color: #52c41a; }
+.stat-high .stat-value { color: #52c41a; }
+.stat-growing { border-left-color: #faad14; }
+.stat-growing .stat-value { color: #fa8c16; }
+.stat-inactive { border-left-color: #f5222d; }
+.stat-inactive .stat-value { color: #f5222d; }
 
-.score-cell { display: flex; align-items: center; gap: 8px; }
-.score-cell :deep(.ant-progress) { flex: 1; }
-.score-value { font-weight: 700; font-size: 16px; min-width: 32px; text-align: right; }
 
-.radar-container { padding: 8px; }
-.radar-chart { width: 100%; height: 320px; }
-.radar-empty { height: 320px; display: flex; align-items: center; justify-content: center; }
-.mt-4 { margin-top: 16px; }
-.birthday-badge { font-weight: 500; color: #1890ff; }
 
-.selected-row { background-color: #e6f7ff !important; }
+
+.name-cell { font-weight: 500; color: #1f2937; }
+.meta-cell { color: #9ca3af; font-size: 12px; }
+.rank-num { color: #9ca3af; font-feature-settings: 'tnum'; }
+
+.score-bar { display: flex; align-items: center; gap: 8px; }
+.score-bar :deep(.ant-progress) { flex: 1; }
+.score-text { font-weight: 700; font-size: 15px; min-width: 32px; text-align: right; }
+
+
+
+.radar-card :deep(.ant-card-body) { display: flex; flex-direction: column; flex: 1; height: 100%; }
+.radar-body { flex: 1; display: flex; flex-direction: column; }
+.radar-chart { flex: 1; min-height: 280px; }
+.card-toolbar { padding: 0 0 12px; border-bottom: 1px solid #f0f0f0; margin-bottom: 12px; }
+.equal-row { display: flex; align-items: stretch; }
+.equal-row > :deep(.ant-col) { display: flex; }
+.equal-row > :deep(.ant-col) { display: flex; }
+.equal-row > :deep(.ant-col > .ant-card) { flex: 1; }
+.radar-card { display: flex; flex-direction: column; }
+.radar-empty { flex: 1; display: flex; align-items: center; justify-content: center; }
+
+.dim-breakdown { display: flex; flex-direction: column; gap: 6px; padding: 0 4px; }
+.dim-row { display: flex; align-items: center; gap: 8px; }
+.dim-name { font-size: 12px; color: #6b7280; min-width: 56px; flex-shrink: 0; }
+.dim-row :deep(.ant-progress) { flex: 1; margin-bottom: 0; }
+
+
+.row-selected { background-color: #e6f7ff; }
 :deep(.ant-table-row) { cursor: pointer; }
 </style>

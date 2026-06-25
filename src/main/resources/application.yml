@@ -66,6 +66,11 @@ management:
     health:
       show-details: always
 
+ai:
+  api-key: ${AI_API_KEY:}
+  api-url: ${AI_API_URL:https://api.deepseek.com/chat/completions}
+  model: ${AI_MODEL:deepseek-chat}
+
 logging:
   level:
     org.hibernate.SQL: DEBUG
