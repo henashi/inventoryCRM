@@ -47,6 +47,12 @@ export const appRoutes: RouteRecordRaw[] = [
   },
   ...inventoryModuleRoutes,
   {
+    path: '/orders',
+    name: 'OrderList',
+    component: () => import('../views/order/OrderList.vue'),
+    meta: { requiresAuth: true, title: '订单管理', roles: getFeatureRoles('products') }
+  },
+  {
     path: '/ai/customers/scores',
     name: 'CustomerScoring',
     component: () => import('../views/customer/CustomerScoring.vue'),

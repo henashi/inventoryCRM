@@ -19,7 +19,9 @@ import java.util.Map;
 /**
  * LLM API 调用服务
  * <p>
- * 支持 DeepSeek API，无 Key 时自动降级到关键词匹配。
+ * 兼容 OpenAI 协议的大模型 API 调用（DeepSeek / OpenAI / 通义千问等）。
+ * 所有供应商参数通过配置注入，代码零耦合。
+ * 无 API Key 时自动降级到关键词匹配。
  */
 @Slf4j
 @Service
@@ -28,25 +30,45 @@ public class LLMService {
     @Value("${ai.api-key:}")
     private String apiKey;
 
-    @Value("${ai.provider:deepseek}")
-    private String provider;
+    @Value("${ai.api-url:}")
+    private String apiUrl;
 
-    @Value("${ai.model:deepseek-chat}")
+    @Value("${ai.model:}")
     private String model;
 
-    private static final String DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
     private static final String SYSTEM_PROMPT = """
-            你是一个库存CRM系统的AI助手。你的任务是将用户的中文问题解析为结构化JSON。
+            你是一个库存CRM系统的AI助手。将用户的问题解析为JSON,只能使用以下明确定义的意图和参数:
 
-            支持以下意图类型：
-            1. stock_query - 库存查询（如"哪些商品库存不足？"）
-            2. customer_query - 客户查询（如"最近新增的客户"）
-            3. gift_query - 礼品查询（如"还有哪些礼品可以发放"）
-            4. stat_query - 统计查询（如"上月出库总量"）
-            5. general_chat - 普通对话（如"你好"）
+            1. greeting — 打招呼
+               {"intent":"greeting","params":{},"requiresQuery":false}
 
-            请严格按以下JSON格式返回，不要包含其他文字：
-            {"intent":"意图类型","params":{...},"requiresQuery":true/false}
+            2. help — 询问帮助
+               {"intent":"help","params":{},"requiresQuery":false}
+
+            3. stock_query — 商品/库存查询
+               params可选字段:
+               - "lowStockOnly": true   (查询库存不足的商品)
+               - "listAll": true        (列出全部商品)
+               - "logType": "IN"/"OUT"  (查询出入库记录)
+               {"intent":"stock_query","params":{"listAll":true},"requiresQuery":true}
+
+            4. customer_query — 客户查询
+               params可选字段:
+               - "recentFirst": true    (最近新增)
+               - "listAll": true        (全部客户)
+               {"intent":"customer_query","params":{"listAll":true},"requiresQuery":true}
+
+            5. gift_query — 礼品查询
+               params可选字段:
+               - "activeOnly": true     (仅可发放的)
+               {"intent":"gift_query","params":{"activeOnly":true},"requiresQuery":true}
+
+            6. stat_query — 统计查询
+               params可选字段:
+               - "statType": "total_in"/"total_out" (入库/出库统计)
+               {"intent":"stat_query","params":{},"requiresQuery":true}
+
+            只返回JSON,不要包含其他文字。
             """;
 
     private final RestTemplate restTemplate;
@@ -59,37 +81,34 @@ public class LLMService {
 
     /**
      * 调用 LLM 解析意图
-     *
-     * @param userMessage 用户消息
-     * @return 解析后的意图 JSON 字符串
      */
     public String analyzeIntent(String userMessage) {
-        if (apiKey == null || apiKey.isBlank()) {
-            log.info("AI API Key 未配置，使用降级关键词匹配");
+        if (!isConfigured()) {
+            log.info("AI API 未配置（缺 api-key/url/model），使用降级关键词匹配");
             return fallbackIntentAnalysis(userMessage);
         }
-        return callDeepSeek(userMessage);
+        return callLLM(userMessage);
     }
 
     /**
      * 调用 LLM 生成自然语言回答
-     *
-     * @param systemPrompt 系统提示
-     * @param data 查询结果数据
-     * @param userQuery 用户原问题
-     * @return 自然语言回答
      */
     public String generateAnswer(String systemPrompt, String data, String userQuery) {
-        if (apiKey == null || apiKey.isBlank()) {
-            // 降级：直接返回数据
+        if (!isConfigured()) {
             return data;
         }
-        return callDeepSeekWithPrompt(systemPrompt, data, userQuery);
+        return callLLMWithPrompt(systemPrompt, data, userQuery);
     }
 
-    // ==================== DeepSeek API 调用 ====================
+    private boolean isConfigured() {
+        return apiKey != null && !apiKey.isBlank()
+                && apiUrl != null && !apiUrl.isBlank()
+                && model != null && !model.isBlank();
+    }
 
-    private String callDeepSeek(String userMessage) {
+    // ==================== LLM API 调用 ====================
+
+    private String callLLM(String userMessage) {
         try {
             Map<String, Object> requestBody = new LinkedHashMap<>();
             requestBody.put("model", model);
@@ -101,26 +120,16 @@ public class LLMService {
             messages.add(Map.of("role", "user", "content", userMessage));
             requestBody.put("messages", messages);
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setBearerAuth(apiKey);
-
-            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
-            ResponseEntity<String> response = restTemplate.postForEntity(DEEPSEEK_API_URL, request, String.class);
-
-            JsonNode root = objectMapper.readTree(response.getBody());
-            String content = root.path("choices").get(0).path("message").path("content").asText();
-
-            // 验证是有效 JSON
-            objectMapper.readTree(content);
-            return content;
+            String reply = doPost(requestBody);
+            objectMapper.readTree(reply); // 验证是有效 JSON
+            return reply;
         } catch (Exception e) {
-            log.warn("DeepSeek API 调用失败: {}, 使用降级模式", e.getMessage());
+            log.warn("LLM API 意图解析失败: {}, 使用降级模式", e.getMessage());
             return fallbackIntentAnalysis(userMessage);
         }
     }
 
-    private String callDeepSeekWithPrompt(String systemPrompt, String data, String userQuery) {
+    private String callLLMWithPrompt(String systemPrompt, String data, String userQuery) {
         try {
             Map<String, Object> requestBody = new LinkedHashMap<>();
             requestBody.put("model", model);
@@ -133,18 +142,26 @@ public class LLMService {
                     "问题：" + userQuery + "\n数据：" + data));
             requestBody.put("messages", messages);
 
+            return doPost(requestBody);
+        } catch (Exception e) {
+            log.warn("LLM API 回答生成失败: {}", e.getMessage());
+            return data;
+        }
+    }
+
+    private String doPost(Map<String, Object> requestBody) {
+        try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setBearerAuth(apiKey);
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
-            ResponseEntity<String> response = restTemplate.postForEntity(DEEPSEEK_API_URL, request, String.class);
+            ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, request, String.class);
 
             JsonNode root = objectMapper.readTree(response.getBody());
             return root.path("choices").get(0).path("message").path("content").asText();
         } catch (Exception e) {
-            log.warn("DeepSeek API 调用失败: {}", e.getMessage());
-            return data;
+            throw new RuntimeException("LLM API 调用失败: " + e.getMessage(), e);
         }
     }
 
@@ -153,29 +170,60 @@ public class LLMService {
     String fallbackIntentAnalysis(String message) {
         String msg = message.toLowerCase();
 
-        if (msg.contains("库存不足") || msg.contains("缺货") || msg.contains("低库存")
-                || (msg.contains("库存") && (msg.contains("哪些") || msg.contains("什么")))) {
-            return "{\"intent\":\"stock_query\",\"params\":{\"lowStockOnly\":true},\"requiresQuery\":true}";
+        // ===== 打招呼 =====
+        if (msg.contains("你好") || msg.contains("hello") || msg.contains("hi")) {
+            return "{\"intent\":\"greeting\",\"params\":{},\"requiresQuery\":false}";
         }
-        if (msg.contains("入库") || (msg.contains("出库") && !msg.contains("最多") && !msg.contains("统计"))) {
+        if (msg.contains("帮助") || msg.contains("能做什么") || msg.contains("你会什么")) {
+            return "{\"intent\":\"help\",\"params\":{},\"requiresQuery\":false}";
+        }
+
+        // ===== 商品/库存查询 =====
+        boolean stockQuestion = msg.contains("商品") || msg.contains("库存") || msg.contains("仓库") || msg.contains("存货") || msg.contains("产品");
+        boolean listAll = msg.contains("分别") || msg.contains("都有") || msg.contains("全部") || msg.contains("所有");
+        boolean lowStock = msg.contains("不足") || msg.contains("缺货") || msg.contains("预警") || msg.contains("低于");
+
+        if (stockQuestion) {
+            if (listAll) {
+                return "{\"intent\":\"stock_query\",\"params\":{\"listAll\":true},\"requiresQuery\":true}";
+            }
+            if (lowStock || msg.contains("哪些") || msg.contains("什么")) {
+                return "{\"intent\":\"stock_query\",\"params\":{\"lowStockOnly\":true},\"requiresQuery\":true}";
+            }
+            return "{\"intent\":\"stock_query\",\"params\":{\"listAll\":true},\"requiresQuery\":true}";
+        }
+        if (msg.contains("入库") || (msg.contains("出库") && !msg.contains("统计") && !msg.contains("总量"))) {
             String type = msg.contains("入库") ? "IN" : "OUT";
             return "{\"intent\":\"stock_query\",\"params\":{\"logType\":\"" + type + "\"},\"requiresQuery\":true}";
         }
-        if (msg.contains("新增客户") || msg.contains("最近客户") || (msg.contains("客户") && msg.contains("新增"))) {
-            return "{\"intent\":\"customer_query\",\"params\":{\"recentFirst\":true},\"requiresQuery\":true}";
+
+        // ===== 客户查询 =====
+        if (msg.contains("客户") || msg.contains("会员") || msg.contains("顾客")) {
+            if (msg.contains("新增") || msg.contains("最近") || msg.contains("新")) {
+                return "{\"intent\":\"customer_query\",\"params\":{\"recentFirst\":true},\"requiresQuery\":true}";
+            }
+            if (listAll) {
+                return "{\"intent\":\"customer_query\",\"params\":{\"listAll\":true},\"requiresQuery\":true}";
+            }
+            return "{\"intent\":\"customer_query\",\"params\":{\"listAll\":true},\"requiresQuery\":true}";
         }
-        if (msg.contains("礼品") || msg.contains("赠品")) {
+
+        // ===== 礼品查询 =====
+        if (msg.contains("礼品") || msg.contains("赠品") || msg.contains("礼物")) {
             boolean active = msg.contains("可以") || msg.contains("可用") || msg.contains("能发");
             return "{\"intent\":\"gift_query\",\"params\":{\"activeOnly\":" + active + "},\"requiresQuery\":true}";
         }
-        if ((msg.contains("出库") || msg.contains("入库")) && (msg.contains("最多") || msg.contains("统计") || msg.contains("总量"))) {
+
+        // ===== 统计查询 =====
+        if ((msg.contains("出库") || msg.contains("入库")) && (msg.contains("统计") || msg.contains("总量") || msg.contains("多少") || msg.contains("最多"))) {
             String type = msg.contains("入库") ? "IN" : "OUT";
             return "{\"intent\":\"stat_query\",\"params\":{\"statType\":\"total_" + type.toLowerCase() + "\"},\"requiresQuery\":true}";
         }
-        if (msg.contains("你好") || msg.contains("帮助") || msg.contains("hello") || msg.contains("hi")) {
-            return "{\"intent\":\"general_chat\",\"params\":{},\"requiresQuery\":false}";
+        if (msg.contains("统计") || msg.contains("总共有") || msg.contains("概览")) {
+            return "{\"intent\":\"stat_query\",\"params\":{},\"requiresQuery\":true}";
         }
-        // 默认
-        return "{\"intent\":\"general_chat\",\"params\":{\"suggestion\":\"stock_query\"},\"requiresQuery\":false}";
+
+        // ===== 默认 =====
+        return "{\"intent\":\"help\",\"params\":{},\"requiresQuery\":false}";
     }
 }

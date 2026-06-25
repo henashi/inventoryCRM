@@ -46,7 +46,7 @@ export const aiApi = {
 
   // ===== AI 聊天助手 =====
 
-  /** 发送消息给 AI 助手 */
-  chat: (message: string) =>
-    request.post<{ reply: string; fallback: boolean }>('/ai/chat', { message }),
+  /** 发送消息给 AI 助手（带历史上下文） */
+  chat: (message: string, history?: { role: string; content: string }[]) =>
+    request.post<{ reply: string; fallback: boolean }>('/ai/chat', { message, history }),
 }

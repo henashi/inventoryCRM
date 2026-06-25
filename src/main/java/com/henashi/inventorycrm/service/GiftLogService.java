@@ -62,6 +62,7 @@ public class GiftLogService {
     }
 
     @Transactional
+    @CacheEvict(allEntries = true)
     public GiftLogDTO saveGiftLog(GiftLogCreateDTO logCreateDTO) {
         log.debug("创建礼品日志: 客户ID={}, 礼品标识={}",
                 logCreateDTO.customerId(), logCreateDTO.giftId());

@@ -1,10 +1,13 @@
 package com.henashi.inventorycrm.ai;
 
 import com.henashi.inventorycrm.ai.dto.ChatRequestDTO;
+import com.henashi.inventorycrm.ai.dto.ChatRequestDTO.ChatMessage;
 import com.henashi.inventorycrm.ai.dto.ChatResponseDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * AI 自然语言查询 Agent
@@ -28,13 +31,15 @@ public class NLQueryAgent {
             """;
 
     /**
-     * 处理用户消息
+     * 处理用户消息（带历史上下文）
      */
-    public ChatResponseDTO processMessage(String userMessage) {
+    public ChatResponseDTO processMessage(String userMessage, List<ChatMessage> history) {
         long start = System.currentTimeMillis();
 
-        // Step 1: 意图识别
-        String intentJson = llmService.analyzeIntent(userMessage);
+        // Step 1: 意图识别（带历史上下文）
+        String contextSummary = buildContextSummary(history);
+        String contextualMessage = contextSummary.isEmpty() ? userMessage : contextSummary + "\n当前问题: " + userMessage;
+        String intentJson = llmService.analyzeIntent(contextualMessage);
         log.info("意图识别结果: {}", intentJson);
 
         // Step 2: 判断是否需要查数据库
@@ -52,20 +57,16 @@ public class NLQueryAgent {
         String reply;
         boolean fallback = false;
 
-        if (queryResult != null && !queryResult.startsWith("你好")) {
-            // 有查询结果，让 LLM 生成自然语言回答
+        if (queryResult != null) {
             String prompt = String.format(ANSWER_PROMPT, queryResult);
             reply = llmService.generateAnswer(prompt, queryResult, userMessage);
-            // 如果生成结果就是原始数据（降级模式），标记 fallback
             fallback = reply.equals(queryResult);
-        } else if (queryResult != null) {
-            reply = queryResult;
         } else {
-            reply = "你好！我是库存CRM AI助手。你可以问我：\n"
+            reply = "你可以这样问我：\n"
+                    + "• 咱们仓库有什么商品？\n"
                     + "• 哪些商品库存不足？\n"
-                    + "• 最近新增的客户\n"
-                    + "• 有哪些礼品可以发放\n"
-                    + "• 上月出库总量是多少";
+                    + "• 最近新增了哪些客户？\n"
+                    + "• 有哪些礼品可以发放？";
         }
 
         long elapsed = System.currentTimeMillis() - start;
@@ -75,9 +76,26 @@ public class NLQueryAgent {
     }
 
     /**
-     * 处理带历史上下文的聊天（供后续扩展）
+     * 处理带历史上下文的聊天
      */
     public ChatResponseDTO processWithHistory(ChatRequestDTO request) {
-        return processMessage(request.message());
+        List<ChatMessage> history = request.history();
+        return processMessage(request.message(), history != null ? history : List.of());
+    }
+
+    /**
+     * 构建历史上下文摘要（提取最近几轮的关键信息）
+     */
+    private String buildContextSummary(List<ChatMessage> history) {
+        if (history == null || history.isEmpty()) return "";
+        // 只取最近 3 轮对话
+        int start = Math.max(0, history.size() - 6);
+        StringBuilder sb = new StringBuilder("历史对话：\n");
+        for (int i = start; i < history.size(); i++) {
+            ChatMessage msg = history.get(i);
+            String role = "user".equals(msg.role()) ? "用户" : "AI";
+            sb.append(role).append(": ").append(msg.content()).append("\n");
+        }
+        return sb.toString();
     }
 }

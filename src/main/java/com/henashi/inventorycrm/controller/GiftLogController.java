@@ -50,8 +50,7 @@ public class GiftLogController {
 
     @GetMapping("/{id}")
     @Operation(summary = "根据ID获取礼品日志信息", description = "通过礼品日志ID查询礼品日志的详细信息")
-    public GiftLogDTO getGiftLog(
-            @PathVariable("id") @NotNull @Min(1) Long id) {
+    public GiftLogDTO getGiftLog(@PathVariable @NotNull @Min(1) Long id) {
         return giftLogService.findGiftLogDTOById(id);
     }
 
@@ -73,7 +72,7 @@ public class GiftLogController {
 
     @PatchMapping("/{id}")
     @Operation(summary = "更新礼品日志信息", description = "根据提供的礼品日志ID和更新信息修改对应的礼品日志")
-    public GiftLogDTO updateGiftLog(@PathVariable("id") @NotNull Long id, @Valid @RequestBody GiftLogUpdateDTO giftLogUpdateDTO) {
+    public GiftLogDTO updateGiftLog(@PathVariable @NotNull Long id, @Valid @RequestBody GiftLogUpdateDTO giftLogUpdateDTO) {
         return giftLogService.updateGiftLog(id, giftLogUpdateDTO);
     }
 

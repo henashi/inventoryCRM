@@ -7,7 +7,10 @@
           <h1 class="chat-title">💬 AI 运营助手</h1>
           <span class="chat-subtitle">用自然语言查询库存、客户、礼品和统计数据</span>
         </div>
-        <a-button size="small" @click="clearMessages">清除对话</a-button>
+        <a-space>
+          <a-button size="small" @click="goBack">← 返回</a-button>
+          <a-button size="small" @click="clearMessages">清除对话</a-button>
+        </a-space>
       </div>
 
       <!-- 消息列表 -->
@@ -37,7 +40,7 @@
             {{ msg.role === 'user' ? '👤' : '🤖' }}
           </div>
           <div class="message-bubble">
-            <div class="message-text">{{ msg.content }}</div>
+            <div class="message-text">{{ stripMarkdown(msg.content) }}</div>
             <div v-if="msg.role === 'assistant' && msg.fallback" class="message-badge">
               离线模式
             </div>
@@ -61,6 +64,7 @@
           placeholder="输入你的问题，例如：哪些商品库存不足？"
           size="large"
           @pressEnter="handleSend"
+          @keydown="handleKeyDown"
           :disabled="loading"
         />
         <a-button
@@ -79,6 +83,7 @@
 
 <script setup lang="ts">
 import { ref, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { aiApi } from '@/api/ai'
 
@@ -88,10 +93,13 @@ interface ChatMessage {
   fallback?: boolean
 }
 
+const router = useRouter()
 const inputText = ref('')
 const messages = ref<ChatMessage[]>([])
 const loading = ref(false)
 const messagesRef = ref<HTMLElement>()
+const messageHistory = ref<string[]>([])
+const historyIndex = ref(-1)
 
 const suggestedQuestions = [
   '哪些商品库存不足？',
@@ -111,25 +119,31 @@ const scrollToBottom = () => {
 }
 
 const sendMessage = async (text: string) => {
-  inputText.value = text
-  await handleSend()
+  await handleSendWithText(text)
 }
 
-const handleSend = async () => {
-  const text = inputText.value.trim()
+const handleSendWithText = async (text: string) => {
   if (!text || loading.value) return
-
-  // 添加用户消息
+  messageHistory.value.push(text)
+  historyIndex.value = -1
   messages.value.push({ role: 'user', content: text })
   inputText.value = ''
   scrollToBottom()
+  await doChat(text)
+}
 
+const handleSend = async () => {
+  await handleSendWithText(inputText.value.trim())
+}
+
+const doChat = async (text: string) => {
   loading.value = true
   try {
-    const response = await aiApi.chat(text)
+    const history = messages.value.slice(-10).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content }))
+    const response = await aiApi.chat(text, history)
     messages.value.push({
       role: 'assistant',
-      content: response.reply,
+      content: stripMarkdown(response.reply),
       fallback: response.fallback,
     })
   } catch {
@@ -142,6 +156,35 @@ const handleSend = async () => {
     scrollToBottom()
   }
 }
+
+const handleKeyDown = (e: KeyboardEvent) => {
+  if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    if (messageHistory.value.length === 0) return
+    const newIndex = historyIndex.value === -1
+      ? messageHistory.value.length - 1
+      : Math.max(0, historyIndex.value - 1)
+    historyIndex.value = newIndex
+    inputText.value = messageHistory.value[newIndex]
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    if (historyIndex.value === -1) return
+    const newIndex = historyIndex.value + 1
+    if (newIndex >= messageHistory.value.length) {
+      historyIndex.value = -1
+      inputText.value = ''
+    } else {
+      historyIndex.value = newIndex
+      inputText.value = messageHistory.value[newIndex]
+    }
+  }
+}
+
+const goBack = () => {
+  router.back()
+}
+
+const stripMarkdown = (text: string) => text.replace(/\*\*/g, '')
 
 const clearMessages = () => {
   messages.value = []

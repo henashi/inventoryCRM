@@ -625,6 +625,56 @@ export interface AiRunResult {
   warningCount: number
 }
 
+
+
+// ===== 订单 =====
+
+export interface OrderDTO {
+  id: number
+  customerId: number
+  customerName: string
+  totalAmount: number
+  discount: number
+  finalAmount: number
+  orderTime: string
+  remark: string
+  items: OrderItem[]
+  createdTime: string
+}
+
+export interface OrderCreateDTO {
+  customerId: number
+  discount?: number
+  remark?: string
+  items: OrderItemCreateDTO[]
+}
+
+// ===== 消费记录 =====
+
+export interface OrderItem {
+  id: number
+  customerId: number
+  customerName: string
+  productId: number | null
+  productName: string
+  quantity: number
+  unitPrice: number | null
+  totalAmount: number
+  orderTime: string
+  remark: string
+  createdTime: string
+}
+
+export interface OrderItemCreateDTO {
+  customerId: number
+  productId?: number
+  productName?: string
+  quantity: number
+  unitPrice?: number
+  totalAmount: number
+  remark?: string
+}
+
 // ===== 客户评分 & 礼品推荐类型 =====
 
 /** 客户评分结果（含六维雷达） */

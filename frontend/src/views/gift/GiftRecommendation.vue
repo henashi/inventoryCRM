@@ -125,8 +125,8 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
+import request from '@/api/request'
 import { aiApi } from '@/api/ai'
-import { giftLogApi } from '@/api/giftLog'
 import type { CustomerScore, GiftRecommendation } from '@/types'
 
 const router = useRouter()
@@ -204,13 +204,13 @@ const handleIssueGift = async (rec: GiftRecommendation) => {
     content: `确定要为 ${selectedCustomerInfo.value?.customerName} 发放「${rec.giftName}」吗？`,
     onOk: async () => {
       try {
-        await giftLogApi.addGiftLog({
-          customerId: selectedCustomerId.value! as any,
-          giftId: rec.giftId as any,
+        await request.post('/gift-logs', {
+          customerId: selectedCustomerId.value!,
+          giftId: rec.giftId,
           quantity: 1,
           operator: 'system',
           issueNotes: 'AI 推荐发放',
-        } as any)
+        })
         message.success(`已成功发放 ${rec.giftName}`)
         // 刷新推荐列表
         recommendations.value = await aiApi.getRecommendations(selectedCustomerId.value!)
@@ -231,13 +231,13 @@ const handleBatchBirthday = async () => {
         try {
           const recs = await aiApi.getRecommendations(customer.id)
           if (recs.length > 0) {
-            await giftLogApi.addGiftLog({
-              customerId: customer.id as any,
-              giftId: recs[0].giftId as any,
+            await request.post('/gift-logs', {
+              customerId: customer.id,
+              giftId: recs[0].giftId,
               quantity: 1,
               operator: 'system',
               issueNotes: 'AI 推荐发放：生日礼品',
-            } as any)
+            })
             success++
           }
         } catch {

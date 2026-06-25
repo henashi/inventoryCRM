@@ -21,6 +21,9 @@
           </template>
           AI 评分
         </a-button>
+        <a-button @click="goToOrders">
+          订单管理
+        </a-button>
         <a-button @click="handleExport" :loading="exportLoading">
           <template #icon>
             <export-outlined />
@@ -1135,9 +1138,8 @@ const handleBack = () => {
   router.push('/')
 }
 
-const goToAIScoring = () => {
-  router.push('/ai/customers/scores')
-}
+const goToAIScoring = () => { router.push('/ai/customers/scores') }
+const goToOrders = () => { router.push('/orders') }
 
 const clearSelection = () => {
   selectedRowKeys.value = []

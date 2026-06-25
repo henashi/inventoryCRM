@@ -53,14 +53,22 @@ public class QueryExecutor {
             JsonNode params = root.path("params");
 
             return switch (intent) {
+                case "greeting" -> "你好！我是库存CRM AI助手，随时帮你查询库存、客户、礼品和统计数据 😊";
+                case "help" -> "你可以这样问我：\n"
+                        + "• 咱们仓库有什么商品？\n"
+                        + "• 哪些商品库存不足？\n"
+                        + "• 最近新增了哪些客户？\n"
+                        + "• 有哪些礼品可以发放？\n"
+                        + "• 上月出库总量是多少";
                 case "stock_query" -> handleStockQuery(params);
                 case "customer_query" -> handleCustomerQuery(params);
                 case "gift_query" -> handleGiftQuery(params);
                 case "stat_query" -> handleStatQuery(params);
-                default -> "你好！我是库存CRM AI助手。你可以问我：\n"
+                default -> "你可以这样问我：\n"
+                        + "• 咱们仓库有什么商品？\n"
                         + "• 哪些商品库存不足？\n"
-                        + "• 最近新增的客户\n"
-                        + "• 有哪些礼品可以发放\n"
+                        + "• 最近新增了哪些客户？\n"
+                        + "• 有哪些礼品可以发放？\n"
                         + "• 上月出库总量是多少";
             };
         } catch (Exception e) {
@@ -71,7 +79,22 @@ public class QueryExecutor {
 
     private String handleStockQuery(JsonNode params) {
         boolean lowStock = params.path("lowStockOnly").asBoolean(false);
+        boolean listAll = params.path("listAll").asBoolean(false);
         String logType = params.path("logType").asText("");
+
+        if (listAll) {
+            List<Product> all = productRepository.findAll();
+            if (all.isEmpty()) return "仓库里还没有商品。";
+            StringBuilder sb = new StringBuilder("📦 仓库共有 " + all.size() + " 个商品：\n");
+            for (Product p : all) {
+                sb.append("• ").append(p.getName())
+                        .append("（").append(p.getCode()).append("）")
+                        .append(" 库存 ").append(p.getCurrentStock() != null ? p.getCurrentStock() : 0)
+                        .append(" ").append(p.getUnit() != null ? p.getUnit() : "件")
+                        .append("\n");
+            }
+            return sb.toString();
+        }
 
         if (lowStock) {
             List<Product> lowStockProducts = productRepository.findAll().stream()
@@ -122,6 +145,20 @@ public class QueryExecutor {
 
     private String handleCustomerQuery(JsonNode params) {
         boolean recentFirst = params.path("recentFirst").asBoolean(false);
+        boolean listAll = params.path("listAll").asBoolean(false);
+
+        if (listAll) {
+            List<Customer> all = customerRepository.findAll();
+            if (all.isEmpty()) return "暂无客户数据。";
+            StringBuilder sb = new StringBuilder("👥 共有 " + all.size() + " 位客户：\n");
+            for (Customer c : all) {
+                sb.append("• ").append(c.getName())
+                        .append("（").append(c.getPhone()).append("）")
+                        .append(" 等级 ").append(c.getGiftLevel() != null ? c.getGiftLevel() : 0)
+                        .append("\n");
+            }
+            return sb.toString();
+        }
 
         if (recentFirst) {
             List<Customer> recentCustomers = customerRepository.findAll().stream()

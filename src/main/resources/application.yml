@@ -68,8 +68,8 @@ management:
 
 ai:
   api-key: ${AI_API_KEY:}
-  provider: deepseek
-  model: deepseek-chat
+  api-url: ${AI_API_URL:https://api.deepseek.com/chat/completions}
+  model: ${AI_MODEL:deepseek-chat}
 
 logging:
   level:
