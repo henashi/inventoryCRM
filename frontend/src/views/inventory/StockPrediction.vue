@@ -3,7 +3,7 @@
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="page-header-main">
-        <h1 class="page-title">🤖 AI 库存预测</h1>
+
         <div class="page-subtitle">
           基于 OLS 线性回归模型的出库趋势预测，自动识别缺货风险并推荐补货量
           <span v-if="lastRunTime" class="last-run">上次预测：{{ lastRunTime }}</span>
@@ -14,7 +14,7 @@
           <template #icon><SyncOutlined /></template>
           执行全量预测
         </a-button>
-        <a-button @click="goToInventory">返回库存总览</a-button>
+        
       </div>
     </div>
 
@@ -189,7 +189,7 @@
 import { onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { SyncOutlined } from '@ant-design/icons-vue'
+import { SyncOutlined, RobotOutlined } from '@ant-design/icons-vue'
 import * as echarts from 'echarts'
 import { aiApi } from '@/api/ai'
 import type { DailyOutRecord, PredictionSummary, StockPrediction } from '@/types'
@@ -499,11 +499,6 @@ const goToStockIn = (record: StockPrediction) => {
   })
 }
 
-/** 返回库存总览 */
-const goToInventory = () => {
-  router.push('/inventory')
-}
-
 // ===== 工具函数 =====
 
 const getDaysColor = (days: number): string => {
@@ -589,7 +584,7 @@ watch([searchKeyword, alertFilter], () => {
 <style scoped>
 .prediction-page {
   padding: 20px;
-  background: #f5f7fa;
+  background: var(--bg-page);
   min-height: 100vh;
 }
 
@@ -604,19 +599,19 @@ watch([searchKeyword, alertFilter], () => {
   font-size: 24px;
   font-weight: 700;
   margin: 0;
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .page-subtitle {
   font-size: 14px;
-  color: #6b7280;
+  color: var(--text-secondary);
   margin-top: 4px;
 }
 
 .last-run {
   display: block;
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--text-tertiary);
   margin-top: 2px;
 }
 
@@ -673,12 +668,12 @@ watch([searchKeyword, alertFilter], () => {
 /* 商品单元格 */
 .product-cell .product-name {
   font-weight: 500;
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .product-cell .product-code {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--text-tertiary);
 }
 
 /* 库存单元格 */
@@ -715,7 +710,7 @@ watch([searchKeyword, alertFilter], () => {
 
 .avg-hint {
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--text-tertiary);
 }
 
 /* 补货量 */
@@ -725,7 +720,7 @@ watch([searchKeyword, alertFilter], () => {
 }
 
 .text-gray-400 {
-  color: #9ca3af;
+  color: var(--text-tertiary);
 }
 
 /* 模型信息单元格 */

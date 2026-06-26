@@ -2,12 +2,11 @@
   <div class="page-container">
     <div class="page-header">
       <div>
-        <h1 class="page-title">客户评分</h1>
+
         <div class="page-subtitle">基于多维度指标的客户价值评估</div>
       </div>
       <div class="page-header-actions">
-        <a-button @click="goBack">返回客户列表</a-button>
-        <a-button @click="goToRecommendations">礼品推荐</a-button>
+          <a-button @click="goToRecommendations">礼品推荐</a-button>
         <a-button type="primary" :loading="runningScoring" @click="handleRunScoring">
           <template #icon><SyncOutlined /></template>
           执行评分
@@ -281,11 +280,6 @@ async function handleRunScoring() {
 function goToRecommendations() {
   router.push('/ai/customers/gift-recommendations')
 }
-
-function goBack() {
-  router.push('/customers')
-}
-
 function renderRadar(customer: CustomerScore) {
   if (!radarRef.value) return
   if (radarChart) radarChart.dispose()
@@ -338,7 +332,7 @@ onUnmounted(() => { if (radarChart) radarChart.dispose() })
 <style scoped>
 .page-container {
   padding: 20px;
-  background: #f5f7fa;
+  background: var(--bg-page);
   min-height: 100vh;
 }
 .page-header {
@@ -358,8 +352,8 @@ onUnmounted(() => { if (radarChart) radarChart.dispose() })
 .stat-body { padding: 16px 20px 12px; }
 .stat-inner { display: flex; justify-content: space-between; align-items: baseline; }
 .stat-value { font-size: 28px; font-weight: 700; line-height: 1.2; }
-.stat-label { font-size: 14px; color: #6b7280; }
-.stat-footer { padding: 6px 20px; font-size: 12px; color: #9ca3af; border-top: 1px solid #f0f0f0; }
+.stat-label { font-size: 15px; color: var(--text-secondary); font-weight: 500; }
+.stat-footer { padding: 6px 20px; font-size: 13px; color: var(--text-tertiary); border-top: 1px solid var(--border-color); }
 .stat-high { border-left-color: #52c41a; }
 .stat-high .stat-value { color: #52c41a; }
 .stat-growing { border-left-color: #faad14; }
@@ -393,10 +387,10 @@ onUnmounted(() => { if (radarChart) radarChart.dispose() })
 
 .dim-breakdown { display: flex; flex-direction: column; gap: 6px; padding: 0 4px; }
 .dim-row { display: flex; align-items: center; gap: 8px; }
-.dim-name { font-size: 12px; color: #6b7280; min-width: 56px; flex-shrink: 0; }
+.dim-name { font-size: 13px; color: var(--text-primary); min-width: 56px; flex-shrink: 0; font-weight: 500; }
 .dim-row :deep(.ant-progress) { flex: 1; margin-bottom: 0; }
 
 
-.row-selected { background-color: #e6f7ff; }
+.row-selected { background-color: rgba(24, 144, 255, 0.1); }
 :deep(.ant-table-row) { cursor: pointer; }
 </style>

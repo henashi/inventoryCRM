@@ -2,7 +2,7 @@
   <div class="gift-page">
     <div class="page-header">
       <div>
-        <h1 class="page-title">礼品管理</h1>
+
         <p class="page-subtitle">支持查看礼品详情；删除仅对管理员开放。</p>
       </div>
       <div class="page-actions">

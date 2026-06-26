@@ -41,9 +41,13 @@ public class GiftRecommendationService {
         // 获取客户已领取的礼品 ID 列表
         Set<Long> receivedGiftIds = findReceivedGiftIds(customerId);
 
-        // 获取所有生效中的礼品
+        // 获取所有生效中的礼品（兼容 status 字符串和 giftStatus 枚举）
         List<Gift> activeGifts = giftRepository.findAll().stream()
-                .filter(g -> g.getStatus() != null && "ACTIVE".equals(g.getStatus()))
+                .filter(g -> {
+                    if (g.getGiftStatus() == Gift.GiftStatus.ACTIVE) return true;
+                    if ("ACTIVE".equals(g.getStatus())) return true;
+                    return false;
+                })
                 .filter(g -> !receivedGiftIds.contains(g.getId()))
                 .collect(Collectors.toList());
 

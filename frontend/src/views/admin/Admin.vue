@@ -2,12 +2,11 @@
   <div class="admin-page">
     <div class="page-header">
       <div>
-        <h1 class="page-title">系统管理</h1>
+
         <p class="page-subtitle">聚合系统概览、模块入口与运行提醒，便于演示和日常巡检。</p>
       </div>
       <a-space wrap>
-        <a-button @click="goDashboard">返回仪表盘</a-button>
-        <a-button @click="goDataDicts">配置管理</a-button>
+          <a-button @click="goDataDicts">配置管理</a-button>
         <a-button type="primary" :loading="loading" @click="loadOverview">刷新概览</a-button>
       </a-space>
     </div>
@@ -31,38 +30,17 @@
     </a-row>
 
     <a-row :gutter="[16, 16]">
-      <a-col :xs="24" :xl="14">
-        <a-card title="关键模块入口" class="section-card">
-          <div class="shortcut-grid">
-            <div
-              v-for="entry in shortcuts"
-              :key="entry.title"
-              class="shortcut-item"
-              @click="router.push(entry.path)"
-            >
-              <div class="shortcut-icon" :class="entry.type">
-                <component :is="entry.icon" />
-              </div>
-              <div>
-                <div class="shortcut-title">{{ entry.title }}</div>
-                <div class="shortcut-description">{{ entry.description }}</div>
-              </div>
-            </div>
-          </div>
-        </a-card>
-      </a-col>
-
-      <a-col :xs="24" :xl="10">
+      <a-col :xs="24">
         <a-card title="角色与权限说明" class="section-card">
           <div class="role-header">
             <span>当前登录</span>
-            <a-tag color="blue">{{ currentRoleText }}</a-tag>
+            <a-tag :color="currentRoleColor">{{ currentRoleText }}</a-tag>
           </div>
           <div class="permission-list">
             <div v-for="item in permissionItems" :key="item.title" class="permission-item">
               <div class="permission-title-row">
                 <strong>{{ item.title }}</strong>
-                <a-tag :color="item.color">{{ item.role }}</a-tag>
+                <a-tag :color="item.color">{{ item.roleName }}</a-tag>
               </div>
               <div class="permission-desc">{{ item.description }}</div>
             </div>
@@ -144,8 +122,8 @@
                 <div class="config-title">{{ item.paramName || item.paramCode }}</div>
                 <div class="config-desc">{{ item.groupName || item.groupCode }} · {{ item.paramValue || '--' }}</div>
               </div>
-              <a-tag :color="item.status === 'ACTIVE' ? 'green' : 'default'">
-                {{ item.status === 'ACTIVE' ? '生效中' : '已停用' }}
+              <a-tag :color="item.status === 'ACTIVE' || item.status === 'DICT_STATUS_ACTIVE' ? 'green' : 'default'">
+                {{ item.status === 'ACTIVE' || item.status === 'DICT_STATUS_ACTIVE' ? '生效中' : '已停用' }}
               </a-tag>
             </div>
           </div>
@@ -350,6 +328,12 @@ const currentRoleText = computed(() => ({
   MANAGER: '经理',
   USER: '普通用户',
 }[accountUser.value?.role || authStore.userRole || 'ADMIN'] || '管理员'))
+
+const currentRoleColor = computed(() => ({
+  ADMIN: 'red',
+  MANAGER: 'blue',
+  USER: 'green',
+}[accountUser.value?.role || authStore.userRole || 'ADMIN'] || 'blue'))
 const currentTimeText = computed(() => dayjs().format('YYYY-MM-DD HH:mm'))
 const lastUpdatedText = computed(() => lastUpdatedAt.value ? dayjs(lastUpdatedAt.value).format('YYYY-MM-DD HH:mm:ss') : '--')
 const operationLogSummary = computed(() => buildOperationLogSummary(recentOperationLogs.value))
@@ -475,18 +459,21 @@ const permissionItems = [
   {
     title: '系统管理员',
     role: 'ADMIN',
+    roleName: '管理员',
     color: 'red',
     description: '可访问系统概览、配置管理、库存与业务模块，适合演示全局管理能力。',
   },
   {
     title: '业务经理',
     role: 'MANAGER',
+    roleName: '经理',
     color: 'blue',
     description: '聚焦客户、商品、礼品与库存流程，不暴露系统级配置入口。',
   },
   {
     title: '普通用户',
     role: 'USER',
+    roleName: '普通用户',
     color: 'green',
     description: '可查看商品和礼品相关页面，避免进入无权限的系统管理能力。',
   },
@@ -569,9 +556,11 @@ const loadOverview = async () => {
   }
 
   if (results[2].status === 'fulfilled') {
+    const raw = results[2].value
     inventoryStats.value = {
       ...inventoryStats.value,
-      ...results[2].value,
+      ...raw,
+      totalOperations: (raw.inCount || 0) + (raw.outCount || 0),
     }
   } else {
     failedModules.push('库存日志统计')
@@ -626,7 +615,7 @@ onMounted(() => {
 .admin-page {
   min-height: 100vh;
   padding: 20px;
-  background: #f5f7fa;
+  background: var(--bg-page);
 }
 
 .page-header {
@@ -747,7 +736,7 @@ onMounted(() => {
 .role-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px;
   margin-bottom: 16px;
 }
 

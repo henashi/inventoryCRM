@@ -1,7 +1,7 @@
 <template>
   <div class="dataDict-page">
     <div class="page-header">
-      <h1 class="page-title">配置管理</h1>
+
       <div class="page-actions">
           <a-button @click="handleRefresh" :loading="isLoading">
             <reload-outlined />

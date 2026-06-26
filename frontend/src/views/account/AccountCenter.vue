@@ -2,7 +2,7 @@
   <div class="account-page">
     <div class="page-header">
       <div>
-        <h1 class="page-title">个人中心</h1>
+
         <p class="page-subtitle">维护个人资料、安全设置与退出策略说明</p>
       </div>
       <a-space>

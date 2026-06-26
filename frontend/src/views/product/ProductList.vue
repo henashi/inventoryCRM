@@ -1,7 +1,7 @@
 <template>
   <div class="product-list-page">
     <div class="page-header">
-      <h1 class="page-title">商品管理</h1>
+
       <div class="page-actions">
         <a-button type="primary" @click="showAddModal">
           <plus-outlined />
@@ -18,12 +18,6 @@
         <a-button @click="handleRefresh" :loading="isLoading || statsLoading || categoryLoading">
           <reload-outlined />
           刷新
-        </a-button>
-        <a-button @click="handleBack" style="margin-right:8px">
-          <template #icon>
-            <home-outlined />
-          </template>
-          返回仪表盘
         </a-button>
       </div>
     </div>
@@ -386,7 +380,6 @@ import { message, Modal, type FormInstance } from 'ant-design-vue'
 import {
   PlusOutlined,
   ReloadOutlined,
-  HomeOutlined,
   StopOutlined,
   CheckOutlined,
   ImportOutlined,
@@ -664,9 +657,6 @@ const handleRefresh = async () => {
   message.success('刷新成功')
 }
 
-const handleBack = () => {
-  router.push('/')
-}
 
 const resetFormState = () => {
   Object.assign(formState, {

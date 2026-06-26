@@ -3,7 +3,7 @@
     <!-- 气泡弹窗 -->
     <div v-if="isOpen" class="fab-popup" :style="popupStyle">
       <div class="fab-popup-header">
-        <span>🤖 AI 助手</span>
+        <span>✦ AI 助手</span>
         <a-button type="text" size="small" @click="closePopup">✕</a-button>
       </div>
       <div class="fab-popup-body" ref="fabMessagesRef">
@@ -33,6 +33,7 @@
     </div>
 
     <!-- 悬浮球 -->
+    <a-tooltip title="AI 助手" placement="left">
     <div
       class="fab-button"
       :style="{ transform: `translate(${posX}px, ${posY}px)` }"
@@ -40,8 +41,10 @@
       @click="togglePopup"
     >
       <span v-if="unreadCount > 0" class="fab-badge">{{ unreadCount }}</span>
-      🤖
+      ✦
     </div>
+    
+    </a-tooltip>
   </div>
 </template>
 
@@ -227,7 +230,7 @@ const fabSend = async (text: string) => {
   right: 20px;
   width: 360px;
   height: 480px;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.15);
   display: flex;
@@ -246,7 +249,7 @@ const fabSend = async (text: string) => {
   justify-content: space-between;
   align-items: center;
   padding: 14px 16px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-color);
   font-weight: 600;
   font-size: 15px;
   flex-shrink: 0;
@@ -263,11 +266,11 @@ const fabSend = async (text: string) => {
   display: flex;
   gap: 6px;
   padding: 10px 16px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border-color);
   flex-shrink: 0;
 }
 
-.fab-empty { text-align: center; padding-top: 60px; color: #9ca3af; }
+.fab-empty { text-align: center; padding-top: 60px; color: var(--text-tertiary); }
 .fab-empty-text { font-size: 15px; margin-bottom: 12px; }
 .fab-suggestions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
 .fab-suggestion { cursor: pointer; font-size: 12px; border-radius: 12px; }
@@ -283,6 +286,6 @@ const fabSend = async (text: string) => {
   word-break: break-word;
 }
 .user .fab-bubble { background: #1890ff; color: #fff; border-bottom-right-radius: 2px; }
-.assistant .fab-bubble { background: #f0f2f5; color: #1f2937; border-bottom-left-radius: 2px; }
+.assistant .fab-bubble { background: var(--bg-chat-message); color: var(--text-primary); border-bottom-left-radius: 2px; }
 .fab-loading { color: #9ca3af; }
 </style>

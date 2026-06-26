@@ -1,7 +1,7 @@
 <template>
   <div class="page-container">
     <div class="page-header">
-      <h1 class="page-title">订单管理</h1>
+
       <div class="page-header-actions">
         <a-button type="primary" @click="showForm = true">新增订单</a-button>
       </div>
@@ -284,7 +284,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.page-container { padding: 20px; background: #f5f7fa; min-height: 100vh; }
+.page-container { padding: 20px; background: var(--bg-page); min-height: 100vh; }
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .page-title { font-size: 24px; font-weight: 700; margin: 0; color: #111827; }
 .name-cell { font-weight: 500; }
