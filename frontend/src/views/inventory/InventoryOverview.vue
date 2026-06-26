@@ -2,17 +2,15 @@
   <div class="inventory-page">
     <div class="page-header">
       <div class="page-header-main">
-        <h1 class="page-title">库存总览</h1>
+
         <div class="page-subtitle">统一查看库存快照、预警与出入库操作</div>
       </div>
       <div class="page-header-actions">
         <a-button @click="openAlertsDrawer">低库存预警</a-button>
         <a-button :loading="exportLoading" @click="handleExport">导出快照</a-button>
-        <a-button @click="goToPredictions">🤖 AI 预测</a-button>
-        <a-button @click="goToAssistant">💬 AI 助手</a-button>
-        <a-button @click="goToLogs">库存日志</a-button>
+<a-button @click="goToLogs">库存日志</a-button>
         <a-button class="header-action-primary" type="primary" @click="openAction('in')">商品入库</a-button>
-        <a-button class="header-action-back" @click="goToDashboard">返回仪表盘</a-button>
+
       </div>
     </div>
 
@@ -42,7 +40,7 @@
           </div>
           <div class="search-field search-field-checkbox">
             <a-form-item label="筛选项">
-              <a-checkbox v-model:checked="searchForm.lowStockOnly">仅看低库存</a-checkbox>
+              <a-checkbox v-model:checked="searchForm.lowStockOnly" @change="handleSearch">仅看低库存</a-checkbox>
             </a-form-item>
           </div>
           <div class="search-actions">
@@ -294,20 +292,10 @@ const openAlertsDrawer = async () => {
   await loadAlerts()
 }
 
-const goToDashboard = () => {
-  router.push('/dashboard')
-}
+
 
 const goToLogs = () => {
   router.push('/inventory/logs')
-}
-
-const goToPredictions = () => {
-  router.push('/inventory/predictions')
-}
-
-const goToAssistant = () => {
-  router.push('/ai/assistant')
 }
 
 const goToDetail = (inventory: Inventory) => {

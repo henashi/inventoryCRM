@@ -217,7 +217,14 @@ public class InventoryLogService {
                 }
             }
         }
-        return new InventoryLogStatsDTO(inCount, outCount, inQuantity, outQuantity);
+        Long totalOperations = inCount + outCount;
+        Long successCount = inventoryLogRepository.countByStatus("SUCCESS");
+        Long failureCount = inventoryLogRepository.countByStatus("FAIL");
+        double successRate = totalOperations > 0
+            ? Math.round((double) successCount / totalOperations * 1000.0) / 10.0
+            : 0.0;
+        return new InventoryLogStatsDTO(inCount, outCount, inQuantity, outQuantity,
+                totalOperations, successCount, failureCount, successRate, 0L);
     }
 
     private PageRequest buildHistoryPage(int page, int size) {

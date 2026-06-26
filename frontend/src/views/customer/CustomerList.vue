@@ -1,7 +1,7 @@
 <template>
   <div class="customer-list-page">
     <div class="page-header">
-      <h1 class="page-title">客户管理</h1>
+
       <div class="page-actions">
         <a-button type="primary" @click="showAddModal" class="add-btn">
           <template #icon>
@@ -37,12 +37,6 @@
             </template>
           </a-button>
         </a-tooltip>
-        <a-button @click="handleBack" style="margin-right:8px">
-          <template #icon>
-            <home-outlined />
-          </template>
-          返回仪表盘
-        </a-button>
       </div>
     </div>
 
@@ -574,7 +568,6 @@ import {
   PlusOutlined,
   ExportOutlined,
   ImportOutlined,
-  BulbOutlined,
   ReloadOutlined,
   StopOutlined,
   CheckOutlined,
@@ -1134,12 +1127,7 @@ const handleBatchDelete = () => {
   })
 }
 
-const handleBack = () => {
-  router.push('/')
-}
 
-const goToAIScoring = () => { router.push('/ai/customers/scores') }
-const goToOrders = () => { router.push('/orders') }
 
 const clearSelection = () => {
   selectedRowKeys.value = []

@@ -2,7 +2,7 @@
   <div class="inventory-detail-page">
     <div class="page-header">
       <div>
-        <h1 class="page-title">库存详情</h1>
+
         <div class="page-subtitle">查看库存状态、预警原因与最近变更记录</div>
       </div>
       <a-space>

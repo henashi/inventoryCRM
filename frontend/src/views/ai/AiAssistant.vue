@@ -4,7 +4,7 @@
       <!-- 头部 -->
       <div class="chat-header">
         <div class="chat-header-info">
-          <h1 class="chat-title">💬 AI 运营助手</h1>
+
           <span class="chat-subtitle">用自然语言查询库存、客户、礼品和统计数据</span>
         </div>
         <a-space>
@@ -16,7 +16,7 @@
       <!-- 消息列表 -->
       <div class="chat-messages" ref="messagesRef">
         <div v-if="messages.length === 0" class="chat-empty">
-          <div class="empty-icon">🤖</div>
+          <div class="empty-icon">✦</div>
           <div class="empty-title">有什么可以帮你的？</div>
           <div class="empty-suggestions">
             <a-tag
@@ -37,7 +37,7 @@
           :class="msg.role"
         >
           <div class="message-avatar">
-            {{ msg.role === 'user' ? '👤' : '🤖' }}
+            {{ msg.role === 'user' ? '👤' : '✦' }}
           </div>
           <div class="message-bubble">
             <div class="message-text">{{ stripMarkdown(msg.content) }}</div>
@@ -49,7 +49,7 @@
 
         <!-- 加载中 -->
         <div v-if="loading" class="message-row assistant">
-          <div class="message-avatar">🤖</div>
+          <div class="message-avatar">✦</div>
           <div class="message-bubble loading-bubble">
             <a-spin size="small" />
             <span class="loading-text">思考中...</span>
@@ -194,7 +194,7 @@ const clearMessages = () => {
 <style scoped>
 .chat-page {
   height: calc(100vh - 48px);
-  background: #f5f7fa;
+  background: var(--bg-page);
   display: flex;
   justify-content: center;
   padding: 16px;
@@ -203,9 +203,9 @@ const clearMessages = () => {
 .chat-container {
   width: 100%;
   max-width: 800px;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -216,11 +216,11 @@ const clearMessages = () => {
   justify-content: space-between;
   align-items: center;
   padding: 16px 24px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
 }
 .chat-title { font-size: 18px; font-weight: 600; margin: 0; }
-.chat-subtitle { font-size: 13px; color: #9ca3af; margin-left: 8px; }
+.chat-subtitle { font-size: 13px; color: var(--text-tertiary); margin-left: 8px; }
 
 .chat-messages {
   flex: 1;
@@ -238,10 +238,10 @@ const clearMessages = () => {
   align-items: center;
   justify-content: center;
   gap: 16px;
-  color: #9ca3af;
+  color: var(--text-tertiary);
 }
 .empty-icon { font-size: 48px; }
-.empty-title { font-size: 18px; font-weight: 500; color: #6b7280; }
+.empty-title { font-size: 18px; font-weight: 500; color: var(--text-secondary); }
 .empty-suggestions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 500px; }
 .suggestion-tag {
   cursor: pointer;
@@ -286,8 +286,8 @@ const clearMessages = () => {
   border-bottom-right-radius: 4px;
 }
 .assistant .message-bubble {
-  background: #f5f7fa;
-  color: #1f2937;
+  background: var(--bg-chat-message);
+  color: var(--text-primary);
   border-bottom-left-radius: 4px;
 }
 
@@ -309,7 +309,7 @@ const clearMessages = () => {
   display: flex;
   gap: 8px;
   padding: 16px 24px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border-color);
   flex-shrink: 0;
 }
 .chat-input-area :deep(.ant-input) { border-radius: 8px; }

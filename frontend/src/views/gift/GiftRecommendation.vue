@@ -2,10 +2,10 @@
   <div class="recommendation-page">
     <div class="page-header">
       <div>
-        <h1 class="page-title">🎁 AI 礼品推荐</h1>
+
         <div class="page-subtitle">基于客户评分智能匹配最佳礼品，支持一键发放</div>
       </div>
-      <a-button @click="goToScoring">返回评分榜</a-button>
+      
     </div>
 
     <!-- 生日提醒横幅 -->
@@ -41,7 +41,7 @@
             :pagination="{ pageSize: 6, showSizeChanger: false, showTotal: (t: number) => `共 ${t} 人` }"
             :scroll="{ y: 380 }"
             :row-class="(r: any) => r.customerId === selectedCustomerId ? 'selected-row' : ''"
-            @row-click="handleSelectCustomer"
+            :custom-row="(record) => ({ onClick: () => handleSelectCustomer(record) })"
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'name'">
@@ -190,8 +190,9 @@ const handleSelectCustomer = async (record: CustomerScore) => {
   loading.value.recommendations = true
   try {
     recommendations.value = await aiApi.getRecommendations(record.customerId)
-  } catch {
+  } catch (e) {
     recommendations.value = []
+    console.error("推荐失败:", e)
   } finally {
     loading.value.recommendations = false
   }
@@ -253,7 +254,6 @@ const handleBatchBirthday = async () => {
   })
 }
 
-const goToScoring = () => router.push('/ai/customers/scores')
 
 onMounted(() => { loadData() })
 </script>
@@ -261,7 +261,7 @@ onMounted(() => { loadData() })
 <style scoped>
 .recommendation-page {
   padding: 20px;
-  background: #f5f7fa;
+  background: var(--bg-page);
   min-height: 100vh;
 }
 .page-header {

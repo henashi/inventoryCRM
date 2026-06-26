@@ -46,7 +46,7 @@ public class OperationLogController {
             @RequestParam(defaultValue = "5") Integer size,
             @RequestParam(defaultValue = "0") Integer page) {
         Sort sort = Sort.by("id").descending();
-        return operationLogService.getLogsByModule(module, PageRequest.of(size, page, sort));
+        return operationLogService.getLogsByModule(module, PageRequest.of(page, size, sort));
     }
 
     @GetMapping("/operator/{operator}")
@@ -56,7 +56,7 @@ public class OperationLogController {
             @RequestParam(defaultValue = "5") Integer size,
             @RequestParam(defaultValue = "0") Integer page) {
         Sort sort = Sort.by("id").descending();
-        return operationLogService.getLogsByOperator(operator, PageRequest.of(size, page, sort));
+        return operationLogService.getLogsByOperator(operator, PageRequest.of(page, size, sort));
     }
 
     @GetMapping("/search")
@@ -67,7 +67,7 @@ public class OperationLogController {
             @RequestParam(defaultValue = "0") Integer page
     ) {
         Sort sort = Sort.by("id").descending();
-        return operationLogService.searchLogs(keyword, PageRequest.of(size, page, sort));
+        return operationLogService.searchLogs(keyword, PageRequest.of(page, size, sort));
     }
 
     @PostMapping

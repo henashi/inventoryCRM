@@ -3,7 +3,7 @@
   <div class="inventory-log-page">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h1 class="page-title">库存操作日志</h1>
+
       <div class="page-actions">
         <a-button @click="handleRefresh" :loading="isLoading">
           <reload-outlined />
@@ -13,13 +13,7 @@
           <export-outlined />
           导出
         </a-button>
-        <a-button @click="handleBack" style="margin-left:8px">
-          <template #icon>
-            <home-outlined />
-          </template>
-          返回仪表盘
-        </a-button>
-      </div>
+              </div>
     </div>
 
     <!-- 搜索和筛选区域

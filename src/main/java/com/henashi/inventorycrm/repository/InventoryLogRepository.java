@@ -32,4 +32,7 @@ public interface InventoryLogRepository extends JpaRepository<InventoryLog, Long
 
     @Query("select il.type, sum(il.quantity) quantityCount, count(il) count from InventoryLog il where il.deleted = false group by il.type")
     List<InventoryLogTypeStatsDTO> countStats();
+
+    @Query("select count(il) from InventoryLog il where il.deleted = false and il.status = :status")
+    Long countByStatus(@Param("status") String status);
 }

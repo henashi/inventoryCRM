@@ -1,0 +1,194 @@
+<template>
+  <a-layout class="app-layout">
+    <a-layout-sider v-model:collapsed="collapsed" collapsible width="220" collapsed-width="64" :trigger="null" class="app-sider" :theme="themeStore.isDark ? 'dark' : 'light'">
+      <div class="sider-header">
+        <span class="sider-logo">📦</span>
+        <span class="sider-title" v-show="!collapsed">Inventory CRM</span>
+      </div>
+      <a-menu
+        v-model:openKeys="openKeys"
+        v-model:selectedKeys="selectedKeys"
+        mode="inline"
+        :theme="themeStore.isDark ? 'dark' : 'light'"
+        @click="handleMenuClick"
+      >
+        <a-menu-item key="/dashboard">
+          <dashboard-outlined />
+          <span>仪表盘</span>
+        </a-menu-item>
+
+        <a-sub-menu key="inventory">
+          <template #title>
+            <shop-outlined />
+            <span>库存管理</span>
+          </template>
+          <a-menu-item key="/inventory">库存概览</a-menu-item>
+          <a-menu-item key="/products">商品管理</a-menu-item>
+          <a-menu-item key="/inventory/predictions">AI 预测</a-menu-item>
+        </a-sub-menu>
+
+        <a-sub-menu key="customer">
+          <template #title>
+            <team-outlined />
+            <span>客户管理</span>
+          </template>
+          <a-menu-item key="/customers">客户列表</a-menu-item>
+          <a-menu-item key="/ai/customers/scores">AI 评分</a-menu-item>
+          <a-menu-item key="/ai/customers/gift-recommendations">礼品推荐</a-menu-item>
+          <a-menu-item key="/orders">订单管理</a-menu-item>
+        </a-sub-menu>
+
+        <!-- AI 助手菜单已隐藏，使用悬浮球按钮 -->
+
+        <a-sub-menu key="gift">
+          <template #title>
+            <gift-outlined />
+            <span>礼品管理</span>
+          </template>
+          <a-menu-item key="/gifts">礼品列表</a-menu-item>
+          <a-menu-item key="/gift-logs">礼品发放</a-menu-item>
+        </a-sub-menu>
+
+        <a-menu-item key="/admin">
+          <setting-outlined />
+          <span>系统设置</span>
+        </a-menu-item>
+      </a-menu>
+
+    </a-layout-sider>
+
+    <a-layout>
+      <a-layout-header class="app-header">
+        <div class="header-left">
+          <menu-fold-outlined v-if="!collapsed" @click="collapsed = !collapsed" class="trigger" />
+          <menu-unfold-outlined v-else @click="collapsed = !collapsed" class="trigger" />
+        </div>
+        <div class="header-title">{{ route.meta?.title }}</div>
+        <div class="header-right">
+          <a-button
+            class="theme-toggle-btn"
+            type="text"
+            size="small"
+            @click="themeStore.toggleTheme()"
+            :title="themeStore.isDark ? '切换到亮色模式' : '切换到暗色模式'"
+          >
+            <span class="theme-icon">{{ themeStore.isDark ? '☀️' : '🌙' }}</span>
+          </a-button>
+          <a-dropdown>
+            <div class="user-info">
+              <a-avatar size="small" icon="user" />
+              <span class="user-name">{{ userName }}</span>
+            </div>
+            <template #overlay>
+              <a-menu @click="handleAccountMenu">
+                <a-menu-item key="profile">个人资料</a-menu-item>
+                <a-menu-item key="password">修改密码</a-menu-item>
+                <a-menu-divider />
+                <a-menu-item key="logout">退出登录</a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
+        </div>
+      </a-layout-header>
+
+      <a-layout-content class="app-content">
+        <router-view />
+      </a-layout-content>
+    </a-layout>
+  </a-layout>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { useThemeStore } from '@/stores/theme'
+import {
+  DashboardOutlined, ShopOutlined, TeamOutlined,
+  BulbOutlined, SettingOutlined, GiftOutlined,
+  MenuFoldOutlined, MenuUnfoldOutlined,
+} from '@ant-design/icons-vue'
+
+const router = useRouter()
+const route = useRoute()
+const authStore = useAuthStore()
+const themeStore = useThemeStore()
+const collapsed = ref(false)
+
+const userName = computed(() => authStore.user?.name || authStore.user?.username || '用户')
+
+const selectedKeys = ref<string[]>(['/dashboard'])
+const openKeys = ref<string[]>([])
+
+onMounted(() => {
+  const path = route.path
+  selectedKeys.value = [path]
+  if (path.startsWith('/inventory') || path.startsWith('/products')) openKeys.value.push('inventory')
+  if (path.startsWith('/customer') || path.startsWith('/ai/customers') || path.startsWith('/orders')) openKeys.value.push('customer')
+  if (path.startsWith('/gift') || path.startsWith('/gifts')) openKeys.value.push('gift')
+})
+
+function handleMenuClick({ key }: { key: string }) {
+  router.push(key)
+}
+
+function handleAccountMenu({ key }: { key: string }) {
+  if (key === 'logout') {
+    authStore.logout()
+    router.push('/login')
+  }
+}
+</script>
+
+<style scoped>
+.app-layout { min-height: 100vh; }
+.app-sider { overflow: auto; height: 100vh; position: sticky; top: 0; left: 0; }
+.app-sider :deep(.ant-layout-sider-children) { display: flex; flex-direction: column; }
+.sider-header { height: 64px; display: flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; background: var(--bg-header); }
+.sider-logo { font-size: 24px; }
+.sider-title { font-size: 16px; font-weight: 600; color: var(--text-primary); white-space: nowrap; }
+.sider-trigger { height: 48px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.65); cursor: pointer; border-top: 1px solid rgba(255,255,255,0.1); }
+.sider-trigger:hover { color: #fff; }
+
+.app-header {
+  background: var(--bg-header);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow-header);
+  height: 64px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+.header-left { display: flex; align-items: center; }
+.trigger { font-size: 18px; cursor: pointer; color: var(--text-primary); }
+.header-title {
+  flex: 1;
+  margin-left: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  transition: color 0.3s ease;
+}
+.header-right { display: flex; align-items: center; gap: 16px; }
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+.theme-icon { font-size: 18px; line-height: 1; }
+.user-info { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.user-name { font-size: 14px; color: var(--text-primary); }
+
+.app-content {
+  margin: 16px;
+  min-height: calc(100vh - 64px - 32px);
+  background: var(--bg-page);
+  transition: background 0.3s ease;
+}
+</style>
