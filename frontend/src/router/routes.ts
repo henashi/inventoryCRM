@@ -99,8 +99,9 @@ export const appRoutes: RouteRecordRaw[] = [
         path: 'gift-logs',
         name: 'GiftLogs',
         component: () => import('../views/giftLog/GiftLogList.vue'),
-        meta: { requiresAuth: true, title: '礼品发放', roles: getFeatureRoles('gift-logs') },
+        meta: { requiresAuth: true, title: '礼品发放日志', roles: getFeatureRoles('gift-logs') },
       },
+
     ],
   },
   {

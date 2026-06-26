@@ -8,6 +8,7 @@ import com.henashi.inventorycrm.dto.ProductSearchOptionDTO;
 import com.henashi.inventorycrm.dto.ProductStockStatisticsDTO;
 import com.henashi.inventorycrm.dto.ProductUpdateDTO;
 import com.henashi.inventorycrm.pojo.InventoryLog;
+import com.henashi.inventorycrm.service.ProductDataExchangeService;
 import com.henashi.inventorycrm.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -48,6 +49,7 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductDataExchangeService productDataExchangeService;
 
     @GetMapping("/search")
     public List<ProductSearchOptionDTO> searchProducts(
@@ -68,12 +70,12 @@ public class ProductController {
 
     @GetMapping("/import/template")
     public ImportResultDTO importTemplate() {
-        return productService.getImportTemplateMeta();
+        return productDataExchangeService.getImportTemplateMeta();
     }
 
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ImportResultDTO importProducts(@RequestParam("file") MultipartFile file) {
-        return productService.importProducts(file);
+        return productDataExchangeService.importProducts(file);
     }
 
     @GetMapping("/stock/statistics")

@@ -292,13 +292,13 @@ onMounted(() => {
 .amount-cell { font-weight: 600; color: #f5222d; }
 
 .divider-label { font-size: 13px; color: #6b7280; margin: 8px 0; padding-bottom: 4px; border-bottom: 1px solid #f0f0f0; }
-.item-form-row { background: #fafbfc; border-radius: 6px; padding: 4px 8px; margin-bottom: 4px; }
+.item-form-row { background: var(--bg-card); border-radius: 6px; padding: 4px 8px; margin-bottom: 4px; }
 .col-remove-btn { display: flex; align-items: center; }
 .pt-24 { padding-top: 24px; }
 
-.order-summary { background: #f9fafb; border-radius: 8px; padding: 12px 16px; margin: 12px 0; }
+.order-summary { background: var(--bg-card); border-radius: 8px; padding: 12px 16px; margin: 12px 0; }
 .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 14px; }
-.summary-divider { height: 1px; background: #e5e7eb; margin: 4px 0; }
+.summary-divider { height: 1px; background: var(--border-color); margin: 4px 0; }
 .summary-row.final { font-size: 18px; font-weight: 700; color: #f5222d; }
 
 .expanded-items { padding: 4px 24px; }

@@ -244,6 +244,7 @@ const pagination = computed(() => ({
   current: giftLogStore.pagination.page,
   pageSize: giftLogStore.pagination.size,
   total: giftLogStore.pagination.total,
+  pageSizeOptions: ['5', '10', '20'],
   showTotal: (total: number) => `共 ${total} 条`,
   showSizeChanger: true,
   showQuickJumper: true,
@@ -535,7 +536,7 @@ const loadGiftLogs = async (params?: PageParams) => {
     isLoading.value = true
     await giftLogStore.loadGiftLogs({
       page: params?.page ?? 0,
-      size: params?.size ?? 10,
+      size: params?.size ?? 5,
       customerId: activeCustomerId.value,
     })
   } catch {
@@ -572,7 +573,8 @@ onMounted(async () => {
     handleAdd()
     const nextQuery = { ...route.query }
     delete nextQuery.openCreate
-    await router.replace({ query: nextQuery })
+    const clean = Object.keys(nextQuery).length > 0 ? { query: nextQuery } : {}
+    await router.replace(clean)
   }
 })
 </script>
