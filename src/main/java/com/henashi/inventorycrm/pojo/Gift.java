@@ -47,7 +47,7 @@ import java.util.Random;
         indexes = {
                 @Index(name = "idx_gift_name", columnList = "name"),
                 @Index(name = "idx_gift_code", columnList = "code"),
-                @Index(name = "idx_gift_status", columnList = "giftStatus"),
+                @Index(name = "idx_gift_status", columnList = "status"),
                 @Index(name = "idx_gift_type", columnList = "type")
         },
         uniqueConstraints = {

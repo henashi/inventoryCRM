@@ -8,6 +8,7 @@ import com.henashi.inventorycrm.dto.CustomerSearchOptionDTO;
 import com.henashi.inventorycrm.dto.CustomerStatisticsDTO;
 import com.henashi.inventorycrm.dto.CustomerUpdateDTO;
 import com.henashi.inventorycrm.dto.ImportResultDTO;
+import com.henashi.inventorycrm.service.CustomerDataExchangeService;
 import com.henashi.inventorycrm.service.CustomerService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -48,6 +49,7 @@ import java.util.List;
 public class CustomerController {
 
     private final CustomerService customerService;
+    private final CustomerDataExchangeService customerDataExchangeService;
 
     @GetMapping("/search")
     public List<CustomerSearchOptionDTO> search(
@@ -58,12 +60,12 @@ public class CustomerController {
 
     @GetMapping("/import/template")
     public ImportResultDTO importTemplate() {
-        return customerService.getImportTemplateMeta();
+        return customerDataExchangeService.getImportTemplateMeta();
     }
 
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ImportResultDTO importCustomers(@RequestParam("file") MultipartFile file) {
-        return customerService.importCustomers(file);
+        return customerDataExchangeService.importCustomers(file);
     }
 
     @GetMapping("/statistics")
