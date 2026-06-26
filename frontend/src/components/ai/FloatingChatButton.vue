@@ -63,8 +63,8 @@ const fabHistory = ref<string[]>([])
 const fabHistoryIndex = ref(-1)
 
 // 拖拽状态
-const posX = ref(-20)
-const posY = ref(-120)
+const posX = ref(0)
+const posY = ref(0)
 const dragging = ref(false)
 const dragStartX = ref(0)
 const dragStartY = ref(0)
@@ -74,7 +74,7 @@ const dragOriginY = ref(0)
 // 弹窗位置（固定在按钮正上方）
 const popupStyle = {
   position: 'fixed' as const,
-  bottom: (120 + Math.abs(posY.value)) + 'px',
+  bottom: (80 + Math.abs(posY.value)) + 'px',
   right: (20 - posX.value) + 'px',
 }
 
@@ -189,7 +189,7 @@ const fabSend = async (text: string) => {
 /* 悬浮球 */
 .fab-button {
   position: fixed;
-  bottom: 80px;
+  bottom: 30px;
   right: 20px;
   width: 56px;
   height: 56px;

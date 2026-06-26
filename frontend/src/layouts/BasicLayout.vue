@@ -125,7 +125,7 @@ onMounted(() => {
   selectedKeys.value = [path]
   if (path.startsWith('/inventory') || path.startsWith('/products')) openKeys.value.push('inventory')
   if (path.startsWith('/customer') || path.startsWith('/ai/customers') || path.startsWith('/orders')) openKeys.value.push('customer')
-  if (path.startsWith('/gift') || path.startsWith('/gifts')) openKeys.value.push('gift')
+  if (path.startsWith('/gift')) openKeys.value.push('gift')
 })
 
 function handleMenuClick({ key }: { key: string }) {

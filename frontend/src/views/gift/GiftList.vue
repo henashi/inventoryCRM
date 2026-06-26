@@ -6,10 +6,7 @@
         <p class="page-subtitle">支持查看礼品详情；删除仅对管理员开放。</p>
       </div>
       <div class="page-actions">
-        <a-button @click="handleRefresh" :loading="isLoading">
-          <reload-outlined />
-          刷新
-        </a-button>
+
         <a-button v-if="canManageCatalog" type="primary" @click="showAddModal" style="margin-left: 8px">
           <plus-outlined />
           新增礼品
@@ -17,12 +14,7 @@
         <a-button @click="handleViewDistributionLogs" :loading="isLoading" style="margin-left: 8px">
           查看发放日志
         </a-button>
-        <a-button @click="handleBack" style="margin-left: 8px">
-          <template #icon>
-            <home-outlined />
-          </template>
-          返回
-        </a-button>
+
       </div>
     </div>
 
@@ -200,7 +192,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Modal, message } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
-import { HomeOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined } from '@ant-design/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { useGiftStore } from '@/stores/gift'
 import { useProductStore } from '@/stores/product'
@@ -524,17 +516,9 @@ const handleDeleteGift = (gift: Gift) => {
   })
 }
 
-const handleRefresh = async () => {
-  await loadGifts({
-    page: toServerPage(giftStore.pagination.page),
-    size: giftStore.pagination.size,
-  })
-  message.success('刷新成功')
-}
 
-const handleBack = () => {
-  router.push('/')
-}
+
+
 
 const loadGifts = async (params?: PageParams) => {
   try {

@@ -12,7 +12,7 @@
 
     <a-row :gutter="[16, 16]" class="mb-4">
       <a-col :xs="12" :md="6" v-for="stat in statCards" :key="stat.key">
-        <a-card :bordered="false" class="stat-card" :style="{ borderLeftColor: stat.color }">
+        <a-card :bordered="false" class="stat-card clickable" :style="{ borderLeftColor: stat.color }" @click="router.push(stat.path)">
           <div class="stat-body">
             <div class="stat-info">
               <div class="stat-label">{{ stat.label }}</div>
@@ -128,7 +128,9 @@ import { productApi } from '@/api/product'
 import { customerApi } from '@/api/customer'
 import { orderApi } from '@/api/order'
 import { aiApi } from '@/api/ai'
-import type { StockAlert } from '@/types'
+import { inventoryLogApi } from '@/api/inventoryLog'
+import type { StockAlert, InventoryLog } from '@/types'
+import dayjs from 'dayjs'
 
 const router = useRouter()
 
@@ -139,16 +141,16 @@ let trendChart: echarts.ECharts | null = null
 let pieChart: echarts.ECharts | null = null
 
 const statCards = ref([
-  { key: 'products', label: '商品总数', value: 0, icon: ShoppingOutlined, color: '#1890ff', bg: '#e6f7ff', trend: 0, period: '较上月' },
-  { key: 'customers', label: '客户总数', value: 0, icon: UserOutlined, color: '#52c41a', bg: '#f6ffed', trend: 0, period: '较上月' },
-  { key: 'gifts', label: '礼品数', value: 0, icon: GiftOutlined, color: '#faad14', bg: '#fffbe6', trend: 0, period: '较上月' },
-  { key: 'alerts', label: '库存预警', value: 0, icon: WarningOutlined, color: '#f5222d', bg: '#fff2f0', trend: 0, period: '待处理' },
+  { key: 'products', label: '商品总数', value: 0, icon: ShoppingOutlined, color: '#1890ff', bg: '#e6f7ff', trend: 0, period: '较上月', path: '/products' },
+  { key: 'customers', label: '客户总数', value: 0, icon: UserOutlined, color: '#52c41a', bg: '#f6ffed', trend: 0, period: '较上月', path: '/customers' },
+  { key: 'gifts', label: '礼品数', value: 0, icon: GiftOutlined, color: '#faad14', bg: '#fffbe6', trend: 0, period: '较上月', path: '/gifts' },
+  { key: 'alerts', label: '库存预警', value: 0, icon: WarningOutlined, color: '#f5222d', bg: '#fff2f0', trend: 0, period: '待处理', path: '/inventory' },
 ])
 
 const alerts = ref<StockAlert[]>([])
 const recentOrders = ref<any[]>([])
 
-const trendColor = ref('#52c41a')
+const trendData = ref<{ date: string; inCount: number; outCount: number }[]>([])
 
 function loadStats() {
   Promise.all([
@@ -167,21 +169,52 @@ function loadStats() {
   }).catch(() => {})
 }
 
+async function loadTrendData() {
+  const days = chartDays.value
+  const startTime = dayjs().subtract(days, 'day').format('YYYY-MM-DD')
+  const endTime = dayjs().format('YYYY-MM-DD')
+  try {
+    const res = await inventoryLogApi.getLogs({ page: 0, size: 500, startTime, endTime }) as any
+    const logs: InventoryLog[] = res.content || []
+    const dateMap: Record<string, { inCount: number; outCount: number }> = {}
+    for (let i = 0; i < days; i++) {
+      const d = dayjs().subtract(days - 1 - i, 'day').format('YYYY-MM-DD')
+      dateMap[d] = { inCount: 0, outCount: 0 }
+    }
+    logs.forEach(log => {
+      const d = dayjs(log.logTime).format('YYYY-MM-DD')
+      if (dateMap[d]) {
+        if (log.logType === 'IN' || log.logType === 'CREATE') dateMap[d].inCount += log.quantity || 0
+        if (log.logType === 'OUT') dateMap[d].outCount += log.quantity || 0
+      }
+    })
+    trendData.value = Object.entries(dateMap).map(([date, v]) => ({ date, ...v }))
+  } catch {
+    trendData.value = []
+  }
+  renderTrendChart()
+}
+
+function getChartTextColor() {
+  return document.documentElement.getAttribute('data-theme') === 'dark' ? '#c0c0c0' : '#666666'
+}
+
 function renderTrendChart() {
   if (!trendChartRef.value) return
   if (trendChart) trendChart.dispose()
   trendChart = echarts.init(trendChartRef.value)
-  const days = chartDays.value
-  const xData = Array.from({ length: days }, (_, i) => `${i + 1}日`)
-  const inData = xData.map(() => Math.round(Math.random() * 50 + 10))
-  const outData = xData.map(() => Math.round(Math.random() * 40 + 5))
+  const data = trendData.value
+  const xData = data.map(d => dayjs(d.date).format('MM-DD'))
+  const inData = data.map(d => d.inCount)
+  const outData = data.map(d => d.outCount)
+  const textColor = getChartTextColor()
 
   trendChart.setOption({
     tooltip: { trigger: 'axis' },
-    legend: { data: ['入库', '出库'], bottom: 0 },
+    legend: { data: ['入库', '出库'], bottom: 0, textStyle: { color: textColor } },
     grid: { left: 40, right: 16, top: 8, bottom: 36 },
-    xAxis: { type: 'category', data: xData, axisLabel: { fontSize: 11 } },
-    yAxis: { type: 'value' },
+    xAxis: { type: 'category', data: xData, axisLabel: { fontSize: 11, color: textColor } },
+    yAxis: { type: 'value', axisLabel: { color: textColor } },
     series: [
       { name: '入库', type: 'line', data: inData, smooth: true, lineStyle: { color: '#52c41a' }, areaStyle: { color: 'rgba(82,196,26,0.1)' } },
       { name: '出库', type: 'line', data: outData, smooth: true, lineStyle: { color: '#1890ff' }, areaStyle: { color: 'rgba(24,144,255,0.1)' } },
@@ -189,31 +222,62 @@ function renderTrendChart() {
   })
 }
 
+const stockPieData = ref<{ name: string; value: number; color: string }[]>([])
+
+async function loadPieData() {
+  try {
+    const res = await productApi.getProducts({ page: 0, size: 999 }) as any
+    const products: { currentStock: number; safeStock: number }[] = res.content || []
+    let normal = 0, lowStock = 0, outOfStock = 0
+    products.forEach(p => {
+      const stock = p.currentStock || 0
+      const safe = p.safeStock || 0
+      if (stock <= 0) outOfStock++
+      else if (stock < safe) lowStock++
+      else normal++
+    })
+    stockPieData.value = [
+      { name: '库存充足', value: normal, color: '#52c41a' },
+      { name: '低库存', value: lowStock, color: '#faad14' },
+      { name: '缺货', value: outOfStock, color: '#f5222d' },
+    ]
+  } catch {
+    stockPieData.value = []
+  }
+  renderPieChart()
+}
+
 function renderPieChart() {
   if (!pieChartRef.value) return
   if (pieChart) pieChart.dispose()
+  const data = stockPieData.value
+  if (data.length === 0) return
   pieChart = echarts.init(pieChartRef.value)
+  const textColor = getChartTextColor()
   pieChart.setOption({
     tooltip: { trigger: 'item' },
     series: [{
       type: 'pie',
       radius: ['40%', '65%'],
       center: ['50%', '50%'],
-      data: [
-        { name: '高价值', value: 30, itemStyle: { color: '#52c41a' } },
-        { name: '成长', value: 45, itemStyle: { color: '#faad14' } },
-        { name: '待激活', value: 25, itemStyle: { color: '#d9d9d9' } },
-      ],
-      label: { show: true, formatter: '{b}\n{d}%', fontSize: 11 },
+      data: data.map(d => ({ name: d.name, value: d.value, itemStyle: { color: d.color } })),
+      label: {
+        show: true,
+        formatter: '{b}\n{d}%',
+        fontSize: 11,
+        color: textColor,
+        textBorderColor: 'transparent',
+      },
     }],
   })
 }
 
-watch(chartDays, () => nextTick(renderTrendChart))
+watch(chartDays, () => loadTrendData())
 
 onMounted(() => {
   loadStats()
-  nextTick(() => { renderTrendChart(); renderPieChart() })
+  loadTrendData()
+  loadPieData()
 })
 
 onUnmounted(() => {
@@ -240,6 +304,8 @@ onUnmounted(() => {
 .mb-4 { margin-bottom: 16px; }
 
 .stat-card { border-radius: 8px; border-left: 4px solid; }
+.stat-card.clickable { cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.stat-card.clickable:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 .stat-card :deep(.ant-card) { background: var(--bg-card); }
 .stat-card :deep(.ant-card-body) { padding: 16px 20px 0; }
 .stat-body { display: flex; justify-content: space-between; align-items: flex-start; }
