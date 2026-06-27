@@ -49,10 +49,14 @@
           <a-menu-item key="/gift-logs">礼品发放</a-menu-item>
         </a-sub-menu>
 
-        <a-menu-item key="/admin">
-          <setting-outlined />
-          <span>系统设置</span>
-        </a-menu-item>
+        <a-sub-menu key="system">
+          <template #title>
+            <setting-outlined />
+            <span>系统管理</span>
+          </template>
+          <a-menu-item key="/data-dicts">配置管理</a-menu-item>
+          <a-menu-item key="/operation-logs">系统日志</a-menu-item>
+        </a-sub-menu>
       </a-menu>
 
     </a-layout-sider>
@@ -76,13 +80,13 @@
           </a-button>
           <a-dropdown>
             <div class="user-info">
-              <a-avatar size="small" icon="user" />
+              <a-avatar :style="{ backgroundColor: avatarColor, verticalAlign: 'middle', fontWeight: 600 }" size="small">{{ userInitial }}</a-avatar>
               <span class="user-name">{{ userName }}</span>
+              <a-tag v-if="roleLabel" :color="avatarColor" class="role-tag">{{ roleLabel }}</a-tag>
             </div>
             <template #overlay>
               <a-menu @click="handleAccountMenu">
-                <a-menu-item key="profile">个人资料</a-menu-item>
-                <a-menu-item key="password">修改密码</a-menu-item>
+                <a-menu-item key="profile">个人中心</a-menu-item>
                 <a-menu-divider />
                 <a-menu-item key="logout">退出登录</a-menu-item>
               </a-menu>
@@ -105,7 +109,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import {
   DashboardOutlined, ShopOutlined, TeamOutlined,
-  BulbOutlined, SettingOutlined, GiftOutlined,
+  SettingOutlined, GiftOutlined,
   MenuFoldOutlined, MenuUnfoldOutlined,
 } from '@ant-design/icons-vue'
 
@@ -116,6 +120,26 @@ const themeStore = useThemeStore()
 const collapsed = ref(false)
 
 const userName = computed(() => authStore.user?.name || authStore.user?.username || '用户')
+const userInitial = computed(() => {
+  const name = userName.value
+  return name.charAt(0).toUpperCase()
+})
+const roleLabel = computed(() => {
+  const role = authStore.user?.role
+  switch (role) {
+    case 'ADMIN': return '管理员'
+    case 'MANAGER': return '经理'
+    default: return '用户'
+  }
+})
+const avatarColor = computed(() => {
+  const role = authStore.user?.role
+  switch (role) {
+    case 'ADMIN': return '#1890ff'
+    case 'MANAGER': return '#52c41a'
+    default: return '#722ed1'
+  }
+})
 
 const selectedKeys = ref<string[]>(['/dashboard'])
 const openKeys = ref<string[]>([])
@@ -126,15 +150,18 @@ onMounted(() => {
   if (path.startsWith('/inventory') || path.startsWith('/products')) openKeys.value.push('inventory')
   if (path.startsWith('/customer') || path.startsWith('/ai/customers') || path.startsWith('/orders')) openKeys.value.push('customer')
   if (path.startsWith('/gift')) openKeys.value.push('gift')
+  if (path.startsWith('/data-dicts') || path.startsWith('/operation-logs')) openKeys.value.push('system')
 })
 
 function handleMenuClick({ key }: { key: string }) {
   router.push(key)
 }
 
-function handleAccountMenu({ key }: { key: string }) {
-  if (key === 'logout') {
-    authStore.logout()
+async function handleAccountMenu({ key }: { key: string }) {
+  if (key === 'profile') {
+    router.push('/account')
+  } else if (key === 'logout') {
+    await authStore.logout()
     router.push('/login')
   }
 }

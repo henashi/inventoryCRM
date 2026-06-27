@@ -3,12 +3,14 @@
   import zhCN from 'ant-design-vue/es/locale/zh_CN'
   import dayjs from 'dayjs'
   import 'dayjs/locale/zh-cn'
+  import { useRoute } from 'vue-router'
   import FloatingChatButton from '@/components/ai/FloatingChatButton.vue'
   import { useThemeStore } from '@/stores/theme'
 
   // 设置 dayjs 中文化
   dayjs.locale('zh-cn')
 
+  const route = useRoute()
   const locale = zhCN
   const themeStore = useThemeStore()
   const { defaultAlgorithm, darkAlgorithm } = theme
@@ -17,7 +19,7 @@
 <template>
   <a-config-provider :locale="locale" :theme="{ algorithm: themeStore.isDark ? darkAlgorithm : defaultAlgorithm }">
     <router-view />
-    <FloatingChatButton />
+    <FloatingChatButton v-if="route.path !== '/login'" />
   </a-config-provider>
 </template>
 

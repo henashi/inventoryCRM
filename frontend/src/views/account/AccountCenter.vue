@@ -102,6 +102,26 @@
             </a-card>
           </a-col>
         </a-row>
+
+        <a-row :gutter="[16, 16]" style="margin-top: 58px;">
+          <a-col :xs="24">
+            <a-card title="角色与权限说明" class="section-card">
+              <div class="role-header">
+                <span>当前登录</span>
+                <a-tag :color="currentRoleColor">{{ roleText }}</a-tag>
+              </div>
+              <div class="permission-list">
+                <div v-for="item in permissionItems" :key="item.title" class="permission-item">
+                  <div class="permission-title-row">
+                    <strong>{{ item.title }}</strong>
+                    <a-tag :color="item.color">{{ item.roleName }}</a-tag>
+                  </div>
+                  <div class="permission-desc">{{ item.description }}</div>
+                </div>
+              </div>
+            </a-card>
+          </a-col>
+        </a-row>
       </a-tab-pane>
 
       <a-tab-pane key="password" tab="修改密码">
@@ -218,6 +238,36 @@ const roleText = computed(() => {
   }
 })
 const statusText = computed(() => currentUser.value?.status === 1 ? '启用' : '停用')
+
+const currentRoleColor = computed(() => ({
+  ADMIN: 'red',
+  MANAGER: 'blue',
+  USER: 'green',
+}[authStore.userRole] || 'blue'))
+
+const permissionItems = [
+  {
+    title: '系统管理员',
+    role: 'ADMIN',
+    roleName: '管理员',
+    color: 'red',
+    description: '可访问系统概览、配置管理、库存与业务模块，适合演示全局管理能力。',
+  },
+  {
+    title: '业务经理',
+    role: 'MANAGER',
+    roleName: '经理',
+    color: 'blue',
+    description: '聚焦客户、商品、礼品与库存流程，不暴露系统级配置入口。',
+  },
+  {
+    title: '普通用户',
+    role: 'USER',
+    roleName: '普通用户',
+    color: 'green',
+    description: '可查看商品和礼品相关页面，避免进入无权限的系统管理能力。',
+  },
+]
 
 const applyRouteTab = () => {
   activeTab.value = route.query.tab === 'password' ? 'password' : 'profile'
@@ -339,7 +389,8 @@ onMounted(async () => {
 .account-page {
   min-height: 100vh;
   padding: 20px;
-  background: #f5f7fa;
+  background: var(--bg-page);
+  transition: background 0.3s ease;
 }
 
 .page-header {
@@ -353,7 +404,7 @@ onMounted(async () => {
 .page-title {
   margin: 0;
   font-size: 28px;
-  color: #262626;
+  color: var(--text-primary);
 }
 
 .page-subtitle {
@@ -388,6 +439,41 @@ onMounted(async () => {
 
 .profile-card-extra {
   margin-inline-start: 8px;
+}
+
+.section-card {
+  margin-top: 16px;
+}
+
+.role-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.permission-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.permission-item {
+  padding: 14px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+
+.permission-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.permission-desc {
+  margin-top: 8px;
+  color: var(--text-secondary);
 }
 
 @media (max-width: 768px) {

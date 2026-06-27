@@ -15,10 +15,7 @@
           <export-outlined />
           导出商品
         </a-button>
-        <a-button @click="handleRefresh" :loading="isLoading || statsLoading || categoryLoading">
-          <reload-outlined />
-          刷新
-        </a-button>
+
       </div>
     </div>
 
@@ -74,17 +71,7 @@
       </a-form>
     </a-card>
 
-    <a-row :gutter="[16, 16]" class="summary-row">
-      <a-col v-for="card in productSummaryCards" :key="card.key" :xs="24" :sm="8">
-        <a-card class="summary-card" :loading="statsLoading" @click="handleSummaryCardClick(card.key)">
-          <div class="summary-primary-line">
-            <span class="summary-title">{{ card.title }}</span>
-            <span class="summary-value-inline">{{ card.value }}</span>
-          </div>
-          <div class="summary-secondary-line">{{ card.helper }}</div>
-        </a-card>
-      </a-col>
-    </a-row>
+
 
     <a-card class="table-card">
       <template #title>
@@ -414,7 +401,7 @@ const productStore = useProductStore()
 const formRef = ref<FormInstance>()
 
 const isLoading = ref(false)
-const statsLoading = ref(false)
+const statsLoading = ref(false) // unused
 const categoryLoading = ref(false)
 const exportLoading = ref(false)
 const modalVisible = ref(false)
@@ -423,7 +410,7 @@ const currentProduct = ref<Product | null>(null)
 const modalTitle = ref('')
 const quickFilter = ref<ProductQuickFilter>('all')
 const categories = ref<string[]>([])
-const productSummaryCards = ref<ProductSummaryCard[]>([])
+// const productSummaryCards = ref<ProductSummaryCard[]>([])
 const lowStockProducts = ref<Product[]>([])
 const importModalVisible = ref(false)
 const importLoading = ref(false)
@@ -601,17 +588,7 @@ const loadProducts = async (params?: PageParams) => {
   }
 }
 
-const loadProductSummary = async () => {
-  try {
-    statsLoading.value = true
-    const stats = await productApi.getStockStatistics() as unknown as ProductStockStatistics
-    productSummaryCards.value = buildProductListSummary(stats)
-  } catch {
-    message.error('加载商品统计失败')
-  } finally {
-    statsLoading.value = false
-  }
-}
+
 
 const loadCategories = async () => {
   try {
@@ -653,7 +630,7 @@ const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
 }
 
 const handleRefresh = async () => {
-  await Promise.all([loadProducts(), loadProductSummary(), loadCategories()])
+  await Promise.all([loadProducts(), loadCategories()])
   message.success('刷新成功')
 }
 
@@ -970,7 +947,7 @@ onMounted(async () => {
   if (!route.params.code) {
     await loadProducts({ page: 0, size: productStore.pagination.size })
   }
-  await Promise.all([loadProductSummary(), loadCategories()])
+  await loadCategories()
 })
 </script>
 
@@ -1054,6 +1031,8 @@ onMounted(async () => {
 }
 
 .page-header {
+  display: flex;
+  justify-content: flex-end;
   margin-bottom: 16px;
   gap: 12px;
 }

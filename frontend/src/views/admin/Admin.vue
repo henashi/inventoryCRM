@@ -7,7 +7,6 @@
       </div>
       <a-space wrap>
           <a-button @click="goDataDicts">配置管理</a-button>
-        <a-button type="primary" :loading="loading" @click="loadOverview">刷新概览</a-button>
       </a-space>
     </div>
 

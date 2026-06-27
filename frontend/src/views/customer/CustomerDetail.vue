@@ -1,13 +1,8 @@
 <template>
   <div class="customer-detail-page">
     <div class="page-header">
-      <div>
-        <h1 class="page-title">客户详情</h1>
-        <p class="page-subtitle">查看客户档案、推荐关系与最近礼品记录。</p>
-      </div>
       <a-space wrap>
         <a-button @click="goBack">返回</a-button>
-        <a-button v-if="customer" @click="goToEdit">编辑客户</a-button>
         <a-button v-if="customer" @click="goToGiftLogs">查看礼品记录</a-button>
         <a-button v-if="customer" type="primary" @click="issueGift">发放礼品</a-button>
       </a-space>
@@ -138,7 +133,6 @@
                 </div>
                 <a-divider />
                 <a-space direction="vertical" style="width: 100%">
-                  <a-button block @click="goToEdit">编辑客户</a-button>
                   <a-button block @click="goToGiftLogs">查看礼品记录</a-button>
                   <a-button block type="primary" @click="issueGift">继续发放礼品</a-button>
                 </a-space>
@@ -387,7 +381,7 @@ watch(() => route.params.id, () => {
 .page-header {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 16px;
   margin-bottom: 16px;
 }
@@ -408,6 +402,33 @@ watch(() => route.params.id, () => {
   justify-content: space-between;
   gap: 24px;
   padding: 8px 0 24px;
+}
+
+/* ===== 暗色模式 ===== */
+[data-theme='dark'] .hero-stat-item {
+  background: var(--bg-card);
+}
+[data-theme='dark'] .hero-stat-item strong {
+  color: var(--text-primary);
+}
+[data-theme='dark'] .hero-stat-label {
+  color: var(--text-secondary);
+}
+[data-theme='dark'] .hero-meta {
+  color: var(--text-secondary);
+}
+[data-theme='dark'] .summary-label {
+  color: var(--text-secondary);
+}
+[data-theme='dark'] .gift-log-item {
+  border-color: var(--border-color);
+  background: var(--bg-card);
+}
+[data-theme='dark'] .gift-log-meta {
+  color: var(--text-secondary);
+}
+[data-theme='dark'] .gift-log-note {
+  color: var(--text-tertiary);
 }
 
 .hero-main {

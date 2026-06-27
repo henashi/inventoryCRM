@@ -11,23 +11,11 @@
     </div>
 
     <a-row :gutter="[16, 16]" class="mb-4">
-      <a-col :xs="12" :md="6" v-for="stat in statCards" :key="stat.key">
-        <a-card :bordered="false" class="stat-card clickable" :style="{ borderLeftColor: stat.color }" @click="router.push(stat.path)">
-          <div class="stat-body">
-            <div class="stat-info">
-              <div class="stat-label">{{ stat.label }}</div>
-              <div class="stat-value">{{ stat.value }}</div>
-            </div>
-            <div class="stat-icon-wrap" :style="{ background: stat.bg }">
-              <component :is="stat.icon" :style="{ color: stat.color }" />
-            </div>
-          </div>
-          <div class="stat-footer">
-            <span :style="{ color: stat.trendColor }">
-              <arrow-up-outlined v-if="stat.trend > 0" />{{ stat.trend > 0 ? '+' : '' }}{{ stat.trend }}%
-            </span>
-            <span class="text-secondary">{{ stat.period }}</span>
-          </div>
+      <a-col :xs="24" :sm="12" :md="8" v-for="card in summaryCards" :key="card.key">
+        <a-card :bordered="false" class="summary-card clickable" :loading="loading" @click="router.push(card.path)">
+          <div class="summary-card-label">{{ card.label }}</div>
+          <div class="summary-card-value">{{ card.value }}</div>
+          <div class="summary-card-helper">{{ card.helper }}</div>
         </a-card>
       </a-col>
     </a-row>
@@ -119,16 +107,14 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  ShoppingOutlined, UserOutlined, GiftOutlined, WarningOutlined,
-  ArrowUpOutlined,
-} from '@ant-design/icons-vue'
 import * as echarts from 'echarts'
 import { productApi } from '@/api/product'
 import { customerApi } from '@/api/customer'
 import { orderApi } from '@/api/order'
 import { aiApi } from '@/api/ai'
 import { inventoryLogApi } from '@/api/inventoryLog'
+import { giftApi } from '@/api/gift'
+import { dataDictApi } from '@/api/dataDict'
 import type { StockAlert, InventoryLog } from '@/types'
 import dayjs from 'dayjs'
 
@@ -140,11 +126,15 @@ const pieChartRef = ref<HTMLElement>()
 let trendChart: echarts.ECharts | null = null
 let pieChart: echarts.ECharts | null = null
 
-const statCards = ref([
-  { key: 'products', label: '商品总数', value: 0, icon: ShoppingOutlined, color: '#1890ff', bg: '#e6f7ff', trend: 0, period: '较上月', path: '/products' },
-  { key: 'customers', label: '客户总数', value: 0, icon: UserOutlined, color: '#52c41a', bg: '#f6ffed', trend: 0, period: '较上月', path: '/customers' },
-  { key: 'gifts', label: '礼品数', value: 0, icon: GiftOutlined, color: '#faad14', bg: '#fffbe6', trend: 0, period: '较上月', path: '/gifts' },
-  { key: 'alerts', label: '库存预警', value: 0, icon: WarningOutlined, color: '#f5222d', bg: '#fff2f0', trend: 0, period: '待处理', path: '/inventory' },
+const loading = ref(false)
+
+const summaryCards = ref([
+  { key: 'customers', label: '客户总量', value: 0, helper: '正常 0 / 停用 0', path: '/customers' },
+  { key: 'products', label: '商品概况', value: 0, helper: '在售 0 / 低库存 0', path: '/products' },
+  { key: 'inventory', label: '库存操作', value: 0, helper: '成功 0 / 失败 0', path: '/inventory' },
+  { key: 'orders', label: '订单总数', value: 0, helper: '--', path: '/orders' },
+  { key: 'gifts', label: '礼品管理', value: 0, helper: '--', path: '/gifts' },
+  { key: 'configs', label: '系统配置', value: 0, helper: '配置项 0', path: '/data-dicts' },
 ])
 
 const alerts = ref<StockAlert[]>([])
@@ -152,21 +142,61 @@ const recentOrders = ref<any[]>([])
 
 const trendData = ref<{ date: string; inCount: number; outCount: number }[]>([])
 
-function loadStats() {
-  Promise.all([
-    productApi.getProducts({ page: 0, size: 1 }),
-    customerApi.getCustomers({ page: 0, size: 1 }),
+async function loadSummary() {
+  loading.value = true
+  const results = await Promise.allSettled([
+    customerApi.getStatistics(),
+    productApi.getStockStatistics(),
+    inventoryLogApi.getStats(),
     orderApi.list({ page: 0, size: 5 }),
+    giftApi.loadGifts({ page: 0, size: 1 }),
     aiApi.getAlerts('DANGER'),
     aiApi.getAlerts('WARNING'),
-  ]).then(([products, customers, orders, danger, warning]) => {
-    statCards.value[0].value = products.totalElements || 0
-    statCards.value[1].value = customers.totalElements || 0
-    statCards.value[2].value = 0 // gift count
-    statCards.value[3].value = (danger?.length || 0) + (warning?.length || 0)
-    recentOrders.value = (orders as any).content || []
+  ])
+
+  if (results[0].status === 'fulfilled') {
+    const d = results[0].value
+    summaryCards.value[0].value = d.totalCustomers || 0
+    summaryCards.value[0].helper = `正常 ${d.normalCustomers || 0} / 停用 ${d.disabledCustomers || 0}`
+  }
+  if (results[1].status === 'fulfilled') {
+    const d = results[1].value
+    summaryCards.value[1].value = d.totalProducts || 0
+    summaryCards.value[1].helper = `在售 ${d.activeProducts || 0} / 低库存 ${d.lowStockProducts || 0}`
+  }
+  if (results[2].status === 'fulfilled') {
+    const d = results[2].value
+    const total = (d.inCount || 0) + (d.outCount || 0)
+    summaryCards.value[2].value = total
+    summaryCards.value[2].helper = `成功 ${d.successCount || 0} / 失败 ${d.failureCount || 0}`
+  }
+  if (results[3].status === 'fulfilled') {
+    const res = results[3].value
+    summaryCards.value[3].value = (res as any).totalElements || 0
+    summaryCards.value[3].helper = `最近 ${((res as any).content || []).length} 笔`
+    recentOrders.value = ((res as any).content || []).slice(0, 5)
+  }
+  if (results[4].status === 'fulfilled') {
+    const res = results[4].value
+    summaryCards.value[4].value = (res as any).totalElements || 0
+    summaryCards.value[4].helper = `共 ${((res as any).content || []).length} 页`
+  }
+  if (results[5].status === 'fulfilled' || results[6].status === 'fulfilled') {
+    const danger = results[5].status === 'fulfilled' ? results[5].value : []
+    const warning = results[6].status === 'fulfilled' ? results[6].value : []
     alerts.value = [...(danger || []), ...(warning || [])]
-  }).catch(() => {})
+  }
+  // 系统配置
+  try {
+    const res = await dataDictApi.loadDataDicts({ page: 0, size: 1 })
+    const total = (res as any).totalElements || 0
+    summaryCards.value[5].value = total
+    summaryCards.value[5].helper = `共 ${total} 项`
+  } catch {
+    summaryCards.value[5].value = 0
+    summaryCards.value[5].helper = '--'
+  }
+  loading.value = false
 }
 
 async function loadTrendData() {
@@ -195,8 +225,17 @@ async function loadTrendData() {
   renderTrendChart()
 }
 
+function isDarkMode() {
+  return document.documentElement.getAttribute('data-theme') === 'dark'
+}
 function getChartTextColor() {
-  return document.documentElement.getAttribute('data-theme') === 'dark' ? '#c0c0c0' : '#666666'
+  return isDarkMode() ? '#c0c0c0' : '#666666'
+}
+function getChartColors() {
+  if (isDarkMode()) {
+    return { green: '#4ade80', blue: '#60a5fa', yellow: '#fbbf24', red: '#f87171', areaAlpha: '0.08' }
+  }
+  return { green: '#52c41a', blue: '#1890ff', yellow: '#faad14', red: '#f5222d', areaAlpha: '0.1' }
 }
 
 function renderTrendChart() {
@@ -208,6 +247,7 @@ function renderTrendChart() {
   const inData = data.map(d => d.inCount)
   const outData = data.map(d => d.outCount)
   const textColor = getChartTextColor()
+  const isDark = isDarkMode()
 
   trendChart.setOption({
     tooltip: { trigger: 'axis' },
@@ -216,8 +256,8 @@ function renderTrendChart() {
     xAxis: { type: 'category', data: xData, axisLabel: { fontSize: 11, color: textColor } },
     yAxis: { type: 'value', axisLabel: { color: textColor } },
     series: [
-      { name: '入库', type: 'line', data: inData, smooth: true, lineStyle: { color: '#52c41a' }, areaStyle: { color: 'rgba(82,196,26,0.1)' } },
-      { name: '出库', type: 'line', data: outData, smooth: true, lineStyle: { color: '#1890ff' }, areaStyle: { color: 'rgba(24,144,255,0.1)' } },
+      { name: '入库', type: 'line', data: inData, smooth: true, lineStyle: { color: isDark ? '#4ade80' : '#52c41a' }, areaStyle: { color: isDark ? 'rgba(74,222,128,0.08)' : 'rgba(82,196,26,0.1)' } },
+      { name: '出库', type: 'line', data: outData, smooth: true, lineStyle: { color: isDark ? '#60a5fa' : '#1890ff' }, areaStyle: { color: isDark ? 'rgba(96,165,250,0.08)' : 'rgba(24,144,255,0.1)' } },
     ],
   })
 }
@@ -237,9 +277,9 @@ async function loadPieData() {
       else normal++
     })
     stockPieData.value = [
-      { name: '库存充足', value: normal, color: '#52c41a' },
-      { name: '低库存', value: lowStock, color: '#faad14' },
-      { name: '缺货', value: outOfStock, color: '#f5222d' },
+      { name: '库存充足', value: normal, color: isDarkMode() ? '#60a5fa' : '#1890ff' },
+      { name: '低库存', value: lowStock, color: isDarkMode() ? '#facc15' : '#eab308' },
+      { name: '缺货', value: outOfStock, color: isDarkMode() ? '#f87171' : '#f5222d' },
     ]
   } catch {
     stockPieData.value = []
@@ -275,7 +315,7 @@ function renderPieChart() {
 watch(chartDays, () => loadTrendData())
 
 onMounted(() => {
-  loadStats()
+  loadSummary()
   loadTrendData()
   loadPieData()
 })
@@ -303,17 +343,12 @@ onUnmounted(() => {
 .dashboard-actions { display: flex; gap: 8px; }
 .mb-4 { margin-bottom: 16px; }
 
-.stat-card { border-radius: 8px; border-left: 4px solid; }
-.stat-card.clickable { cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
-.stat-card.clickable:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-.stat-card :deep(.ant-card) { background: var(--bg-card); }
-.stat-card :deep(.ant-card-body) { padding: 16px 20px 0; }
-.stat-body { display: flex; justify-content: space-between; align-items: flex-start; }
-.stat-info { flex: 1; }
-.stat-label { font-size: 14px; color: var(--text-secondary); }
-.stat-value { font-size: 30px; font-weight: 700; color: var(--text-primary); line-height: 1.2; margin-top: 4px; }
-.stat-icon-wrap { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
-.stat-footer { display: flex; justify-content: space-between; padding: 8px 0 0; font-size: 12px; border-top: 1px solid var(--border-color); margin-top: 12px; }
+.summary-card { min-height: 140px; border-radius: 8px; }
+.summary-card.clickable { cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.summary-card.clickable:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.summary-card-label { font-size: 14px; color: var(--text-secondary); }
+.summary-card-value { font-size: 30px; font-weight: 700; color: var(--text-primary); line-height: 1.2; margin-top: 8px; }
+.summary-card-helper { margin-top: 8px; color: var(--text-tertiary); font-size: 13px; }
 
 .chart-wrap { height: 280px; }
 .chart { width: 100%; height: 100%; }

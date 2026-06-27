@@ -326,4 +326,38 @@ onMounted(() => { loadData() })
 .rec-match { margin-bottom: 8px; }
 .rec-reason { font-size: 13px; color: #6b7280; margin-bottom: 8px; line-height: 1.5; }
 .rec-actions { display: flex; gap: 8px; }
+
+/* ===== 暗色模式 ===== */
+[data-theme='dark'] .page-title {
+  color: var(--text-primary);
+}
+[data-theme='dark'] .page-subtitle {
+  color: var(--text-secondary);
+}
+[data-theme='dark'] .recommendation-card {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+}
+[data-theme='dark'] .recommendation-card.top-1 {
+  border-color: #52c41a;
+  background: linear-gradient(135deg, rgba(82, 196, 26, 0.12) 0%, var(--bg-card) 100%);
+}
+[data-theme='dark'] .rec-rank {
+  color: #4a4a4a;
+}
+[data-theme='dark'] .top-1 .rec-rank {
+  color: #52c41a;
+}
+[data-theme='dark'] .rec-name {
+  color: var(--text-primary);
+}
+[data-theme='dark'] .rec-reason {
+  color: var(--text-secondary);
+}
+[data-theme='dark'] .selected-row {
+  background-color: rgba(24, 144, 255, 0.15) !important;
+}
+[data-theme='dark'] .text-gray-400 {
+  color: var(--text-tertiary) !important;
+}
 </style>

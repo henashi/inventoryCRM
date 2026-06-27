@@ -1,6 +1,6 @@
 import request from './request'
 
-type OperationLogRecord = {
+export interface OperationLogRecord {
   id: number
   module: string
   operationType: string
@@ -9,13 +9,13 @@ type OperationLogRecord = {
   requestMethod?: string
   operator?: string
   ipAddress?: string
-  status: number
+  status?: number
   errorMessage?: string
   executionTime?: number
-  operationTime?: string
+  operationTime: string
 }
 
-type OperationLogPage = {
+export interface OperationLogPage {
   content: OperationLogRecord[]
   totalElements: number
   totalPages: number
@@ -26,8 +26,35 @@ type OperationLogPage = {
   empty: boolean
 }
 
-export const operationLogApi = {
-  searchLogs: (params?: Record<string, unknown>) => request.get<OperationLogPage>('/operation-logs/search', { params }),
+export interface OperationLogQuery {
+  keyword?: string
+  module?: string
+  operator?: string
+  status?: number
+  page?: number
+  size?: number
+  startTime?: string
+  endTime?: string
 }
 
-export type { OperationLogRecord, OperationLogPage }
+export const operationLogApi = {
+  /** 分页搜索系统日志 */
+  search: (params?: OperationLogQuery) =>
+    request.get<OperationLogPage>('/operation-logs/search', { params }),
+
+  /** 分页搜索（别名，兼容旧引用） */
+  searchLogs: (params?: OperationLogQuery) =>
+    request.get<OperationLogPage>('/operation-logs/search', { params }),
+
+  /** 根据ID查询详情 */
+  getById: (id: number) =>
+    request.get<OperationLogRecord>(`/operation-logs/${id}`),
+
+  /** 按模块查询日志 */
+  getByModule: (module: string, params?: { page?: number; size?: number }) =>
+    request.get<OperationLogPage>(`/operation-logs/module/${module}`, { params }),
+
+  /** 按操作人查询日志 */
+  getByOperator: (operator: string, params?: { page?: number; size?: number }) =>
+    request.get<OperationLogPage>(`/operation-logs/operator/${operator}`, { params }),
+}
