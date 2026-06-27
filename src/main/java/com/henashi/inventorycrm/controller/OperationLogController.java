@@ -2,6 +2,7 @@ package com.henashi.inventorycrm.controller;
 
 import com.henashi.inventorycrm.dto.OperationLogCreateDTO;
 import com.henashi.inventorycrm.dto.OperationLogDTO;
+import com.henashi.inventorycrm.annotation.OperationLogIgnore;
 import com.henashi.inventorycrm.service.OperationLogService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -35,16 +36,16 @@ public class OperationLogController {
     @GetMapping("/{id}")
     @Operation(summary = "获取操作日志", description = "根据ID获取操作日志的详细信息")
     public OperationLogDTO getOperationLog(
-            @PathVariable @NotNull @Min(1) Long id) {
+            @PathVariable("id") @NotNull @Min(1) Long id) {
         return operationLogService.findOperationLogDTOById(id);
     }
 
     @GetMapping("/module/{module}")
     @Operation(summary = "获取模块日志", description = "根据模块名称获取相关的操作日志")
     public Page<OperationLogDTO> getLogsByModule(
-            @PathVariable @NotNull String module,
-            @RequestParam(defaultValue = "5") Integer size,
-            @RequestParam(defaultValue = "0") Integer page) {
+            @PathVariable("module") @NotNull String module,
+            @RequestParam(name = "size", defaultValue = "5") Integer size,
+            @RequestParam(name = "page", defaultValue = "0") Integer page) {
         Sort sort = Sort.by("id").descending();
         return operationLogService.getLogsByModule(module, PageRequest.of(page, size, sort));
     }
@@ -52,25 +53,31 @@ public class OperationLogController {
     @GetMapping("/operator/{operator}")
     @Operation(summary = "获取操作人日志", description = "根据操作人名称获取相关的操作日志")
     public Page<OperationLogDTO> getLogsByOperator(
-            @PathVariable @NotNull String operator,
-            @RequestParam(defaultValue = "5") Integer size,
-            @RequestParam(defaultValue = "0") Integer page) {
+            @PathVariable("operator") @NotNull String operator,
+            @RequestParam(name = "size", defaultValue = "5") Integer size,
+            @RequestParam(name = "page", defaultValue = "0") Integer page) {
         Sort sort = Sort.by("id").descending();
         return operationLogService.getLogsByOperator(operator, PageRequest.of(page, size, sort));
     }
 
     @GetMapping("/search")
-    @Operation(summary = "分页查询日志", description = "根据关键词搜索操作日志，支持模块名称、操作人和描述的模糊匹配")
+    @Operation(summary = "分页查询日志", description = "多条件搜索操作日志，支持关键词/模块/操作人/时间范围过滤")
     public Page<OperationLogDTO> searchLogs(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "5") Integer size,
-            @RequestParam(defaultValue = "0") Integer page
+            @RequestParam(name = "keyword", required = false) String keyword,
+            @RequestParam(name = "module", required = false) String module,
+            @RequestParam(name = "operator", required = false) String operator,
+            @RequestParam(name = "status", required = false) Integer status,
+            @RequestParam(name = "startTime", required = false) String startTime,
+            @RequestParam(name = "endTime", required = false) String endTime,
+            @RequestParam(name = "size", defaultValue = "20") Integer size,
+            @RequestParam(name = "page", defaultValue = "0") Integer page
     ) {
         Sort sort = Sort.by("id").descending();
-        return operationLogService.searchLogs(keyword, PageRequest.of(page, size, sort));
+        return operationLogService.searchLogs(keyword, module, operator, status, startTime, endTime, PageRequest.of(page, size, sort));
     }
 
     @PostMapping
+    @OperationLogIgnore
     @Operation(summary = "创建操作日志", description = "记录一条新的操作日志")
     public ResponseEntity<OperationLogDTO> createOperationLog(
             @Valid @RequestBody OperationLogCreateDTO logCreateDTO) {

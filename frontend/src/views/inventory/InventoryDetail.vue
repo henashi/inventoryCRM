@@ -6,7 +6,7 @@
         <div class="page-subtitle">查看库存状态、预警原因与最近变更记录</div>
       </div>
       <a-space>
-        <a-button @click="goBack">返回总览</a-button>
+        <a-button @click="goBack">返回</a-button>
         <a-button @click="goToLogs">查看日志</a-button>
         <a-button type="primary" @click="openAction('in')">入库</a-button>
         <a-button @click="openAction('out')">出库</a-button>
@@ -61,11 +61,11 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'changeType'">
-            <a-tag :color="getChangeTypeColor(record.changeType)">{{ getChangeTypeLabel(record.changeType) }}</a-tag>
+            <a-tag :color="changeTypeColors[normChangeType(record.changeType)] || 'default'">{{ getChangeTypeLabel(record.changeType) }}</a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'changeQuantity'">
-            <span :class="record.changeQuantity >= 0 ? 'positive' : 'negative'">
-              {{ record.changeQuantity >= 0 ? `+${record.changeQuantity}` : record.changeQuantity }}
+            <span :class="record.changeType === 'out' || record.changeType === 'OUT' ? 'negative' : 'positive'">
+              {{ record.changeType === 'out' || record.changeType === 'OUT' ? `-${record.changeQuantity}` : `+${record.changeQuantity}` }}
             </span>
           </template>
           <template v-else-if="column.dataIndex === 'createdAt'">
@@ -144,7 +144,7 @@ const resolveActionIntent = () => {
 }
 
 const goBack = () => {
-  router.push('/inventory')
+  router.back()
 }
 
 const goToLogs = () => {
@@ -188,6 +188,15 @@ const handleActionSubmit = async (payload: { mode: 'in' | 'out' | 'adjust'; prod
   }
 }
 
+const changeTypeColors: Record<string, string> = {
+  IN: '#58a6ff',
+  OUT: '#a371f7',
+  ADJUST: '#d29922',
+  CREATE: '#58a6ff',
+}
+
+const normChangeType = (type: string) => type?.toUpperCase() || ''
+
 const getChangeTypeLabel = (type: string) => {
   const labels: Record<string, string> = {
     IN: '入库',
@@ -196,18 +205,19 @@ const getChangeTypeLabel = (type: string) => {
     CREATE: '新建',
   }
 
-  return labels[type] || type
+  return labels[normChangeType(type)] || type
 }
 
 const getChangeTypeColor = (type: string) => {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
   const colors: Record<string, string> = {
     IN: 'green',
-    OUT: 'purple',
+    OUT: isDark ? '#7c3aed' : 'purple',
     ADJUST: 'orange',
     CREATE: 'blue',
   }
 
-  return colors[type] || 'default'
+  return colors[normChangeType(type)] || 'default'
 }
 
 const formatDateTime = (value?: string) => value ? dayjs(value).format('YYYY-MM-DD HH:mm:ss') : '--'
@@ -271,10 +281,21 @@ watch(
 }
 
 .positive {
-  color: #52c41a;
+  color: #58a6ff;
 }
 
 .negative {
-  color: #722ed1;
+  color: #a371f7;
+}
+
+/* ===== 暗色模式 ===== */
+[data-theme='dark'] .positive {
+  color: #58a6ff !important;
+}
+[data-theme='dark'] .negative {
+  color: #a371f7 !important;
+}
+[data-theme='dark'] .ant-tag-has-color {
+  color: #e0e0e0 !important;
 }
 </style>

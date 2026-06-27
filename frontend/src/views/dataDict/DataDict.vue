@@ -3,11 +3,7 @@
     <div class="page-header">
 
       <div class="page-actions">
-          <a-button @click="handleRefresh" :loading="isLoading">
-            <reload-outlined />
-            刷新
-          </a-button>
-          <a-button type="primary" @click="showAddModal" style="margin-left:8px">
+          <a-button type="primary" @click="showAddModal">
             <plus-outlined />
             新增配置
           </a-button>
@@ -434,7 +430,7 @@ onMounted(() => {
 .page-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   margin-bottom: 20px;
 }
 

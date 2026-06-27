@@ -6,10 +6,7 @@
         <p class="page-subtitle">支持查看发放详情；删除仅对管理员开放。</p>
       </div>
       <div class="page-actions">
-        <a-button @click="handleRefresh" :loading="isLoading">
-          <reload-outlined />
-          刷新
-        </a-button>
+
         <a-button @click="handleAdd" type="primary" style="margin-left: 8px">
           <gift-outlined />
           发放

@@ -60,8 +60,19 @@
         />
       </a-form-item>
 
-      <a-form-item v-if="mode" :label="reasonLabel" required>
-        <a-textarea v-model:value="reason" :rows="3" :maxlength="200" />
+      <a-form-item v-if="mode" :label="reasonLabel">
+        <template v-if="reasonPresets.length">
+          <a-space wrap style="margin-bottom: 8px">
+            <a-tag
+              v-for="preset in reasonPresets"
+              :key="preset"
+              :class="{ 'preset-active': reason === preset }"
+              style="cursor: pointer; padding: 2px 10px; border-radius: 4px;"
+              @click="reason = preset"
+            >{{ preset }}</a-tag>
+          </a-space>
+        </template>
+        <a-textarea v-model:value="reason" :rows="2" :maxlength="200" placeholder="选填" />
       </a-form-item>
 
       <a-form-item label="备注">
@@ -108,6 +119,13 @@ const reasonLabel = computed(() => {
   if (props.mode === 'out') return '出库原因'
   if (props.mode === 'adjust') return '调整原因'
   return '原因'
+})
+
+const reasonPresets = computed(() => {
+  if (props.mode === 'in') return ['采购入库', '退货入库', '调拨入库', '盘盈入库']
+  if (props.mode === 'out') return ['销售出库', '报损出库', '调拨出库', '样品出库']
+  if (props.mode === 'adjust') return ['盘点调整', '损耗调整']
+  return []
 })
 
 const fixedInventory = computed(() => props.inventory || null)
@@ -158,10 +176,6 @@ const handleOk = () => {
       message.warning('请输入正确的入库数量')
       return
     }
-    if (!trimmedReason) {
-      message.warning('请输入入库原因')
-      return
-    }
 
     emit('submit', {
       mode: 'in',
@@ -183,10 +197,6 @@ const handleOk = () => {
     }
     if (quantity.value > inventory.currentStock) {
       message.warning('出库数量不能大于当前库存')
-      return
-    }
-    if (!trimmedReason) {
-      message.warning('请输入出库原因')
       return
     }
 

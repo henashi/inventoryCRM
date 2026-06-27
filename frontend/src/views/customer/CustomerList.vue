@@ -3,26 +3,11 @@
     <div class="page-header">
 
       <div class="page-actions">
-        <a-button type="primary" @click="showAddModal" class="add-btn">
-          <template #icon>
-            <plus-outlined />
-          </template>
-          新增客户
-        </a-button>
         <a-button @click="showImportModal" :loading="importLoading">
           <template #icon>
             <import-outlined />
           </template>
           导入客户
-        </a-button>
-        <a-button @click="goToAIScoring">
-          <template #icon>
-            <bulb-outlined />
-          </template>
-          AI 评分
-        </a-button>
-        <a-button @click="goToOrders">
-          订单管理
         </a-button>
         <a-button @click="handleExport" :loading="exportLoading">
           <template #icon>
@@ -30,18 +15,17 @@
           </template>
           导出
         </a-button>
-        <a-tooltip title="刷新">
-          <a-button @click="handleRefresh" :loading="isLoading || statsLoading">
-            <template #icon>
-              <reload-outlined />
-            </template>
-          </a-button>
-        </a-tooltip>
+        <a-button type="primary" @click="showAddModal" class="add-btn">
+          <template #icon>
+            <plus-outlined />
+          </template>
+          新增客户
+        </a-button>
       </div>
     </div>
 
     <a-card class="search-card">
-      <a-form class="search-form" layout="inline" :model="searchForm" @finish="handleSearch">
+      <a-form class="search-form" layout="vertical" :model="searchForm" @finish="handleSearch">
         <a-row :gutter="[16, 16]" style="width: 100%">
           <a-col :xs="24" :sm="12" :md="8" :lg="6">
             <a-form-item label="关键词">
@@ -108,18 +92,6 @@
         </a-row>
       </a-form>
     </a-card>
-
-    <a-row :gutter="[16, 16]" class="stats-row">
-      <a-col v-for="card in customerStatCards" :key="card.key" :xs="24" :sm="12" :lg="6">
-        <a-card class="stats-card" :loading="statsLoading">
-          <div class="stats-primary-line">
-            <span class="stats-title">{{ card.label }}</span>
-            <span class="stats-value-inline">{{ card.value }}</span>
-          </div>
-          <div class="stats-secondary-line">{{ card.helper }}</div>
-        </a-card>
-      </a-col>
-    </a-row>
 
     <a-card class="table-card">
       <a-table
@@ -592,7 +564,6 @@ const referrerLoading = ref(false)
 const referrerSearchKeyword = ref('')
 
 const exportLoading = ref(false)
-const statsLoading = ref(false)
 const modalVisible = ref(false)
 const modalLoading = ref(false)
 const drawerVisible = ref(false)
@@ -607,12 +578,6 @@ const customerImportResult = ref<ImportResult | null>(null)
 const modalType = ref<'add' | 'edit'>('add')
 const currentCustomer = ref<Customer | null>(null)
 const selectedRowKeys = ref<number[]>([])
-const customerStatistics = ref<CustomerStatistics>({
-  totalCustomers: 0,
-  normalCustomers: 0,
-  disabledCustomers: 0,
-  giftLevelDistribution: {},
-})
 
 const columns: TableColumnType[] = [
   {
@@ -1280,7 +1245,7 @@ onMounted(async () => {
 
 .page-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin-bottom: 16px;
   gap: 12px;
@@ -1681,5 +1646,33 @@ onMounted(async () => {
   .page-actions {
     width: 100%;
   }
+}
+
+/* ===== 暗色模式 — 表格客户名称 ===== */
+[data-theme='dark'] .name {
+  color: #e0e0e0 !important;
+}
+[data-theme='dark'] .email {
+  color: #94a3b8 !important;
+}
+
+/* ===== 暗色模式 — 统计卡片 ===== */
+[data-theme='dark'] .stats-card {
+  border: none !important;
+  background: var(--bg-card) !important;
+  box-shadow: none !important;
+}
+[data-theme='dark'] .stats-card::before,
+[data-theme='dark'] .stats-card::after {
+  display: none !important;
+}
+[data-theme='dark'] .stats-title {
+  color: #a0aec0 !important;
+}
+[data-theme='dark'] .stats-value-inline {
+  color: #e8e8e8 !important;
+}
+[data-theme='dark'] .stats-secondary-line {
+  color: #94a3b8 !important;
 }
 </style>

@@ -20,7 +20,6 @@ public record InventoryOutDTO(
         Long warehouseId,
 
         @Schema(description = "出库原因")
-        @NotBlank(message = "出库原因不能为空")
         @Size(max = 200, message = "出库原因不能超过200字符")
         String reason,
 

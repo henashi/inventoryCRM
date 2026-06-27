@@ -6,6 +6,7 @@ import com.henashi.inventorycrm.exception.BusinessException;
 import com.henashi.inventorycrm.mapper.OperationLogMapper;
 import com.henashi.inventorycrm.pojo.OperationLog;
 import com.henashi.inventorycrm.repository.OperationLogRepository;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -81,17 +85,59 @@ public class OperationLogService {
                 .map(operationLogMapper::fromEntity);
     }
 
-    public Page<OperationLogDTO> searchLogs(String keyword, Pageable pageable) {
+    public Page<OperationLogDTO> searchLogs(String keyword, String module, String operator,
+                                            Integer status, String startTime, String endTime,
+                                            Pageable pageable) {
         Specification<OperationLog> spec = (root, query, cb) -> {
-            String likeKeyword = "%" + keyword + "%";
-            return cb.or(
-                    cb.like(root.get("module"), likeKeyword),
-                    cb.like(root.get("operationType"), likeKeyword),
-                    cb.like(root.get("operator"), likeKeyword),
-                    cb.like(root.get("description"), likeKeyword)
-            );
+            List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
+
+            // 关键词模糊搜索（模块/描述/操作人）
+            if (keyword != null && !keyword.isBlank()) {
+                String likeKeyword = "%" + keyword.trim() + "%";
+                predicates.add(cb.or(
+                        cb.like(root.get("module"), likeKeyword),
+                        cb.like(root.get("description"), likeKeyword),
+                        cb.like(root.get("operator"), likeKeyword)
+                ));
+            }
+
+            // 模块精确匹配
+            if (module != null && !module.isBlank()) {
+                predicates.add(cb.equal(root.get("module"), module.trim()));
+            }
+
+            // 操作人模糊匹配
+            if (operator != null && !operator.isBlank()) {
+                predicates.add(cb.like(root.get("operator"), "%" + operator.trim() + "%"));
+            }
+
+            // 状态精确匹配
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+
+            // 时间范围
+            if (startTime != null && !startTime.isBlank()) {
+                try {
+                    predicates.add(cb.greaterThanOrEqualTo(root.get("operationTime"),
+                            LocalDateTime.parse(startTime + "T00:00:00")));
+                } catch (Exception ignored) {}
+            }
+            if (endTime != null && !endTime.isBlank()) {
+                try {
+                    predicates.add(cb.lessThanOrEqualTo(root.get("operationTime"),
+                            LocalDateTime.parse(endTime + "T23:59:59")));
+                } catch (Exception ignored) {}
+            }
+
+            return predicates.isEmpty() ? cb.conjunction()
+                    : cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
         };
         return operationLogRepository.findAll(spec, pageable)
                 .map(operationLogMapper::fromEntity);
+    }
+
+    public Page<OperationLogDTO> searchLogs(String keyword, Pageable pageable) {
+        return searchLogs(keyword, null, null, null, null, null, pageable);
     }
 }

@@ -1,26 +1,25 @@
 <!-- frontend/src/views/inventory/InventoryLogList.vue -->
 <template>
   <div class="inventory-log-page">
-    <!-- 页面标题 -->
     <div class="page-header">
-
-      <div class="page-actions">
-        <a-button @click="handleRefresh" :loading="isLoading">
-          <reload-outlined />
-          刷新
-        </a-button>
-        <a-button @click="handleExport" :loading="exportLoading" style="margin-left:8px">
-          <export-outlined />
-          导出
-        </a-button>
-              </div>
+      <div style="margin-left: auto;">
+        <a-space>
+          <a-button @click="handleExport" :loading="exportLoading">
+            <export-outlined />
+            导出
+          </a-button>
+          <a-button @click="router.back()">
+            <arrow-left-outlined />
+            返回
+          </a-button>
+        </a-space>
+      </div>
     </div>
-
-    <!-- 搜索和筛选区域
+    <!-- 搜索栏 -->
     <a-card class="search-card">
-      <a-form layout="inline" :model="searchForm" @finish="handleSearch">
+      <a-form layout="vertical" :model="searchForm" @finish="handleSearch">
         <a-row :gutter="[16, 16]" style="width: 100%">
-          <a-col :xs="24" :sm="12" :md="6">
+          <a-col :xs="24" :sm="12" :md="8" :lg="6">
             <a-form-item label="商品">
               <a-select
                 v-model:value="searchForm.productId"
@@ -30,109 +29,19 @@
                 :filter-option="filterProductOption"
                 style="width: 100%"
               >
-                <a-select-option
-                  v-for="product in productOptions"
-                  :key="product.id"
-                  :value="product.id"
-                >
-                  {{ product.name }} ({{ product.code }})
-                </a-select-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
-
-          <a-col :xs="24" :sm="12" :md="6">
-            <a-form-item label="操作类型">
-              <a-select
-                v-model:value="searchForm.type"
-                placeholder="请选择操作类型"
-                allow-clear
-                style="width: 100%"
-              >
-                <a-select-option value="CREATE">新建商品</a-select-option>
-                <a-select-option value="IN">入库</a-select-option>
-                <a-select-option value="OUT">出库</a-select-option>
-                <a-select-option value="ADJUST">调整</a-select-option>
-                <a-select-option value="TRANSFER">调拨</a-select-option>
-                <a-select-option value="CHECK">盘点</a-select-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
-
-          <a-col :xs="24" :sm="12" :md="6">
-            <a-form-item label="操作人">
-              <a-input
-                v-model:value="searchForm.operator"
-                placeholder="请输入操作人"
-                allow-clear
-              />
-            </a-form-item>
-          </a-col>
-
-          <a-col :xs="24" :sm="12" :md="6">
-            <a-form-item label="操作时间">
-              <a-range-picker
-                v-model:value="searchForm.dateRange"
-                style="width: 100%"
-                :placeholder="['开始时间', '结束时间']"
-                show-time
-                format="YYYY-MM-DD HH:mm"
-                value-format="YYYY-MM-DD HH:mm"
-              />
-            </a-form-item>
-          </a-col>
-        </a-row>
-
-        <a-row style="width: 100%; margin-top: 8px">
-          <a-col :xs="24" style="display: flex; justify-content: flex-end">
-            <a-space>
-              <a-button type="primary" html-type="submit" :loading="isLoading">
-                搜索
-              </a-button>
-              <a-button @click="handleReset">
-                重置
-              </a-button>
-              <a-button @click="handleAdvancedSearch" type="link">
-                高级搜索
-              </a-button>
-            </a-space>
-          </a-col>
-        </a-row>
-      </a-form>
-    </a-card> -->
-    <!-- 搜索栏 -->
-    <a-card class="search-card" :bordered="true" size="small">
-      <a-form
-        :model="searchForm"
-        :label-col="{ span: 6 }"
-        :wrapper-col="{ span: 18 }"
-        @submit.prevent="handleSearch"
-      >
-        <a-row :gutter="16">
-          <!-- 商品选择 -->
-          <a-col :xs="24" :sm="12" :md="8" :lg="6" :xl="6">
-            <a-form-item label="商品" :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-              <a-select
-                v-model:value="searchForm.productId"
-                placeholder="请选择商品"
-                allow-clear
-                show-search
-                :filter-option="filterProductOption"
-              >
                 <a-select-option v-for="product in productOptions" :key="product.id" :value="product.id">
                   {{ product.name }} ({{ product.code }})
                 </a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
-
-          <!-- 操作类型 -->
-          <a-col :xs="24" :sm="12" :md="8" :lg="6" :xl="6">
-            <a-form-item label="操作类型" :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+          <a-col :xs="24" :sm="12" :md="8" :lg="5">
+            <a-form-item label="操作类型">
               <a-select
                 v-model:value="searchForm.type"
-                placeholder="请选择操作类型"
+                placeholder="请选择"
                 allow-clear
+                style="width: 100%"
               >
                 <a-select-option value="CREATE">新建商品</a-select-option>
                 <a-select-option value="IN">入库</a-select-option>
@@ -143,101 +52,35 @@
               </a-select>
             </a-form-item>
           </a-col>
-
-          <!-- 操作时间 -->
-          <a-col :xs="24" :sm="12" :md="16" :lg="12" :xl="12">
-            <a-form-item label="操作时间" :label-col="{ span: 4 }" :wrapper-col="{ span: 20 }">
-              <a-range-picker
-                v-model:value="searchForm.dateRange"
-                :placeholder="['开始时间', '结束时间']"
-                style="width: 100%"
-                format="YYYY-MM-DD"
-                value-format="YYYY-MM-DD"
+          <a-col :xs="24" :sm="12" :md="8" :lg="5">
+            <a-form-item label="操作人">
+              <a-input
+                v-model:value="searchForm.operator"
+                placeholder="操作人"
               />
             </a-form-item>
           </a-col>
-
-          <!-- 操作人 -->
-          <a-col :xs="24" :sm="12" :md="8" :lg="6" :xl="6">
-            <a-form-item label="操作人" :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-              <a-input
-                v-model:value="searchForm.operator"
-                placeholder="请输入操作人"
-                allow-clear
-                @keyup.enter="handleSearch"
-              >
-                <template #prefix>
-                  <user-outlined style="color: rgba(0, 0, 0, 0.25)" />
-                </template>
-              </a-input>
+          <a-col :xs="24" :sm="12" :md="10" :lg="7">
+            <a-form-item label="操作时间">
+              <a-range-picker
+                v-model:value="searchForm.dateRange"
+                style="width: 100%"
+                :placeholder="['开始日期', '结束日期']"
+              />
             </a-form-item>
           </a-col>
         </a-row>
-
-        <div class="search-actions" style="display: flex; justify-content: flex-end">
-          <a-space :size="12">
-            <a-button
-              type="primary"
-              html-type="submit"
-              :loading="isLoading"
-              @click="handleSearch"
-            >
-              <template #icon>
-                <search-outlined />
-              </template>
-              搜索
-            </a-button>
-            <a-button
-              @click="handleReset"
-            >
-              <template #icon>
-                <reload-outlined />
-              </template>
-              重置
-            </a-button>
-          </a-space>
-        </div>
+        <a-row style="width: 100%; margin-top: 8px">
+          <a-col :xs="24" style="display: flex; justify-content: flex-end">
+            <a-space>
+              <a-button type="primary" html-type="submit" :loading="isLoading">搜索</a-button>
+              <a-button @click="handleReset">重置</a-button>
+            </a-space>
+          </a-col>
+        </a-row>
       </a-form>
     </a-card>
-    <!-- 统计卡片 -->
-    <a-row :gutter="16" class="stats-cards">
-      <a-col :xs="12" :sm="6" class="text-center">
-        <a-statistic
-          title="入库次数"
-          :value="stats.inCount"
-          :value-style="{ color: '#3f8600' }"
-        >
-          <template #prefix>
-            <arrow-up-outlined />
-          </template>
-        </a-statistic>
-      </a-col>
-      <a-col :xs="12" :sm="6" class="text-center">
-        <a-statistic
-          title="出库次数"
-          :value="stats.outCount"
-          :value-style="{ color: '#d3adf7' }"
-        >
-          <template #prefix>
-            <arrow-down-outlined />
-          </template>
-        </a-statistic>
-      </a-col>
-      <a-col :xs="12" :sm="6" class="text-center">
-        <a-statistic
-          title="入库总量"
-          :value="stats.inQuantity"
-          :value-style="{ color: '#3f8600' }"
-        />
-      </a-col>
-      <a-col :xs="12" :sm="6" class="text-center">
-        <a-statistic
-          title="出库总量"
-          :value="stats.outQuantity"
-          :value-style="{ color: '#d3adf7' }"
-        />
-      </a-col>
-    </a-row>
+
 
     <!-- 库存日志表格 -->
     <a-card class="table-card">
@@ -247,25 +90,20 @@
         :loading="isLoading"
         :pagination="pagination"
         row-key="id"
+        size="small"
         @change="handleTableChange"
         :scroll="{ x: 1000 }"
       >
         <!-- 操作时间 -->
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'createdAt'">
-            <div class="time-cell">
-              <div class="date">{{ formatDate(record.createdAt, 'MM-DD') }}</div>
-              <div class="time">{{ formatDate(record.createdAt, 'HH:mm:ss') }}</div>
-            </div>
+            <div class="time-cell">{{ formatDate(record.createdAt, 'YYYY-MM-DD HH:mm:ss') }}</div>
           </template>
 
           <!-- 商品信息 -->
           <template v-else-if="column.dataIndex === 'productInfo'">
             <div class="product-info">
               <div class="product-name">
-                <a-tag :color="getOperationTypeColor(record.logType)" size="small">
-                  {{ getSimplifyTypeText(record.logType) }}
-                </a-tag>
                 {{ record.productName }}
               </div>
               <div class="product-code">{{ record.productCode }}</div>
@@ -274,71 +112,43 @@
 
           <!-- 操作类型 -->
           <template v-else-if="column.dataIndex === 'type'">
-            <a-tag :color="getOperationTypeColor(record.logType)">
-              {{ getOperationTypeText(record.logType) }}
+            <a-tag :color="getOperationTypeColor(record.logType)" style="font-size: 12px; line-height: 18px; padding: 0 6px;">
+              {{ getSimplifyTypeText(record.logType) }}
             </a-tag>
           </template>
 
           <!-- 库存变化 -->
           <template v-else-if="column.dataIndex === 'stockChange'">
             <div class="stock-change">
-              <div class="change-quantity">
-                <span :class="getChangeClass(record.afterStock - record.beforeStock)">
-                  {{ formatChangeQuantity(record.afterStock - record.beforeStock) }}
-                </span>
-                <span class="unit">{{ record.productUnit }}</span>
-              </div>
-              <div class="stock-range">
-                {{ record.beforeStock }} → {{ record.afterStock }}
-              </div>
+              <span :class="getChangeClass(record.afterStock - record.beforeStock)" class="change-val">
+                {{ formatChangeQuantity(record.afterStock - record.beforeStock) }}
+              </span>
+              <span class="unit">{{ record.productUnit }}</span>
             </div>
           </template>
 
           <!-- 操作人 -->
           <template v-else-if="column.dataIndex === 'operator'">
-            <div class="operator-info">
-              <a-avatar :size="24" style="background-color: #1890ff">
-                {{ getFirstChar(record.operator) }}
-              </a-avatar>
-              <span class="operator-name">{{ record.operator }}</span>
-            </div>
+            <span class="operator-name">{{ record.operator }}</span>
           </template>
 
           <!-- 原因 -->
           <template v-else-if="column.dataIndex === 'reason'">
-            <div class="reason-cell" :title="record.reason">
-              {{ record.reason }}
-            </div>
+            <div class="reason-cell" :title="record.reason">{{ record.reason }}</div>
           </template>
 
           <!-- 操作状态 -->
           <template v-else-if="column.dataIndex === 'status'">
-            <a-tag :color="record.success ? 'green' : 'red'">
+            <a-tag :color="record.success ? 'green' : 'red'" style="font-size: 12px; line-height: 18px; padding: 0 6px;">
               {{ record.success ? '成功' : '失败' }}
             </a-tag>
-            <!-- <div v-if="!record.success && record.errorMessage" class="error-msg">
-              {{ record.errorMessage }}
-            </div> -->
           </template>
 
           <!-- 操作 -->
           <template v-else-if="column.dataIndex === 'actions'">
             <a-space size="small">
-              <a-button
-                type="link"
-                size="small"
-                @click="handleViewDetail(record)"
-              >
-                详情
-              </a-button>
-              <a-button
-                v-if="record.logType === 'CREATE'"
-                type="link"
-                size="small"
-                @click="handleViewProduct(record.productId)"
-              >
-                查看商品
-              </a-button>
+              <a-button type="link" size="small" @click="handleViewDetail(record)">详情</a-button>
+              <a-button v-if="record.logType === 'CREATE'" type="link" size="small" @click="handleViewProduct(record.productId)">商品</a-button>
             </a-space>
           </template>
         </template>
@@ -431,10 +241,8 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
-  ReloadOutlined,
-  ExportOutlined,
-  ArrowUpOutlined,
-  ArrowDownOutlined
+  ArrowLeftOutlined,
+  ExportOutlined
 } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 import { useInventoryLogStore } from '@/stores/inventoryLog'
@@ -463,53 +271,56 @@ const searchForm = reactive({
 // 表格列定义
 const columns = [
   {
-    title: '操作时间',
-    dataIndex: 'createdTime',
-    key: 'createdTime',
-    width: 100,
-    sorter: true
-  },
-  {
-    title: '商品信息',
+    title: '商品',
     dataIndex: 'productInfo',
     key: 'productInfo',
-    width: 150
+    width: 130,
+    ellipsis: true
   },
   {
-    title: '操作类型',
+    title: '类型',
     dataIndex: 'type',
     key: 'type',
-    width: 100
+    width: 70
   },
   {
     title: '库存变化',
     dataIndex: 'stockChange',
     key: 'stockChange',
-    width: 150
+    width: 120
   },
   {
     title: '操作人',
     dataIndex: 'operator',
     key: 'operator',
-    width: 120
+    width: 80,
+    ellipsis: true
   },
   {
     title: '原因',
     dataIndex: 'reason',
     key: 'reason',
-    width: 150
+    width: 130,
+    ellipsis: true
   },
   {
     title: '状态',
     dataIndex: 'status',
     key: 'status',
-    width: 80
+    width: 65
+  },
+  {
+    title: '时间',
+    dataIndex: 'createdAt',
+    key: 'createdAt',
+    width: 100,
+    sorter: true
   },
   {
     title: '操作',
     dataIndex: 'actions',
     key: 'actions',
-    width: 100,
+    width: 90,
     fixed: 'right'
   }
 ]
@@ -526,22 +337,11 @@ const pagination = computed(() => ({
   current: inventoryLogStore.pagination.page,
   pageSize: inventoryLogStore.pagination.size,
   total: inventoryLogStore.pagination.total,
-  pageSizeOptions: ['5', '10', '20'], // 可选的每页条数
+  pageSizeOptions: ['5', '10', '20', '50', '100'],
   showSizeChanger: true,
   showQuickJumper: true,
-  showTotal: (total: number) => `共 ${total} 条记录`
+  showTotal: (total: number) => `共 ${total} 条`
 }))
-
-const stats = computed(() => ({
-  inCount: inventoryLogStore.stats.inCount,
-  outCount: inventoryLogStore.stats.outCount,
-  inQuantity: inventoryLogStore.stats.inQuantity,
-  outQuantity: inventoryLogStore.stats.outQuantity
-}))
-
-const handleBack = () => {
-  router.push('/dashboard')
-}
 
 // 方法
 const filterProductOption = (input: string, option: any) => {
@@ -564,16 +364,17 @@ const getFirstChar = (str: string) => {
   return str.charAt(0).toUpperCase()
 }
 
+const changeTypeColors: Record<string, string> = {
+  CREATE: '#58a6ff',
+  IN: '#2ea043',
+  OUT: '#a371f7',
+  ADJUST: '#d29922',
+  TRANSFER: '#db61a2',
+  CHECK: '#3b8fc2',
+}
+
 const getOperationTypeColor = (type: string) => {
-  const colors: Record<string, string> = {
-    CREATE: 'blue',
-    IN: 'green',
-    OUT: 'purple',
-    ADJUST: 'orange',
-    TRANSFER: 'pink',
-    CHECK: 'cyan'
-  }
-  return colors[type] || 'default'
+  return changeTypeColors[type] || 'default'
 }
 
 const getSimplifyTypeText = (type: string) => {
@@ -599,6 +400,8 @@ const getOperationTypeText = (type: string) => {
   }
   return texts[type] || type
 }
+
+// 只在详情页用长文本，列表用简写
 
 const getChangeClass = (change: number) => {
   if (change > 0) return 'change-positive'
@@ -718,87 +521,70 @@ onMounted(() => {
 
 <style scoped>
 .inventory-log-page {
-  padding: 20px;
+  padding: 16px 20px;
 }
 
 .page-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  margin-bottom: 20px;
-}
-
-.search-card {
   margin-bottom: 16px;
 }
 
-.stats-cards {
-  margin-bottom: 16px;
-}
-
-.text-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
+.search-card,
 .table-card {
-  border-radius: 8px;
+  margin-bottom: 16px;
+}
+.search-card :deep(.ant-card-body) {
+  padding: 16px 20px;
+}
+.search-card :deep(.ant-form-item-label > label) {
+  color: #6b7280;
+  font-size: 13px;
+}
+.search-card :deep(.ant-input),
+.search-card :deep(.ant-picker),
+.search-card :deep(.ant-select-selector),
+.search-card :deep(.ant-btn) {
+  min-height: 34px;
+  font-size: 13px;
+}
+
+.table-card :deep(.ant-table-thead > tr > th) {
+  padding: 8px 10px;
+}
+.table-card :deep(.ant-table-tbody > tr > td) {
+  padding: 8px 10px;
 }
 
 .time-cell {
-  display: flex;
-  flex-direction: column;
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.time-cell .date {
-  font-weight: 500;
-  color: #333;
-}
-
-.time-cell .time {
-  color: #666;
+  white-space: nowrap;
 }
 
 .product-info {
   display: flex;
   flex-direction: column;
+  line-height: 1.3;
 }
-
 .product-name {
   font-weight: 500;
-  color: #333;
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
-
 .product-code {
-  font-size: 12px;
-  color: #666;
+  font-size: 11px;
+  color: #9ca3af;
 }
 
 .stock-change {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  white-space: nowrap;
 }
-
-.change-quantity {
-  font-size: 16px;
+.change-val {
   font-weight: 600;
-  display: flex;
-  align-items: baseline;
-  gap: 2px;
+  font-size: 13px;
 }
-
-.change-quantity .unit {
-  font-size: 12px;
-  color: #666;
-  font-weight: normal;
+.stock-change .unit {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-left: 2px;
 }
 
 .change-positive {
@@ -806,45 +592,19 @@ onMounted(() => {
 }
 
 .change-negative {
-  color: #d3adf7;
+  color: #f5222d;
 }
 
 .change-zero {
-  color: #999;
-}
-
-.stock-range {
-  font-size: 12px;
-  color: #666;
-  background-color: #f5f5f5;
-  padding: 2px 6px;
-  border-radius: 4px;
-  display: inline-block;
-}
-
-.operator-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  color: #9ca3af;
 }
 
 .operator-name {
-  color: #333;
+  color: var(--text-primary, #111827);
 }
 
 .reason-cell {
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  cursor: default;
-}
-
-.error-msg {
-  font-size: 12px;
-  color: #ff4d4f;
-  margin-top: 4px;
-  max-width: 150px;
+  max-width: 130px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -855,14 +615,8 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .stats-cards {
-    margin-bottom: 12px;
+  .search-card :deep(.ant-form) {
+    flex-wrap: wrap;
   }
 }
 </style>

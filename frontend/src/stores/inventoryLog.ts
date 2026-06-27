@@ -72,7 +72,6 @@ export const useInventoryLogStore = defineStore('inventoryLog', () => {
       if (params?.size !== undefined) {
         pagination.value.size = params.size
       }
-      await loadStats()
     } finally {
       isLoading.value = false
     }

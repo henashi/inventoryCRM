@@ -23,7 +23,6 @@ public record InventoryLogCreateDTO(
         @Schema(description = "操作数量")
         Integer quantity,
 
-        @NotBlank(message = "原因不能为空")
         @Size(max = 200, message = "原因不能超过200字符")
         @Schema(description = "操作原因")
         String reason,

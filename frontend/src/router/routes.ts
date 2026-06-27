@@ -24,6 +24,12 @@ export const appRoutes: RouteRecordRaw[] = [
         meta: { requiresAuth: true, title: '客户管理', roles: getFeatureRoles('customers') },
       },
       {
+        path: 'customers/:id',
+        name: 'CustomerDetail',
+        component: () => import('../views/customer/CustomerDetail.vue'),
+        meta: { requiresAuth: true, title: '客户详情', roles: getFeatureRoles('customers') },
+      },
+      {
         path: 'products',
         name: 'ProductList',
         component: () => import('../views/product/ProductList.vue'),
@@ -79,9 +85,7 @@ export const appRoutes: RouteRecordRaw[] = [
       },
       {
         path: 'admin',
-        name: 'Admin',
-        component: () => import('../views/admin/Admin.vue'),
-        meta: { requiresAuth: true, title: '系统管理' },
+        redirect: '/data-dicts',
       },
       {
         path: 'data-dicts',
@@ -100,6 +104,18 @@ export const appRoutes: RouteRecordRaw[] = [
         name: 'GiftLogs',
         component: () => import('../views/giftLog/GiftLogList.vue'),
         meta: { requiresAuth: true, title: '礼品发放日志', roles: getFeatureRoles('gift-logs') },
+      },
+      {
+        path: 'account',
+        name: 'AccountCenter',
+        component: () => import('../views/account/AccountCenter.vue'),
+        meta: { requiresAuth: true, title: '个人中心', roles: getFeatureRoles('account') },
+      },
+      {
+        path: 'operation-logs',
+        name: 'OperationLogs',
+        component: () => import('../views/operationLog/OperationLogList.vue'),
+        meta: { requiresAuth: true, title: '系统日志', roles: getFeatureRoles('operation-logs') },
       },
 
     ],
