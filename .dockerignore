@@ -1,0 +1,33 @@
+# Build
+target/
+*.jar
+*.war
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# Frontend deps (built in container)
+frontend/node_modules/
+frontend/dist/
+
+# Maven wrapper (docker has its own maven)
+.mvn/
+
+# Temp
+*.tmp

@@ -14,14 +14,11 @@ export const inventoryApi = {
   getInventories: (params?: InventoryQueryParams) =>
     request.get<PageResult<Inventory>>('/inventories', { params }),
 
-  getInventory: (id: number) =>
-    request.get<InventoryDetail>(`/inventories/${id}`),
+  getInventory: (id: number) => request.get<InventoryDetail>(`/inventories/${id}`),
 
-  stockIn: (data: InventoryInDTO) =>
-    request.post<Inventory>('/inventories/in', data),
+  stockIn: (data: InventoryInDTO) => request.post<Inventory>('/inventories/in', data),
 
-  stockOut: (data: InventoryOutDTO) =>
-    request.post<Inventory>('/inventories/out', data),
+  stockOut: (data: InventoryOutDTO) => request.post<Inventory>('/inventories/out', data),
 
   adjustStock: (id: number, data: InventoryAdjustDTO) =>
     request.patch<Inventory>(`/inventories/${id}/adjust`, data),
@@ -35,6 +32,6 @@ export const inventoryApi = {
   exportInventoryReport: (params?: InventoryQueryParams) =>
     request.get('/inventories/export', {
       params,
-      responseType: 'blob'
-    })
+      responseType: 'blob',
+    }),
 }

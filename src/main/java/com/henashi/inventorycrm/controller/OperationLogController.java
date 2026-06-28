@@ -40,26 +40,6 @@ public class OperationLogController {
         return operationLogService.findOperationLogDTOById(id);
     }
 
-    @GetMapping("/module/{module}")
-    @Operation(summary = "获取模块日志", description = "根据模块名称获取相关的操作日志")
-    public Page<OperationLogDTO> getLogsByModule(
-            @PathVariable("module") @NotNull String module,
-            @RequestParam(name = "size", defaultValue = "5") Integer size,
-            @RequestParam(name = "page", defaultValue = "0") Integer page) {
-        Sort sort = Sort.by("id").descending();
-        return operationLogService.getLogsByModule(module, PageRequest.of(page, size, sort));
-    }
-
-    @GetMapping("/operator/{operator}")
-    @Operation(summary = "获取操作人日志", description = "根据操作人名称获取相关的操作日志")
-    public Page<OperationLogDTO> getLogsByOperator(
-            @PathVariable("operator") @NotNull String operator,
-            @RequestParam(name = "size", defaultValue = "5") Integer size,
-            @RequestParam(name = "page", defaultValue = "0") Integer page) {
-        Sort sort = Sort.by("id").descending();
-        return operationLogService.getLogsByOperator(operator, PageRequest.of(page, size, sort));
-    }
-
     @GetMapping("/search")
     @Operation(summary = "分页查询日志", description = "多条件搜索操作日志，支持关键词/模块/操作人/时间范围过滤")
     public Page<OperationLogDTO> searchLogs(

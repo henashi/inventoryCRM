@@ -3,9 +3,7 @@
     <!-- 页面标题 -->
     <div class="page-header">
       <h1 class="page-title">系统日志</h1>
-      <div class="page-header-actions">
-
-      </div>
+      <div class="page-header-actions"></div>
     </div>
 
     <!-- 统计卡片 -->
@@ -70,16 +68,8 @@
         <a-row :gutter="16">
           <a-col :xs="24" :sm="12" :md="8" :lg="6">
             <a-form-item label="模块">
-              <a-select
-                v-model:value="searchForm.module"
-                placeholder="全部模块"
-                allow-clear
-              >
-                <a-select-option
-                  v-for="mod in moduleOptions"
-                  :key="mod"
-                  :value="mod"
-                >
+              <a-select v-model:value="searchForm.module" placeholder="全部模块" allow-clear>
+                <a-select-option v-for="mod in moduleOptions" :key="mod" :value="mod">
                   {{ mod }}
                 </a-select-option>
               </a-select>
@@ -87,24 +77,16 @@
           </a-col>
           <a-col :xs="24" :sm="12" :md="8" :lg="6">
             <a-form-item label="操作人">
-              <a-input
-                v-model:value="searchForm.operator"
-                placeholder="输入操作人"
-                allow-clear
-              >
+              <a-input v-model:value="searchForm.operator" placeholder="输入操作人" allow-clear>
                 <template #prefix>
-                  <user-outlined style="color: rgba(0,0,0,0.25)" />
+                  <user-outlined style="color: rgba(0, 0, 0, 0.25)" />
                 </template>
               </a-input>
             </a-form-item>
           </a-col>
           <a-col :xs="24" :sm="12" :md="8" :lg="6">
             <a-form-item label="操作状态">
-              <a-select
-                v-model:value="searchForm.status"
-                placeholder="全部状态"
-                allow-clear
-              >
+              <a-select v-model:value="searchForm.status" placeholder="全部状态" allow-clear>
                 <a-select-option :value="1">成功</a-select-option>
                 <a-select-option :value="0">失败</a-select-option>
               </a-select>
@@ -189,7 +171,11 @@
           <template v-else-if="column.dataIndex === 'executionTime'">
             <span v-if="record.executionTime != null" class="exec-time">
               <field-time-outlined />
-              {{ record.executionTime < 1000 ? record.executionTime + 'ms' : (record.executionTime / 1000).toFixed(2) + 's' }}
+              {{
+                record.executionTime < 1000
+                  ? record.executionTime + 'ms'
+                  : (record.executionTime / 1000).toFixed(2) + 's'
+              }}
             </span>
             <span v-else class="exec-time-na">-</span>
           </template>
@@ -203,21 +189,14 @@
 
           <!-- 操作 -->
           <template v-else-if="column.dataIndex === 'actions'">
-            <a-button type="link" size="small" @click="handleViewDetail(record)">
-              详情
-            </a-button>
+            <a-button type="link" size="small" @click="handleViewDetail(record)"> 详情 </a-button>
           </template>
         </template>
       </a-table>
     </a-card>
 
     <!-- 详情抽屉 -->
-    <a-drawer
-      v-model:open="detailVisible"
-      title="操作日志详情"
-      width="520"
-      placement="right"
-    >
+    <a-drawer v-model:open="detailVisible" title="操作日志详情" width="520" placement="right">
       <template v-if="currentLog">
         <div class="detail-content">
           <a-descriptions title="基本信息" bordered size="small" :column="2">
@@ -252,19 +231,34 @@
             </a-descriptions-item>
           </a-descriptions>
 
-          <a-descriptions title="请求信息" bordered size="small" :column="1" style="margin-top: 16px">
+          <a-descriptions
+            title="请求信息"
+            bordered
+            size="small"
+            :column="1"
+            style="margin-top: 16px"
+          >
             <a-descriptions-item label="请求 URL">
               {{ currentLog.requestUrl || '-' }}
             </a-descriptions-item>
             <a-descriptions-item label="请求方法">
-              <a-tag v-if="currentLog.requestMethod" :color="getMethodColor(currentLog.requestMethod)">
+              <a-tag
+                v-if="currentLog.requestMethod"
+                :color="getMethodColor(currentLog.requestMethod)"
+              >
                 {{ currentLog.requestMethod }}
               </a-tag>
               <span v-else>-</span>
             </a-descriptions-item>
           </a-descriptions>
 
-          <a-descriptions title="操作描述" bordered size="small" :column="1" style="margin-top: 16px">
+          <a-descriptions
+            title="操作描述"
+            bordered
+            size="small"
+            :column="1"
+            style="margin-top: 16px"
+          >
             <a-descriptions-item label="描述内容">
               {{ currentLog.description || '-' }}
             </a-descriptions-item>
@@ -289,340 +283,346 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
-import { message } from 'ant-design-vue'
-import {
-  ReloadOutlined,
-  SearchOutlined,
-  UserOutlined,
-  FileTextOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  AppstoreOutlined,
-  FieldTimeOutlined,
-} from '@ant-design/icons-vue'
-import dayjs from 'dayjs'
-import { useOperationLogStore } from '@/stores/operationLog'
-import type { OperationLogRecord } from '@/api/operationLog'
+  import { ref, reactive, computed, onMounted } from 'vue'
+  import { message } from 'ant-design-vue'
+  import {
+    ReloadOutlined,
+    SearchOutlined,
+    UserOutlined,
+    FileTextOutlined,
+    CheckCircleOutlined,
+    CloseCircleOutlined,
+    AppstoreOutlined,
+    FieldTimeOutlined,
+  } from '@ant-design/icons-vue'
+  import dayjs from 'dayjs'
+  import { useOperationLogStore } from '@/stores/operationLog'
+  import type { OperationLogRecord } from '@/api/operationLog'
 
-const store = useOperationLogStore()
+  const store = useOperationLogStore()
 
-// ---- 状态 ----
-const isLoading = computed(() => store.isLoading)
-const logs = computed(() => store.logs)
-const pagination = computed(() => store.pagination)
-const stats = computed(() => store.stats)
-const moduleOptions = computed(() => store.moduleOptions)
+  // ---- 状态 ----
+  const isLoading = computed(() => store.isLoading)
+  const logs = computed(() => store.logs)
+  const pagination = computed(() => store.pagination)
+  const stats = computed(() => store.stats)
+  const moduleOptions = computed(() => store.moduleOptions)
 
-const detailVisible = ref(false)
-const currentLog = ref<OperationLogRecord | null>(null)
+  const detailVisible = ref(false)
+  const currentLog = ref<OperationLogRecord | null>(null)
 
-// ---- 搜索表单 ----
-const searchForm = reactive({
-  module: undefined as string | undefined,
-  operator: '',
-  status: undefined as number | undefined,
-  dateRange: [] as string[],
-})
+  // ---- 搜索表单 ----
+  const searchForm = reactive({
+    module: undefined as string | undefined,
+    operator: '',
+    status: undefined as number | undefined,
+    dateRange: [] as string[],
+  })
 
-// ---- 表格列定义 ----
-const columns = [
-  { title: '操作时间', dataIndex: 'operationTime', key: 'operationTime', width: 110 },
-  { title: '模块', dataIndex: 'module', key: 'module', width: 100 },
-  { title: '操作类型', dataIndex: 'operationType', key: 'operationType', width: 100 },
-  { title: '操作描述', dataIndex: 'description', key: 'description', width: 200, ellipsis: true },
-  { title: '操作人', dataIndex: 'operator', key: 'operator', width: 110 },
-  { title: '耗时', dataIndex: 'executionTime', key: 'executionTime', width: 90 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 70 },
-  { title: '操作', dataIndex: 'actions', key: 'actions', width: 70, fixed: 'right' },
-]
+  // ---- 表格列定义 ----
+  const columns = [
+    { title: '操作时间', dataIndex: 'operationTime', key: 'operationTime', width: 110 },
+    { title: '模块', dataIndex: 'module', key: 'module', width: 100 },
+    { title: '操作类型', dataIndex: 'operationType', key: 'operationType', width: 100 },
+    { title: '操作描述', dataIndex: 'description', key: 'description', width: 200, ellipsis: true },
+    { title: '操作人', dataIndex: 'operator', key: 'operator', width: 110 },
+    { title: '耗时', dataIndex: 'executionTime', key: 'executionTime', width: 90 },
+    { title: '状态', dataIndex: 'status', key: 'status', width: 70 },
+    { title: '操作', dataIndex: 'actions', key: 'actions', width: 70, fixed: 'right' },
+  ]
 
-// ---- 分页配置 ----
-const paginationConfig = computed(() => ({
-  current: store.pagination.page,
-  pageSize: store.pagination.size,
-  total: store.pagination.total,
-  pageSizeOptions: ['10', '20', '50'],
-  showSizeChanger: true,
-  showQuickJumper: true,
-  showTotal: (total: number) => `共 ${total} 条记录`,
-}))
+  // ---- 分页配置 ----
+  const paginationConfig = computed(() => ({
+    current: store.pagination.page,
+    pageSize: store.pagination.size,
+    total: store.pagination.total,
+    pageSizeOptions: ['10', '20', '50'],
+    showSizeChanger: true,
+    showQuickJumper: true,
+    showTotal: (total: number) => `共 ${total} 条记录`,
+  }))
 
-// ---- 工具方法 ----
-function formatDate(dateStr: string, fmt = 'YYYY-MM-DD') {
-  if (!dateStr) return ''
-  return dayjs(dateStr).format(fmt)
-}
-
-function formatDateTime(dateStr: string) {
-  return formatDate(dateStr, 'YYYY-MM-DD HH:mm:ss')
-}
-
-function getFirstChar(str?: string) {
-  if (!str) return '?'
-  return str.charAt(0).toUpperCase()
-}
-
-function getModuleColor(module?: string) {
-  const colors: Record<string, string> = {
-    '客户管理': 'blue',
-    '商品管理': 'cyan',
-    '库存管理': 'green',
-    '礼品管理': 'purple',
-    '订单管理': 'orange',
-    '系统管理': 'geekblue',
-    '用户管理': 'lime',
-    '数据字典': 'gold',
-    '登录认证': 'magenta',
-  }
-  return colors[module || ''] || 'default'
-}
-
-function getOperationTypeText(type?: string) {
-  const map: Record<string, string> = {
-    CREATE: '新增',
-    CONTENT_UPDATE: '修改内容',
-    STATUS_UPDATE: '修改状态',
-    BOTH_UPDATE: '修改内容+状态',
-    DELETE: '删除',
-    OTHER: '其他',
-  }
-  return map[type || ''] || type || '-'
-}
-
-function getMethodColor(method?: string) {
-  const map: Record<string, string> = { GET: 'blue', POST: 'green', PUT: 'orange', DELETE: 'red', PATCH: 'cyan' }
-  return map[method || ''] || 'default'
-}
-
-// ---- 数据加载 ----
-async function loadData(params?: { page?: number; size?: number }) {
-  const queryParams: Record<string, unknown> = {
-    page: params?.page ?? 0,
-    size: params?.size ?? store.pagination.size,
+  // ---- 工具方法 ----
+  function formatDate(dateStr: string, fmt = 'YYYY-MM-DD') {
+    if (!dateStr) return ''
+    return dayjs(dateStr).format(fmt)
   }
 
-  // 结构化筛选参数
-  if (searchForm.module) queryParams.module = searchForm.module
-  if (searchForm.operator) queryParams.operator = searchForm.operator
-  if (searchForm.status !== undefined) queryParams.status = searchForm.status
-  if (searchForm.dateRange?.length === 2) {
-    queryParams.startTime = searchForm.dateRange[0]
-    queryParams.endTime = searchForm.dateRange[1]
+  function formatDateTime(dateStr: string) {
+    return formatDate(dateStr, 'YYYY-MM-DD HH:mm:ss')
   }
 
-  await store.loadLogs(queryParams as any)
-}
+  function getFirstChar(str?: string) {
+    if (!str) return '?'
+    return str.charAt(0).toUpperCase()
+  }
 
-async function handleSearch() {
-  await loadData({ page: 0 })
-}
+  function getModuleColor(module?: string) {
+    const colors: Record<string, string> = {
+      客户管理: 'blue',
+      商品管理: 'cyan',
+      库存管理: 'green',
+      礼品管理: 'purple',
+      订单管理: 'orange',
+      系统管理: 'geekblue',
+      用户管理: 'lime',
+      数据字典: 'gold',
+      登录认证: 'magenta',
+    }
+    return colors[module || ''] || 'default'
+  }
 
-async function handleReset() {
-  searchForm.module = undefined
-  searchForm.operator = ''
-  searchForm.status = undefined
-  searchForm.dateRange = []
-  await loadData({ page: 0 })
-}
+  function getOperationTypeText(type?: string) {
+    const map: Record<string, string> = {
+      CREATE: '新增',
+      CONTENT_UPDATE: '修改内容',
+      STATUS_UPDATE: '修改状态',
+      BOTH_UPDATE: '修改内容+状态',
+      DELETE: '删除',
+      OTHER: '其他',
+    }
+    return map[type || ''] || type || '-'
+  }
 
-async function handleRefresh() {
-  await loadData()
-}
+  function getMethodColor(method?: string) {
+    const map: Record<string, string> = {
+      GET: 'blue',
+      POST: 'green',
+      PUT: 'orange',
+      DELETE: 'red',
+      PATCH: 'cyan',
+    }
+    return map[method || ''] || 'default'
+  }
 
-function handleTableChange(pag: any) {
-  loadData({ page: pag.current - 1, size: pag.pageSize })
-}
+  // ---- 数据加载 ----
+  async function loadData(params?: { page?: number; size?: number }) {
+    const queryParams: Record<string, unknown> = {
+      page: params?.page ?? 0,
+      size: params?.size ?? store.pagination.size,
+    }
 
-function handleViewDetail(record: OperationLogRecord) {
-  currentLog.value = record
-  detailVisible.value = true
-}
+    // 结构化筛选参数
+    if (searchForm.module) queryParams.module = searchForm.module
+    if (searchForm.operator) queryParams.operator = searchForm.operator
+    if (searchForm.status !== undefined) queryParams.status = searchForm.status
+    if (searchForm.dateRange?.length === 2) {
+      queryParams.startTime = searchForm.dateRange[0]
+      queryParams.endTime = searchForm.dateRange[1]
+    }
 
-// ---- 初始化 ----
-onMounted(async () => {
-  await loadData({ page: 0 })
-})
+    await store.loadLogs(queryParams as any)
+  }
+
+  async function handleSearch() {
+    await loadData({ page: 0 })
+  }
+
+  async function handleReset() {
+    searchForm.module = undefined
+    searchForm.operator = ''
+    searchForm.status = undefined
+    searchForm.dateRange = []
+    await loadData({ page: 0 })
+  }
+
+  async function handleRefresh() {
+    await loadData()
+  }
+
+  function handleTableChange(pag: any) {
+    loadData({ page: pag.current - 1, size: pag.pageSize })
+  }
+
+  function handleViewDetail(record: OperationLogRecord) {
+    currentLog.value = record
+    detailVisible.value = true
+  }
+
+  // ---- 初始化 ----
+  onMounted(async () => {
+    await loadData({ page: 0 })
+  })
 </script>
 
 <style scoped>
-.page-container {
-  padding: 20px;
-  background: var(--bg-page);
-  min-height: 100%;
-}
+  .page-container {
+    padding: 20px;
+    background: var(--bg-page);
+    min-height: 100%;
+  }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.page-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-  transition: color 0.3s ease;
-}
-
-/* 统计卡片 */
-.stats-row {
-  margin-bottom: 16px;
-}
-
-.stat-card {
-  border-radius: 8px;
-  transition: box-shadow 0.3s ease;
-}
-
-.stat-card :deep(.ant-card-body) {
-  padding: 16px 20px;
-}
-
-.stat-card-inner {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.stat-icon-wrap {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.stat-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.stat-label {
-  font-size: 13px;
-  color: var(--text-secondary);
-  line-height: 1.4;
-  transition: color 0.3s ease;
-}
-
-.stat-value {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.3;
-  transition: color 0.3s ease;
-}
-
-/* 搜索卡片 */
-.search-card {
-  margin-bottom: 16px;
-  border-radius: 8px;
-}
-
-.search-card :deep(.ant-card-body) {
-  padding: 16px 20px;
-}
-
-.search-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 12px;
-  width: 100%;
-}
-
-/* 表格卡片 */
-.table-card {
-  border-radius: 8px;
-}
-
-/* 时间列 */
-.time-cell {
-  display: flex;
-  flex-direction: column;
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.time-date {
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.time-time {
-  color: var(--text-secondary);
-}
-
-/* 操作描述 */
-.desc-cell {
-  max-width: 240px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--text-primary);
-}
-
-/* 操作人 */
-.operator-cell {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--text-primary);
-}
-
-/* 执行时间 */
-.exec-time {
-  color: var(--text-secondary);
-  font-size: 13px;
-}
-
-.exec-time-na {
-  color: var(--text-tertiary);
-}
-
-/* 操作类型 */
-.op-type {
-  font-size: 13px;
-  color: var(--text-primary);
-}
-
-/* 详情抽屉 */
-.detail-content {
-  padding: 4px;
-}
-
-.error-msg {
-  color: #ff4d4f;
-  white-space: pre-wrap;
-  word-break: break-all;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-/* 暗色模式适配：抽屉内描述列表 */
-[data-theme='dark'] .detail-content :deep(.ant-descriptions-title) {
-  color: #e0e0e0;
-}
-[data-theme='dark'] .detail-content :deep(.ant-descriptions-item-label) {
-  color: #a0a0a0;
-}
-[data-theme='dark'] .detail-content :deep(.ant-descriptions-item-content) {
-  color: var(--text-primary);
-}
-
-/* 响应式 */
-@media (max-width: 768px) {
   .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
   }
+
   .page-title {
-    font-size: 20px;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    transition: color 0.3s ease;
   }
-}
+
+  /* 统计卡片 */
+  .stats-row {
+    margin-bottom: 16px;
+  }
+
+  .stat-card {
+    border-radius: 8px;
+    transition: box-shadow 0.3s ease;
+  }
+
+  .stat-card :deep(.ant-card-body) {
+    padding: 16px 20px;
+  }
+
+  .stat-card-inner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .stat-icon-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .stat-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .stat-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    transition: color 0.3s ease;
+  }
+
+  .stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.3;
+    transition: color 0.3s ease;
+  }
+
+  /* 搜索卡片 */
+  .search-card {
+    margin-bottom: 16px;
+    border-radius: 8px;
+  }
+
+  .search-card :deep(.ant-card-body) {
+    padding: 16px 20px;
+  }
+
+  .search-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+    width: 100%;
+  }
+
+  /* 表格卡片 */
+  .table-card {
+    border-radius: 8px;
+  }
+
+  /* 时间列 */
+  .time-cell {
+    display: flex;
+    flex-direction: column;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .time-date {
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .time-time {
+    color: var(--text-secondary);
+  }
+
+  /* 操作描述 */
+  .desc-cell {
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-primary);
+  }
+
+  /* 操作人 */
+  .operator-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-primary);
+  }
+
+  /* 执行时间 */
+  .exec-time {
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+
+  .exec-time-na {
+    color: var(--text-tertiary);
+  }
+
+  /* 操作类型 */
+  .op-type {
+    font-size: 13px;
+    color: var(--text-primary);
+  }
+
+  /* 详情抽屉 */
+  .detail-content {
+    padding: 4px;
+  }
+
+  .error-msg {
+    color: #ff4d4f;
+    white-space: pre-wrap;
+    word-break: break-all;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  /* 暗色模式适配：抽屉内描述列表 */
+  [data-theme='dark'] .detail-content :deep(.ant-descriptions-title) {
+    color: #e0e0e0;
+  }
+  [data-theme='dark'] .detail-content :deep(.ant-descriptions-item-label) {
+    color: #a0a0a0;
+  }
+  [data-theme='dark'] .detail-content :deep(.ant-descriptions-item-content) {
+    color: var(--text-primary);
+  }
+
+  /* 响应式 */
+  @media (max-width: 768px) {
+    .page-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .page-title {
+      font-size: 20px;
+    }
+  }
 </style>

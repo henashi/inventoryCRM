@@ -9,11 +9,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface OperationLogRepository extends JpaRepository<OperationLog, Long>, JpaSpecificationExecutor<OperationLog> {
-   Page<OperationLog> findByModule(String module, Pageable pageable);
-
-    Page<OperationLog> findByOperator(String operator, Pageable pageable);
-
-    Page<OperationLog> findByStatus(Integer status, Pageable pageable);
 
     @Query("SELECT o FROM OperationLog o WHERE " +
             "LOWER(o.module) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +

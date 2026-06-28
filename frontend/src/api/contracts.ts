@@ -104,9 +104,8 @@ type BackendInventoryLog = {
   status?: string
 }
 
-const compactObject = <T extends Record<string, unknown>>(input: T) => Object.fromEntries(
-  Object.entries(input).filter(([, value]) => value !== undefined),
-)
+const compactObject = <T extends Record<string, unknown>>(input: T) =>
+  Object.fromEntries(Object.entries(input).filter(([, value]) => value !== undefined))
 
 const toOptionalString = (value: Nullable<string>) => {
   if (typeof value !== 'string') {
@@ -138,21 +137,28 @@ export const normalizeCustomer = (customer: BackendCustomer): Customer => ({
   createdAt: customer.createdAt ?? customer.registeredAt,
 })
 
-export const normalizeProduct = (product: BackendProduct): Product => ({
-  ...product,
-  createdAt: product.createdTime,
-}) as Product
+export const normalizeProduct = (product: BackendProduct): Product =>
+  ({
+    ...product,
+    createdAt: product.createdTime,
+  }) as Product
 
-export const normalizeGift = (gift: BackendGift): Gift => ({
-  ...gift,
-  updatedTime: gift.updatedTime ?? gift.contentUpdatedTime ?? gift.statusUpdatedTime ?? gift.createdTime,
-  isDeleted: gift.isDeleted ?? 0,
-}) as Gift
+export const normalizeGift = (gift: BackendGift): Gift =>
+  ({
+    ...gift,
+    updatedTime:
+      gift.updatedTime ?? gift.contentUpdatedTime ?? gift.statusUpdatedTime ?? gift.createdTime,
+    isDeleted: gift.isDeleted ?? 0,
+  }) as Gift
 
 export const normalizeGiftLog = (giftLog: BackendGiftLog): GiftLogDTO => ({
   ...giftLog,
   issuedAt: giftLog.issueAt ?? '',
-  updatedTime: giftLog.updatedTime ?? giftLog.contentUpdatedTime ?? giftLog.statusUpdatedTime ?? giftLog.createdTime,
+  updatedTime:
+    giftLog.updatedTime ??
+    giftLog.contentUpdatedTime ??
+    giftLog.statusUpdatedTime ??
+    giftLog.createdTime,
 })
 
 export const normalizeInventoryLog = (log: BackendInventoryLog): InventoryLog => ({
@@ -177,33 +183,40 @@ export const normalizeDataDict = (dataDict: DataDict): DataDict => ({
   ...dataDict,
 })
 
-export const sanitizeGiftPayload = (payload: GiftCreateDTO | GiftUpdateDTO) => compactObject({
-  name: toOptionalString(payload.name),
-  code: toOptionalString(payload.code),
-  description: toOptionalString(payload.description),
-  limitEnabled: payload.limitEnabled,
-  limitPerPerson: payload.limitEnabled ? toOptionalNumber(payload.limitPerPerson ?? undefined) : undefined,
-  remark: toOptionalString(payload.remark),
-  productId: toOptionalNumber(payload.productId ?? undefined),
-  type: payload.type,
-  status: payload.status,
-}) as unknown as GiftCreateDTO | GiftUpdateDTO
+export const sanitizeGiftPayload = (payload: GiftCreateDTO | GiftUpdateDTO) =>
+  compactObject({
+    name: toOptionalString(payload.name),
+    code: toOptionalString(payload.code),
+    description: toOptionalString(payload.description),
+    limitEnabled: payload.limitEnabled,
+    limitPerPerson: payload.limitEnabled
+      ? toOptionalNumber(payload.limitPerPerson ?? undefined)
+      : undefined,
+    remark: toOptionalString(payload.remark),
+    productId: toOptionalNumber(payload.productId ?? undefined),
+    type: payload.type,
+    status: payload.status,
+  }) as unknown as GiftCreateDTO | GiftUpdateDTO
 
-export const sanitizeGiftLogPayload = (payload: GiftLogDTO & { limitEnabled?: boolean }) => compactObject({
-  customerId: toOptionalNumber(payload.customerId ?? undefined),
-  giftId: toOptionalNumber(payload.giftId ?? undefined),
-  operator: toOptionalString(payload.operator),
-  remark: toOptionalString(payload.remark),
-  quantity: toOptionalNumber(payload.quantity),
-  issueNotes: toOptionalString(payload.issueNotes),
-  status: payload.status,
-})
+export const sanitizeGiftLogPayload = (payload: GiftLogDTO & { limitEnabled?: boolean }) =>
+  compactObject({
+    customerId: toOptionalNumber(payload.customerId ?? undefined),
+    giftId: toOptionalNumber(payload.giftId ?? undefined),
+    operator: toOptionalString(payload.operator),
+    remark: toOptionalString(payload.remark),
+    quantity: toOptionalNumber(payload.quantity),
+    issueNotes: toOptionalString(payload.issueNotes),
+    status: payload.status,
+  })
 
-export const sanitizeDataDictPayload = (payload: DataDictCreateDTO | DataDictUpdateDTO | Partial<DataDict>) => compactObject({
-  groupCode: toOptionalString(payload.groupCode),
-  groupName: toOptionalString((payload as Partial<DataDict>).groupName),
-  paramCode: toOptionalString(payload.paramCode),
-  paramName: toOptionalString((payload as Partial<DataDict>).paramName),
-  paramValue: toOptionalString(payload.paramValue),
-  description: toOptionalString(payload.description),
-}) as unknown as DataDictCreateDTO | DataDictUpdateDTO
+export const sanitizeDataDictPayload = (
+  payload: DataDictCreateDTO | DataDictUpdateDTO | Partial<DataDict>,
+) =>
+  compactObject({
+    groupCode: toOptionalString(payload.groupCode),
+    groupName: toOptionalString((payload as Partial<DataDict>).groupName),
+    paramCode: toOptionalString(payload.paramCode),
+    paramName: toOptionalString((payload as Partial<DataDict>).paramName),
+    paramValue: toOptionalString(payload.paramValue),
+    description: toOptionalString(payload.description),
+  }) as unknown as DataDictCreateDTO | DataDictUpdateDTO

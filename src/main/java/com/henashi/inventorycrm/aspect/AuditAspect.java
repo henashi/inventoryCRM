@@ -193,7 +193,8 @@ public class AuditAspect {
                 try {
                     field.set(entity, null);
                 } catch (IllegalAccessException e) {
-                    // 忽略
+                    log.warn("清理实体关联字段失败: entity={}, field={}, error={}",
+                            entity.getClass().getSimpleName(), field.getName(), e.getMessage());
                 }
             }
         }
@@ -218,7 +219,7 @@ public class AuditAspect {
                 return authentication.getName();
             }
         } catch (Exception e) {
-            // 忽略
+            log.debug("获取当前操作人失败，使用默认值: {}", e.getMessage());
         }
         return "system";
     }

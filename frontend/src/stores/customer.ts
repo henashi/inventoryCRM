@@ -4,16 +4,18 @@ import { ref, computed } from 'vue'
 import { customerApi } from '@/api/customer'
 import type { Customer, CustomerCreateDTO, CustomerUpdateDTO, PageParams } from '@/types'
 
-const formatDateValue = (value: any) => {
+type DateLike = string | Date | { format: (fmt: string) => string } | null | undefined
+
+const formatDateValue = (value: DateLike): string | undefined => {
   if (!value) return undefined
   if (typeof value === 'string') return value.slice(0, 10)
-  if (typeof value?.format === 'function') return value.format('YYYY-MM-DD')
+  if (typeof value === 'object' && 'format' in value) return (value as { format: (fmt: string) => string }).format('YYYY-MM-DD')
   if (value instanceof Date) return value.toISOString().split('T')[0]
   return undefined
 }
 
 const buildCustomerQueryParams = (params?: PageParams) => {
-  const queryParams: any = {
+  const queryParams: Record<string, unknown> = {
     page: params?.page,
     size: params?.size,
     keyword: params?.keyword,
@@ -23,7 +25,7 @@ const buildCustomerQueryParams = (params?: PageParams) => {
     sort: params?.sort,
     direction: params?.direction,
     startDate: params?.startDate,
-    endDate: params?.endDate
+    endDate: params?.endDate,
   }
 
   if (params?.dateRange && Array.isArray(params.dateRange) && params.dateRange.length === 2) {
@@ -32,7 +34,9 @@ const buildCustomerQueryParams = (params?: PageParams) => {
   }
 
   return Object.fromEntries(
-    Object.entries(queryParams).filter(([_, value]) => value !== undefined && value !== null && value !== '')
+    Object.entries(queryParams).filter(
+      ([_, value]) => value !== undefined && value !== null && value !== '',
+    ),
   )
 }
 
@@ -44,36 +48,35 @@ export const useCustomerStore = defineStore('customer', () => {
   const pagination = ref({
     page: 1,
     size: 5,
-    total: 0
+    total: 0,
   })
   const searchKeyword = ref('')
 
   const totalCustomers = computed(() => total.value)
-  const activeCustomers = computed(() =>
-    customers.value.filter(c => c.status === 1).length
-  )
+  const activeCustomers = computed(() => customers.value.filter((c) => c.status === 1).length)
   const filteredCustomers = computed(() => {
     if (!searchKeyword.value) return customers.value
 
     const keyword = searchKeyword.value.toLowerCase()
-    return customers.value.filter(customer =>
-      customer.name?.toLowerCase().includes(keyword) ||
-      customer.phone?.includes(keyword) ||
-      customer.email?.toLowerCase().includes(keyword)
+    return customers.value.filter(
+      (customer) =>
+        customer.name?.toLowerCase().includes(keyword) ||
+        customer.phone?.includes(keyword) ||
+        customer.email?.toLowerCase().includes(keyword),
     )
   })
   const customerOptions = computed(() =>
-    customers.value.map(c => ({
+    customers.value.map((c) => ({
       label: `${c.name} (${c.phone})`,
-      value: c.id
-    }))
+      value: c.id,
+    })),
   )
 
   const loadCustomers = async (params?: PageParams) => {
     try {
       isLoading.value = true
       const queryParams = buildCustomerQueryParams({
-        page: params?.page ?? (pagination.value.page - 1),
+        page: params?.page ?? pagination.value.page - 1,
         size: params?.size ?? pagination.value.size,
         keyword: params?.keyword ?? (searchKeyword.value || undefined),
         giftLevel: params?.giftLevel,
@@ -83,7 +86,7 @@ export const useCustomerStore = defineStore('customer', () => {
         direction: params?.direction,
         startDate: params?.startDate,
         endDate: params?.endDate,
-        dateRange: params?.dateRange
+        dateRange: params?.dateRange,
       })
 
       if (params?.keyword !== undefined) {
@@ -145,7 +148,7 @@ export const useCustomerStore = defineStore('customer', () => {
       isLoading.value = true
       const updatedCustomer = await customerApi.updateCustomer(id, data)
 
-      const index = customers.value.findIndex(c => c.id === id)
+      const index = customers.value.findIndex((c) => c.id === id)
       if (index !== -1) {
         customers.value[index] = { ...customers.value[index], ...updatedCustomer }
       }
@@ -165,7 +168,7 @@ export const useCustomerStore = defineStore('customer', () => {
       isLoading.value = true
       await customerApi.deleteCustomer(id)
 
-      const index = customers.value.findIndex(c => c.id === id)
+      const index = customers.value.findIndex((c) => c.id === id)
       if (index !== -1) {
         customers.value.splice(index, 1)
         total.value -= 1
@@ -175,7 +178,7 @@ export const useCustomerStore = defineStore('customer', () => {
     }
   }
 
-  const exportCustomers = async (params?: any) => {
+  const exportCustomers = async (params?: PageParams) => {
     return customerApi.exportCustomers(buildCustomerQueryParams(params))
   }
 
@@ -199,7 +202,7 @@ export const useCustomerStore = defineStore('customer', () => {
     pagination.value = {
       page: 1,
       size: 5,
-      total: 0
+      total: 0,
     }
   }
 
@@ -224,6 +227,6 @@ export const useCustomerStore = defineStore('customer', () => {
     batchUpdateStatus,
     setSearchKeyword,
     clearCurrentCustomer,
-    reset
+    reset,
   }
 })

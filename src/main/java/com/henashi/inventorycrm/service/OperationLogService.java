@@ -70,21 +70,6 @@ public class OperationLogService {
         }
     }
 
-    public Page<OperationLogDTO> getLogsByModule(String module, Pageable pageable) {
-        return operationLogRepository.findByModule(module, pageable)
-                .map(operationLogMapper::fromEntity);
-    }
-
-    public Page<OperationLogDTO> getLogsByOperator(String operator, Pageable pageable) {
-        return operationLogRepository.findByOperator(operator, pageable)
-                .map(operationLogMapper::fromEntity);
-    }
-
-    public Page<OperationLogDTO> getLogsByStatus(Integer status, Pageable pageable) {
-        return operationLogRepository.findByStatus(status, pageable)
-                .map(operationLogMapper::fromEntity);
-    }
-
     public Page<OperationLogDTO> searchLogs(String keyword, String module, String operator,
                                             Integer status, String startTime, String endTime,
                                             Pageable pageable) {
@@ -121,13 +106,17 @@ public class OperationLogService {
                 try {
                     predicates.add(cb.greaterThanOrEqualTo(root.get("operationTime"),
                             LocalDateTime.parse(startTime + "T00:00:00")));
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    log.warn("解析开始时间参数失败: startTime={}, 将忽略此过滤条件", startTime);
+                }
             }
             if (endTime != null && !endTime.isBlank()) {
                 try {
                     predicates.add(cb.lessThanOrEqualTo(root.get("operationTime"),
                             LocalDateTime.parse(endTime + "T23:59:59")));
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    log.warn("解析结束时间参数失败: endTime={}, 将忽略此过滤条件", endTime);
+                }
             }
 
             return predicates.isEmpty() ? cb.conjunction()

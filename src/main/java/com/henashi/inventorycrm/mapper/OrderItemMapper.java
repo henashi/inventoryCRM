@@ -21,7 +21,6 @@ public interface OrderItemMapper {
     @Mapping(source = "customer.id", target = "customerId")
     @Mapping(source = "customer.name", target = "customerName")
     @Mapping(source = "product.id", target = "productId")
-    @Mapping(source = "product.name", target = "productName")
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     OrderItemDTO toDTO(OrderItem orderItem);
 

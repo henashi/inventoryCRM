@@ -29,10 +29,10 @@ export interface Customer {
   phone: string
   email?: string
   birthday?: string
-  gender?: 0 | 1  // 0: 女, 1: 男
+  gender?: 0 | 1 // 0: 女, 1: 男
   address?: string
-  giftLevel: 0 | 1 | 2 | 3  // 礼品等级
-  status: 0 | 1  // 0: 停用, 1: 正常
+  giftLevel: 0 | 1 | 2 | 3 // 礼品等级
+  status: 0 | 1 // 0: 停用, 1: 正常
   remark?: string
   referrerId?: number
   referrerName?: string
@@ -75,7 +75,7 @@ export interface Product {
   currentStock: number
   safeStock: number
   maxStock: number
-  status: 0 | 1  // 0: 停售, 1: 在售
+  status: 0 | 1 // 0: 停售, 1: 在售
   description?: string
   imageUrl?: string
   createdAt?: string
@@ -106,7 +106,7 @@ export interface StockChange {
   id?: number
   productId: number
   productName: string
-  changeType: 'in' | 'out' | 'adjust'  // 入库/出库/调整
+  changeType: 'in' | 'out' | 'adjust' // 入库/出库/调整
   quantity: number
   beforeStock: number
   afterStock: number
@@ -146,7 +146,7 @@ export interface InventoryChange {
   inventoryId: number
   productId: number
   productName: string
-  changeType: 'in' | 'out' | 'adjust' | 'transfer'  // 入库/出库/调整/调拨
+  changeType: 'in' | 'out' | 'adjust' | 'transfer' // 入库/出库/调整/调拨
   changeQuantity: number
   beforeQuantity: number
   afterQuantity: number
@@ -189,7 +189,7 @@ export interface InventoryQueryParams extends PageParams {
 }
 
 export interface Props {
-  id?: number,
+  id?: number
   code?: string
 }
 
@@ -197,23 +197,23 @@ export interface Props {
  * 库存操作类型枚举
  */
 export enum InventoryLogType {
-  CREATE = 'CREATE',      // 新建商品
-  IN = 'IN',              // 入库
-  OUT = 'OUT',            // 出库
-  ADJUST = 'ADJUST',      // 调整
-  TRANSFER = 'TRANSFER',  // 调拨
-  CHECK = 'CHECK'         // 盘点
+  CREATE = 'CREATE', // 新建商品
+  IN = 'IN', // 入库
+  OUT = 'OUT', // 出库
+  ADJUST = 'ADJUST', // 调整
+  TRANSFER = 'TRANSFER', // 调拨
+  CHECK = 'CHECK', // 盘点
 }
 
 /**
  * 库存操作来源枚举
  */
 export enum InventoryLogSource {
-  WEB = 'WEB',            // Web界面
-  API = 'API',             // API接口
-  INTERNAL = 'INTERNAL',   // 内部调用
-  IMPORT = 'IMPORT',       // 批量导入
-  SYSTEM = 'SYSTEM'       // 系统自动
+  WEB = 'WEB', // Web界面
+  API = 'API', // API接口
+  INTERNAL = 'INTERNAL', // 内部调用
+  IMPORT = 'IMPORT', // 批量导入
+  SYSTEM = 'SYSTEM', // 系统自动
 }
 
 /**
@@ -225,30 +225,30 @@ export interface InventoryLog {
   productName: string
   productCode: string
   productUnit: string
-  logType: InventoryLogType          // 操作类型
+  logType: InventoryLogType // 操作类型
   beforeStock: number
   afterStock: number
   quantity: number
   operator: string
-  logTime: string                    // 操作时间
+  logTime: string // 操作时间
   reason?: string
   success: boolean
   errorMessage?: string
-  source?: InventoryLogSource         // 操作来源
-  referenceNo?: string               // 关联单号
-  warehouseId?: number               // 仓库ID
-  warehouseName?: string             // 仓库名称
-  batchNo?: string                  // 批次号
-  expirationDate?: string           // 有效期
-  location?: string                 // 库位
+  source?: InventoryLogSource // 操作来源
+  referenceNo?: string // 关联单号
+  warehouseId?: number // 仓库ID
+  warehouseName?: string // 仓库名称
+  batchNo?: string // 批次号
+  expirationDate?: string // 有效期
+  location?: string // 库位
   createdAt: string
   updatedAt: string
 
   // 扩展信息（可选）
-  clientIp?: string                 // 客户端IP
-  userAgent?: string                // 用户代理
-  requestId?: string                // 请求ID
-  costTime?: number                 // 操作耗时（毫秒）
+  clientIp?: string // 客户端IP
+  userAgent?: string // 用户代理
+  requestId?: string // 请求ID
+  costTime?: number // 操作耗时（毫秒）
 }
 
 /**
@@ -277,22 +277,22 @@ export interface InventoryLogQueryParams extends PageParams {
  * 礼品/赠品表实体
  */
 export interface Gift {
-  id: number                      // 主键ID
-  code: string                    // 礼品兑换码/唯一标识
-  description?: string            // 礼品详细描述
-  endTime?: string                // 活动结束时间
-  limitEnabled: boolean           // 是否启用限额 (true:启用, false:不启用)
-  limitPerPerson?: number         // 每人限领数量
-  name: string                    // 礼品名称
-  remark?: string                 // 备注信息
-  startTime?: string              // 活动开始时间
+  id: number // 主键ID
+  code: string // 礼品兑换码/唯一标识
+  description?: string // 礼品详细描述
+  endTime?: string // 活动结束时间
+  limitEnabled: boolean // 是否启用限额 (true:启用, false:不启用)
+  limitPerPerson?: number // 每人限领数量
+  name: string // 礼品名称
+  remark?: string // 备注信息
+  startTime?: string // 活动开始时间
   status: 'ACTIVE' | 'DEPLETED' | 'DRAFT' | 'EXPIRED' | 'PAUSED' // 状态: ACTIVE-活动中, DEPLETED-已领完, DRAFT-草稿, EXPIRED-已过期, PAUSED-已暂停
   type: 'COUPON' | 'PHYSICAL' | 'POINTS' | 'VIRTUAL' // 类型: COUPON-优惠券, PHYSICAL-实物, POINTS-积分, VIRTUAL-虚拟商品
-  isDeleted: number              // 是否删除 (软删除标识)
-  productId?: number              // 关联的商品ID
-  productName?: string            // 关联的商品名称
-  createdTime: string            // 创建时间
-  updatedTime: string             // 更新时间
+  isDeleted: number // 是否删除 (软删除标识)
+  productId?: number // 关联的商品ID
+  productName?: string // 关联的商品名称
+  createdTime: string // 创建时间
+  updatedTime: string // 更新时间
   // newGiftLevel?: 0 | 1 | 2          // 邀新礼品等级
 }
 
@@ -300,103 +300,103 @@ export interface Gift {
  * 礼品查询参数
  */
 export interface GiftQuery {
-  id?: number                     // 主键ID
-  code?: string                   // 礼品兑换码 (模糊查询)
-  name?: string                   // 礼品名称 (模糊查询)
+  id?: number // 主键ID
+  code?: string // 礼品兑换码 (模糊查询)
+  name?: string // 礼品名称 (模糊查询)
   statusList?: ('ACTIVE' | 'DEPLETED' | 'DRAFT' | 'EXPIRED' | 'PAUSED')[] // 状态列表
   typeList?: ('COUPON' | 'PHYSICAL' | 'POINTS' | 'VIRTUAL')[] // 类型列表
-  productId?: number              // 关联的商品ID
-  startTimeStart?: string         // 活动开始时间-开始 (查询范围)
-  startTimeEnd?: string           // 活动开始时间-结束 (查询范围)
-  endTimeStart?: string           // 活动结束时间-开始 (查询范围)
-  endTimeEnd?: string             // 活动结束时间-结束 (查询范围)
-  current?: number                // 当前页码
-  size?: number                   // 每页条数
+  productId?: number // 关联的商品ID
+  startTimeStart?: string // 活动开始时间-开始 (查询范围)
+  startTimeEnd?: string // 活动开始时间-结束 (查询范围)
+  endTimeStart?: string // 活动结束时间-开始 (查询范围)
+  endTimeEnd?: string // 活动结束时间-结束 (查询范围)
+  current?: number // 当前页码
+  size?: number // 每页条数
 }
 /**
  * 礼品/赠品表实体
  */
 export interface GiftCreateDTO {
-  code: string                    // 礼品兑换码/唯一标识
-  description?: string            // 礼品详细描述
-  endTime?: string                // 活动结束时间
-  limitEnabled: boolean           // 是否启用限额 (true:启用, false:不启用)
-  limitPerPerson?: number         // 每人限领数量
-  name: string                    // 礼品名称
-  remark?: string                 // 备注信息
-  startTime?: string              // 活动开始时间
+  code: string // 礼品兑换码/唯一标识
+  description?: string // 礼品详细描述
+  endTime?: string // 活动结束时间
+  limitEnabled: boolean // 是否启用限额 (true:启用, false:不启用)
+  limitPerPerson?: number // 每人限领数量
+  name: string // 礼品名称
+  remark?: string // 备注信息
+  startTime?: string // 活动开始时间
   status: 'ACTIVE' | 'DEPLETED' | 'DRAFT' | 'EXPIRED' | 'PAUSED' // 状态: ACTIVE-活动中, DEPLETED-已领完, DRAFT-草稿, EXPIRED-已过期, PAUSED-已暂停
   type: 'COUPON' | 'PHYSICAL' | 'POINTS' | 'VIRTUAL' // 类型: COUPON-优惠券, PHYSICAL-实物, POINTS-积分, VIRTUAL-虚拟商品
-  isDeleted: number              // 是否删除 (软删除标识)
-  productId?: number              // 关联的商品ID
+  isDeleted: number // 是否删除 (软删除标识)
+  productId?: number // 关联的商品ID
 }
 
 /**
  * 礼品/赠品表实体
  */
 export interface GiftUpdateDTO {
-  id: number                      // 主键ID
-  code: string                    // 礼品兑换码/唯一标识
-  description?: string            // 礼品详细描述
-  endTime?: string                // 活动结束时间
-  limitEnabled: boolean           // 是否启用限额 (true:启用, false:不启用)
-  limitPerPerson?: number         // 每人限领数量
-  name: string                    // 礼品名称
-  remark?: string                 // 备注信息
-  startTime?: string              // 活动开始时间
+  id: number // 主键ID
+  code: string // 礼品兑换码/唯一标识
+  description?: string // 礼品详细描述
+  endTime?: string // 活动结束时间
+  limitEnabled: boolean // 是否启用限额 (true:启用, false:不启用)
+  limitPerPerson?: number // 每人限领数量
+  name: string // 礼品名称
+  remark?: string // 备注信息
+  startTime?: string // 活动开始时间
   status: 'ACTIVE' | 'DEPLETED' | 'DRAFT' | 'EXPIRED' | 'PAUSED' // 状态: ACTIVE-活动中, DEPLETED-已领完, DRAFT-草稿, EXPIRED-已过期, PAUSED-已暂停
   type: 'COUPON' | 'PHYSICAL' | 'POINTS' | 'VIRTUAL' // 类型: COUPON-优惠券, PHYSICAL-实物, POINTS-积分, VIRTUAL-虚拟商品
-  isDeleted: number              // 是否删除 (软删除标识)
-  productId?: number              // 关联的商品ID
+  isDeleted: number // 是否删除 (软删除标识)
+  productId?: number // 关联的商品ID
 }
 
 export interface GiftLogDTO {
-  id: number | null                     // 主键ID
-  giftId: number | null                  // 礼品ID
-  customerId: number | null                // 客户ID
-  giftName: string                // 礼品名称
-  customerName: string            // 客户名称
-  issuedAt: string                // 发放时间
-  issueNotes: string                // 发放备注
-  operator: string                // 操作人
-  remark?: string                 // 备注信息
+  id: number | null // 主键ID
+  giftId: number | null // 礼品ID
+  customerId: number | null // 客户ID
+  giftName: string // 礼品名称
+  customerName: string // 客户名称
+  issuedAt: string // 发放时间
+  issueNotes: string // 发放备注
+  operator: string // 操作人
+  remark?: string // 备注信息
   status: 'CANCELLED' | 'ISSUED' | 'PENDING' // 状态: CANCELLED-已取消, ISSUED-已发放, PENDING-待发放
-  quantity: number                // 发放数量
-  createdTime: string            // 创建时间
-  updatedTime: string             // 更新时间
+  quantity: number // 发放数量
+  createdTime: string // 创建时间
+  updatedTime: string // 更新时间
 }
 
 /**
  * 礼品查询参数
  */
 export interface GiftLogQuery {
-  id?: number                     // 主键ID
-  giftId?: number                  // 礼品ID
-  customerId?: number                // 客户ID
-  giftName?: string                // 礼品名称
-  customerName?: string            // 客户名称
-  issuedAt?: string                // 发放时间
-  operator?: string                // 操作人
-  remark?: string                 // 备注信息
+  id?: number // 主键ID
+  giftId?: number // 礼品ID
+  customerId?: number // 客户ID
+  giftName?: string // 礼品名称
+  customerName?: string // 客户名称
+  issuedAt?: string // 发放时间
+  operator?: string // 操作人
+  remark?: string // 备注信息
   status?: ('CANCELLED' | 'ISSUED' | 'PENDING')[] // 状态: CANCELLED-已取消, ISSUED-已发放, PENDING-待发放
-  quantity?: number                // 发放数量
-  createdTime?: string            // 创建时间
-  updatedTime?: string             // 更新时间
+  quantity?: number // 发放数量
+  createdTime?: string // 创建时间
+  updatedTime?: string // 更新时间
 }
 
 /**
  * 配置表实体
  */
 export interface DataDict {
-  id: number                      // 主键ID
-  groupCode: string              // 字典分组编码
-  groupName: string               //配置组名称
-  paramCode: string                 // 字典键
-  paramName: string               // 字典名称
-  paramValue: string               // 字典值
-  description: string                // 字典描述
-  createdTime: string            // 创建时间
-  updatedTime: string             // 更新时间
+  id: number // 主键ID
+  groupCode: string // 字典分组编码
+  groupName: string //配置组名称
+  paramCode: string // 字典键
+  paramName: string // 字典名称
+  paramValue: string // 字典值
+  description: string // 字典描述
+  createdTime: string // 创建时间
+  updatedTime: string // 更新时间
   // sortOrder: number                // 排序
   status: 'ACTIVE' | 'PAUSED' // 状态: ACTIVE-生效, PAUSED-失效
 }
@@ -404,41 +404,41 @@ export interface DataDict {
  * 配置表创建实体
  */
 export interface DataDictCreateDTO {
-  groupCode?: string              // 字典分组编码
-  paramCode?: string                 // 字典键
-  paramValue?: string               // 字典值
-  description?: string                // 字典描述
-  createdTime?: string            // 创建时间
-  updatedTime?: string             // 更新时间
+  groupCode?: string // 字典分组编码
+  paramCode?: string // 字典键
+  paramValue?: string // 字典值
+  description?: string // 字典描述
+  createdTime?: string // 创建时间
+  updatedTime?: string // 更新时间
 }
 
 /**
  * 配置表更新实体
  */
 export interface DataDictUpdateDTO {
-  id?: number                      // 主键ID
-  groupCode?: string              // 字典分组编码
-  paramCode?: string                 // 字典键
-  paramValue?: string               // 字典值
-  description?: string                // 字典描述
-  createdTime?: string            // 创建时间
-  updatedTime?: string             // 更新时间
-  status?: string                // 状态: ACTIVE-生效, PAUSED-失效
+  id?: number // 主键ID
+  groupCode?: string // 字典分组编码
+  paramCode?: string // 字典键
+  paramValue?: string // 字典值
+  description?: string // 字典描述
+  createdTime?: string // 创建时间
+  updatedTime?: string // 更新时间
+  status?: string // 状态: ACTIVE-生效, PAUSED-失效
 }
 
 /**
  * 库存日志统计接口
  */
 export interface InventoryLogStats {
-  inCount: number         // 入库次数
-  outCount: number        // 出库次数
-  inQuantity: number      // 入库总量
-  outQuantity: number     // 出库总量
+  inCount: number // 入库次数
+  outCount: number // 出库次数
+  inQuantity: number // 入库总量
+  outQuantity: number // 出库总量
   totalOperations: number // 总操作次数
-  successCount: number    // 成功次数
-  failureCount: number    // 失败次数
-  successRate: number     // 成功率
-  avgCostTime: number     // 平均耗时
+  successCount: number // 成功次数
+  failureCount: number // 失败次数
+  successRate: number // 成功率
+  avgCostTime: number // 平均耗时
 }
 
 /**
@@ -625,8 +625,6 @@ export interface AiRunResult {
   warningCount: number
 }
 
-
-
 // ===== 订单 =====
 
 export interface OrderDTO {
@@ -715,7 +713,7 @@ export function getInventoryLogTypeText(logType: InventoryLogType): string {
     [InventoryLogType.OUT]: '出库',
     [InventoryLogType.ADJUST]: '调整',
     [InventoryLogType.TRANSFER]: '调拨',
-    [InventoryLogType.CHECK]: '盘点'
+    [InventoryLogType.CHECK]: '盘点',
   }
   return typeMap[logType] || logType
 }
@@ -728,7 +726,7 @@ export function getInventoryLogTypeColor(logType: InventoryLogType): string {
     [InventoryLogType.OUT]: 'red',
     [InventoryLogType.ADJUST]: 'orange',
     [InventoryLogType.TRANSFER]: 'purple',
-    [InventoryLogType.CHECK]: 'cyan'
+    [InventoryLogType.CHECK]: 'cyan',
   }
   return colorMap[logType] || 'default'
 }
@@ -741,7 +739,7 @@ export function getInventoryLogSourceText(source?: InventoryLogSource): string {
     [InventoryLogSource.API]: 'API接口',
     [InventoryLogSource.INTERNAL]: '内部调用',
     [InventoryLogSource.IMPORT]: '批量导入',
-    [InventoryLogSource.SYSTEM]: '系统自动'
+    [InventoryLogSource.SYSTEM]: '系统自动',
   }
   return sourceMap[source] || source
 }

@@ -10,7 +10,7 @@ export const useThemeStore = defineStore('theme', () => {
       const stored = localStorage.getItem(THEME_KEY)
       if (stored !== null) return stored === 'dark'
       return window.matchMedia('(prefers-color-scheme: dark)').matches
-    })()
+    })(),
   )
 
   // 同步到 localStorage + <html> 属性

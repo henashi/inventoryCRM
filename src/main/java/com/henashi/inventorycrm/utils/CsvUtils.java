@@ -1,6 +1,7 @@
 package com.henashi.inventorycrm.utils;
 
 import com.henashi.inventorycrm.exception.BusinessException;
+import jakarta.validation.ConstraintViolation;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
@@ -8,9 +9,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class CsvUtils {
 
@@ -89,7 +93,7 @@ public class CsvUtils {
     }
 
     public static String normalizeHeader(String header) {
-        return normalizeText(header).replace("\uFEFF", "").toLowerCase();
+        return normalizeText(header).replace("\uFEFF", "");
     }
 
     public static String normalizeText(String value) {
@@ -102,5 +106,31 @@ public class CsvUtils {
         }
         String text = String.valueOf(value);
         return '"' + text.replace("\"", "\"\"") + '"';
+    }
+
+    /**
+     * 校验导入文件：非空、≤5MB、.csv 后缀
+     */
+    public static void validateImportFile(MultipartFile file, String errorPrefix) {
+        if (file == null || file.isEmpty()) {
+            throw new BusinessException(errorPrefix + "_FILE_EMPTY", "导入文件不能为空");
+        }
+        if (file.getSize() > 5L * 1024 * 1024) {
+            throw new BusinessException(errorPrefix + "_FILE_TOO_LARGE", "导入文件不能超过 5MB");
+        }
+        String filename = file.getOriginalFilename();
+        if (filename == null || !filename.toLowerCase().endsWith(".csv")) {
+            throw new BusinessException(errorPrefix + "_FILE_TYPE_INVALID", "仅支持导入 CSV 文件");
+        }
+    }
+
+    /**
+     * 构建参数校验失败消息，多个错误用中文分号连接
+     */
+    public static String buildValidationMessage(Set<? extends ConstraintViolation<?>> violations) {
+        return violations.stream()
+                .map(ConstraintViolation::getMessage)
+                .sorted(Comparator.naturalOrder())
+                .collect(Collectors.joining("；"));
     }
 }

@@ -1,0 +1,90 @@
+version: "3.8"
+
+services:
+  # ============================================================
+  # MySQL 数据库
+  # ============================================================
+  db:
+    image: mysql:8.0
+    container_name: inventory-crm-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-password}
+      MYSQL_DATABASE: inventory_crm
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-password}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ============================================================
+  # Spring Boot 后端
+  # ============================================================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: inventory-crm-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # 激活 dev profile（nacos 已配置 optional: 降级，无 nacos 时自动跳过）
+      SPRING_PROFILES_ACTIVE: dev
+
+      # 数据库连接 → docker 内部服务名
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/inventory_crm?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&characterEncoding=utf8mb4
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-password}
+
+      # JWT 密钥（环境变量覆盖 application.yml 中的硬编码）
+      JWT_SECRET: ${JWT_SECRET:-aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789+/ab==}
+
+      # AI API（可选，不设置则自动降级）
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_API_URL: ${AI_API_URL:-}
+      AI_MODEL: ${AI_MODEL:-deepseek-chat}
+
+      # 不启用 Nacos（dev 配置默认已禁用）
+      NACOS_ENABLED: "false"
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # ============================================================
+  # Vue 3 前端（nginx）
+  # ============================================================
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    container_name: inventory-crm-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "8081:80"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  mysql-data:
+    driver: local

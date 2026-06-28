@@ -169,16 +169,7 @@ public class ProductDataExchangeService {
     }
 
     private void validateImportFile(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new BusinessException("PRODUCT_IMPORT_FILE_EMPTY", "导入文件不能为空");
-        }
-        if (file.getSize() > MAX_IMPORT_FILE_SIZE) {
-            throw new BusinessException("PRODUCT_IMPORT_FILE_TOO_LARGE", "导入文件不能超过 5MB");
-        }
-        String filename = file.getOriginalFilename();
-        if (filename == null || !filename.toLowerCase().endsWith(".csv")) {
-            throw new BusinessException("PRODUCT_IMPORT_FILE_TYPE_INVALID", "仅支持导入 CSV 文件");
-        }
+        CsvUtils.validateImportFile(file, "PRODUCT_IMPORT");
     }
 
     private Integer parseRequiredInteger(String value, String fieldName) {
@@ -206,10 +197,7 @@ public class ProductDataExchangeService {
     }
 
     private String buildValidationMessage(Set<? extends ConstraintViolation<?>> violations) {
-        return violations.stream()
-                .map(ConstraintViolation::getMessage)
-                .sorted(Comparator.naturalOrder())
-                .collect(Collectors.joining("；"));
+        return CsvUtils.buildValidationMessage(violations);
     }
 
     private static String normalizeCode(String code) {

@@ -6,8 +6,11 @@ import com.henashi.inventorycrm.ai.dto.ChatResponseDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * AI 自然语言查询 Agent
@@ -81,6 +84,103 @@ public class NLQueryAgent {
     public ChatResponseDTO processWithHistory(ChatRequestDTO request) {
         List<ChatMessage> history = request.history();
         return processMessage(request.message(), history != null ? history : List.of());
+    }
+
+    /**
+     * 流式处理用户消息 — SSE 逐事件推送
+     * <p>
+     * 事件流：
+     *   event: status, data: "正在分析意图…"
+     *   event: intent, data: {intentJson}
+     *   event: status, data: "正在查询数据…"
+     *   event: status, data: "正在生成回答…"
+     *   event: token, data: "单 token"
+     *   event: token, data: "下一个 token"
+     *   event: done, data: {"fallback":false}
+     */
+    public void processStream(ChatRequestDTO request, SseEmitter emitter) {
+        List<ChatMessage> history = request.history() != null ? request.history() : List.of();
+        String userMessage = request.message();
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                // Step 1: 意图分析
+                sendEvent(emitter, "status", "正在理解你的问题…");
+                String contextSummary = buildContextSummary(history);
+                String contextualMessage = contextSummary.isEmpty()
+                        ? userMessage
+                        : contextSummary + "\n当前问题: " + userMessage;
+
+                String intentJson = llmService.analyzeIntent(contextualMessage);
+                sendEvent(emitter, "intent", intentJson);
+
+                // Step 2: 查询数据库
+                boolean requiresQuery = intentJson.contains("\"requiresQuery\":true")
+                        || intentJson.contains("\"requiresQuery\": true");
+
+                String queryResult;
+                if (requiresQuery) {
+                    sendEvent(emitter, "status", "正在查询数据…");
+                    queryResult = queryExecutor.execute(intentJson);
+                } else {
+                    queryResult = null;
+                }
+
+                // Step 3: 流式生成回答
+                sendEvent(emitter, "status", "正在生成回答…");
+
+                final boolean[] isFallback = {false};
+
+                if (queryResult != null) {
+                    String prompt = String.format(ANSWER_PROMPT, queryResult);
+                    llmService.streamAnswer(prompt, queryResult, userMessage,
+                            token -> sendEvent(emitter, "token", token),
+                            () -> { /* done — 下面发送 done 事件 */ }
+                    );
+                } else {
+                    isFallback[0] = true;
+                    String fallbackReply = "你可以这样问我：\n"
+                            + "• 咱们仓库有什么商品？\n"
+                            + "• 哪些商品库存不足？\n"
+                            + "• 最近新增了哪些客户？\n"
+                            + "• 有哪些礼品可以发放？";
+                    sendEvent(emitter, "token", fallbackReply);
+                }
+
+                // Step 4: 完成
+                sendEvent(emitter, "done", "{\"fallback\":false}");
+
+            } catch (Exception e) {
+                log.error("SSE 流式处理异常", e);
+                try {
+                    emitter.send(SseEmitter.event()
+                            .name("error")
+                            .data("处理请求时出错，请稍后重试。"));
+                    emitter.send(SseEmitter.event()
+                            .name("done")
+                            .data("{\"fallback\":true}"));
+                } catch (IOException ex) {
+                    log.debug("发送 SSE 错误事件失败（连接可能已关闭）: {}", ex.getMessage());
+                }
+            } finally {
+                try {
+                    emitter.complete();
+                } catch (Exception ex) {
+                    log.debug("关闭 SSE 连接时异常: {}", ex.getMessage());
+                }
+            }
+        });
+    }
+
+    private void sendEvent(SseEmitter emitter, String eventName, String data) {
+        try {
+            emitter.send(SseEmitter.event()
+                    .name(eventName)
+                    .data(data));
+        } catch (IOException e) {
+            log.warn("SSE 发送事件失败 ({}): {}", eventName, e.getMessage());
+            // emitter 已断开，让 CompletableFuture 自然结束
+        }
     }
 
     /**

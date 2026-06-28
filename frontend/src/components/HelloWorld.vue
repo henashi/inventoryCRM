@@ -1,36 +1,31 @@
 <template>
-    <div class="hello-world">
-        <h1>{{ msg }}</h1>
-        <p>{{ description }}</p>
-        <button @click="increment">Clicked {{ count }} times</button>
-    </div>
+  <div class="hello-world">
+    <h1>{{ msg }}</h1>
+    <p>{{ description }}</p>
+    <button @click="increment">Clicked {{ count }} times</button>
+  </div>
 </template>
 
-<script setup>
-import { ref, defineProps } from 'vue'
+<script setup lang="ts">
+  import { ref } from 'vue'
 
-const props = defineProps({
-    msg: {
-        type: String,
-        default: 'Hello World'
-    }
-})
+  defineProps<{ msg?: string }>()
 
-const count = ref(0)
-const description = 'A simple Vue component'
+  const count = ref(0)
+  const description = 'A simple Vue component'
 
-function increment() {
+  function increment() {
     count.value++
-}
+  }
 </script>
 
 <style scoped>
-.hello-world {
+  .hello-world {
     font-family: Avenir, Helvetica, Arial, sans-serif;
     text-align: center;
     margin: 2rem;
-}
-button {
+  }
+  button {
     margin-top: 1rem;
     padding: 0.5rem 1rem;
     border: none;
@@ -38,6 +33,8 @@ button {
     color: white;
     border-radius: 4px;
     cursor: pointer;
-}
-button:hover { opacity: 0.9; }
+  }
+  button:hover {
+    opacity: 0.9;
+  }
 </style>

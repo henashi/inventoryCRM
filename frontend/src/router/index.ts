@@ -5,7 +5,7 @@ import { appRoutes } from './routes'
 
 const router = createRouter({
   history: createWebHistory(),
-  routes: appRoutes
+  routes: appRoutes,
 })
 
 router.beforeEach((to: RouteLocationNormalized, from, next) => {
@@ -21,7 +21,7 @@ router.beforeEach((to: RouteLocationNormalized, from, next) => {
     if (!isAuthenticated) {
       next({
         path: '/login',
-        query: { redirect: to.fullPath }
+        query: { redirect: to.fullPath },
       })
       return
     }

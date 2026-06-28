@@ -92,7 +92,10 @@ describe('auth store', () => {
 
     authApiMocks.changePassword.mockResolvedValue(undefined)
 
-    const result = await store.changePassword({ oldPassword: 'old-password', newPassword: 'new-password' })
+    const result = await store.changePassword({
+      oldPassword: 'old-password',
+      newPassword: 'new-password',
+    })
 
     expect(result.success).toBe(true)
     expect(store.token).toBeNull()

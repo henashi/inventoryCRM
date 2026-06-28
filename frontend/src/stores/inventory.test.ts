@@ -24,7 +24,19 @@ describe('inventory store', () => {
 
   it('uses five items as the default inventory page size', async () => {
     inventoryApiMocks.getInventories.mockResolvedValueOnce({
-      content: [{ id: 1, productId: 1, productCode: 'P001', productName: '默认分页商品', currentStock: 5, safeStock: 10, maxStock: 20, unit: '件', status: 1 }],
+      content: [
+        {
+          id: 1,
+          productId: 1,
+          productCode: 'P001',
+          productName: '默认分页商品',
+          currentStock: 5,
+          safeStock: 10,
+          maxStock: 20,
+          unit: '件',
+          status: 1,
+        },
+      ],
       totalElements: 1,
       totalPages: 1,
       size: 5,
@@ -44,7 +56,19 @@ describe('inventory store', () => {
 
   it('loads selectable inventories independently from the current paged list', async () => {
     inventoryApiMocks.getInventories.mockResolvedValueOnce({
-      content: [{ id: 1, productId: 1, productCode: 'P001', productName: '当前页商品', currentStock: 5, safeStock: 10, maxStock: 20, unit: '件', status: 1 }],
+      content: [
+        {
+          id: 1,
+          productId: 1,
+          productCode: 'P001',
+          productName: '当前页商品',
+          currentStock: 5,
+          safeStock: 10,
+          maxStock: 20,
+          unit: '件',
+          status: 1,
+        },
+      ],
       totalElements: 1,
       totalPages: 1,
       size: 10,
@@ -55,8 +79,28 @@ describe('inventory store', () => {
     })
     inventoryApiMocks.getInventories.mockResolvedValueOnce({
       content: [
-        { id: 1, productId: 1, productCode: 'P001', productName: '当前页商品', currentStock: 5, safeStock: 10, maxStock: 20, unit: '件', status: 1 },
-        { id: 2, productId: 2, productCode: 'P002', productName: '翻页外商品', currentStock: 8, safeStock: 10, maxStock: 20, unit: '件', status: 1 },
+        {
+          id: 1,
+          productId: 1,
+          productCode: 'P001',
+          productName: '当前页商品',
+          currentStock: 5,
+          safeStock: 10,
+          maxStock: 20,
+          unit: '件',
+          status: 1,
+        },
+        {
+          id: 2,
+          productId: 2,
+          productCode: 'P002',
+          productName: '翻页外商品',
+          currentStock: 8,
+          safeStock: 10,
+          maxStock: 20,
+          unit: '件',
+          status: 1,
+        },
       ],
       totalElements: 2,
       totalPages: 1,
@@ -71,7 +115,11 @@ describe('inventory store', () => {
     await store.loadInventories({ page: 0, size: 10, keyword: '当前页' })
     await (store as any).loadSelectableInventories()
 
-    expect(inventoryApiMocks.getInventories).toHaveBeenNthCalledWith(1, { page: 0, size: 10, keyword: '当前页' })
+    expect(inventoryApiMocks.getInventories).toHaveBeenNthCalledWith(1, {
+      page: 0,
+      size: 10,
+      keyword: '当前页',
+    })
     expect(inventoryApiMocks.getInventories).toHaveBeenNthCalledWith(2, { page: 0, size: 1000 })
     expect((store as any).selectableInventories).toHaveLength(2)
   })

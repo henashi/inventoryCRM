@@ -67,9 +67,10 @@
               v-for="preset in reasonPresets"
               :key="preset"
               :class="{ 'preset-active': reason === preset }"
-              style="cursor: pointer; padding: 2px 10px; border-radius: 4px;"
+              style="cursor: pointer; padding: 2px 10px; border-radius: 4px"
               @click="reason = preset"
-            >{{ preset }}</a-tag>
+              >{{ preset }}</a-tag
+            >
           </a-space>
         </template>
         <a-textarea v-model:value="reason" :rows="2" :maxlength="200" placeholder="选填" />
@@ -83,169 +84,188 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { message } from 'ant-design-vue'
-import type { Inventory, InventoryDetail, InventoryAdjustDTO, InventoryInDTO, InventoryOutDTO } from '@/types'
+  import { computed, ref, watch } from 'vue'
+  import { message } from 'ant-design-vue'
+  import type {
+    Inventory,
+    InventoryDetail,
+    InventoryAdjustDTO,
+    InventoryInDTO,
+    InventoryOutDTO,
+  } from '@/types'
 
-const props = defineProps<{
-  open: boolean
-  mode: 'in' | 'out' | 'adjust' | null
-  inventory?: Inventory | InventoryDetail | null
-  inventoryOptions: Inventory[]
-  loading?: boolean
-}>()
+  const props = defineProps<{
+    open: boolean
+    mode: 'in' | 'out' | 'adjust' | null
+    inventory?: Inventory | InventoryDetail | null
+    inventoryOptions: Inventory[]
+    loading?: boolean
+  }>()
 
-const emit = defineEmits<{
-  cancel: []
-  submit: [payload: { mode: 'in' | 'out' | 'adjust'; productId: number; data: InventoryInDTO | InventoryOutDTO | InventoryAdjustDTO }]
-}>()
-
-const selectedInventoryId = ref<number>()
-const quantity = ref<number>(1)
-const actualQuantity = ref<number>(0)
-const reason = ref('')
-const remark = ref('')
-
-const modalTitle = computed(() => {
-  if (props.mode === 'in') return '库存入库'
-  if (props.mode === 'out') return '库存出库'
-  if (props.mode === 'adjust') return '库存调整'
-  return '库存操作'
-})
-
-const quantityLabel = computed(() => props.mode === 'in' ? '入库数量' : '出库数量')
-const reasonLabel = computed(() => {
-  if (props.mode === 'in') return '入库原因'
-  if (props.mode === 'out') return '出库原因'
-  if (props.mode === 'adjust') return '调整原因'
-  return '原因'
-})
-
-const reasonPresets = computed(() => {
-  if (props.mode === 'in') return ['采购入库', '退货入库', '调拨入库', '盘盈入库']
-  if (props.mode === 'out') return ['销售出库', '报损出库', '调拨出库', '样品出库']
-  if (props.mode === 'adjust') return ['盘点调整', '损耗调整']
-  return []
-})
-
-const fixedInventory = computed(() => props.inventory || null)
-
-const activeInventory = computed(() => {
-  if (fixedInventory.value) {
-    return fixedInventory.value
-  }
-
-  return props.inventoryOptions.find((item) => getInventoryIdentifier(item) === selectedInventoryId.value) || null
-})
-
-const getInventoryIdentifier = (inventory: Inventory | InventoryDetail) => inventory.id || inventory.productId
-
-const resetForm = () => {
-  const inventoryId = props.inventory ? getInventoryIdentifier(props.inventory) : undefined
-  selectedInventoryId.value = inventoryId
-  quantity.value = 1
-  actualQuantity.value = props.inventory?.currentStock || 0
-  reason.value = ''
-  remark.value = ''
-}
-
-const filterOption = (input: string, option: { children?: string }) => {
-  return String(option.children || '').toLowerCase().includes(input.toLowerCase())
-}
-
-const handleCancel = () => {
-  emit('cancel')
-}
-
-const handleOk = () => {
-  if (!props.mode) {
-    return
-  }
-
-  const inventory = activeInventory.value
-  if (!inventory) {
-    message.warning('请先选择商品')
-    return
-  }
-
-  const trimmedReason = reason.value.trim()
-  const productId = getInventoryIdentifier(inventory)
-
-  if (props.mode === 'in') {
-    if (!quantity.value || quantity.value <= 0) {
-      message.warning('请输入正确的入库数量')
-      return
-    }
-
-    emit('submit', {
-      mode: 'in',
-      productId,
-      data: {
-        productId,
-        quantity: quantity.value,
-        reason: trimmedReason,
-        remark: remark.value || undefined,
+  const emit = defineEmits<{
+    cancel: []
+    submit: [
+      payload: {
+        mode: 'in' | 'out' | 'adjust'
+        productId: number
+        data: InventoryInDTO | InventoryOutDTO | InventoryAdjustDTO
       },
-    })
-    return
-  }
+    ]
+  }>()
 
-  if (props.mode === 'out') {
-    if (!quantity.value || quantity.value <= 0) {
-      message.warning('请输入正确的出库数量')
-      return
-    }
-    if (quantity.value > inventory.currentStock) {
-      message.warning('出库数量不能大于当前库存')
-      return
-    }
+  const selectedInventoryId = ref<number>()
+  const quantity = ref<number>(1)
+  const actualQuantity = ref<number>(0)
+  const reason = ref('')
+  const remark = ref('')
 
-    emit('submit', {
-      mode: 'out',
-      productId,
-      data: {
-        productId,
-        quantity: quantity.value,
-        reason: trimmedReason,
-        remark: remark.value || undefined,
-      },
-    })
-    return
-  }
-
-  if (actualQuantity.value < 0) {
-    message.warning('盘点后库存不能小于 0')
-    return
-  }
-  if (!trimmedReason) {
-    message.warning('请输入调整原因')
-    return
-  }
-
-  emit('submit', {
-    mode: 'adjust',
-    productId,
-    data: {
-      actualQuantity: actualQuantity.value,
-      reason: trimmedReason,
-      remark: remark.value || undefined,
-    },
+  const modalTitle = computed(() => {
+    if (props.mode === 'in') return '库存入库'
+    if (props.mode === 'out') return '库存出库'
+    if (props.mode === 'adjust') return '库存调整'
+    return '库存操作'
   })
-}
 
-watch(
-  () => [props.open, props.mode, props.inventory],
-  () => {
-    if (props.open) {
-      resetForm()
+  const quantityLabel = computed(() => (props.mode === 'in' ? '入库数量' : '出库数量'))
+  const reasonLabel = computed(() => {
+    if (props.mode === 'in') return '入库原因'
+    if (props.mode === 'out') return '出库原因'
+    if (props.mode === 'adjust') return '调整原因'
+    return '原因'
+  })
+
+  const reasonPresets = computed(() => {
+    if (props.mode === 'in') return ['采购入库', '退货入库', '调拨入库', '盘盈入库']
+    if (props.mode === 'out') return ['销售出库', '报损出库', '调拨出库', '样品出库']
+    if (props.mode === 'adjust') return ['盘点调整', '损耗调整']
+    return []
+  })
+
+  const fixedInventory = computed(() => props.inventory || null)
+
+  const activeInventory = computed(() => {
+    if (fixedInventory.value) {
+      return fixedInventory.value
     }
-  },
-  { immediate: true },
-)
+
+    return (
+      props.inventoryOptions.find(
+        (item) => getInventoryIdentifier(item) === selectedInventoryId.value,
+      ) || null
+    )
+  })
+
+  const getInventoryIdentifier = (inventory: Inventory | InventoryDetail) =>
+    inventory.id || inventory.productId
+
+  const resetForm = () => {
+    const inventoryId = props.inventory ? getInventoryIdentifier(props.inventory) : undefined
+    selectedInventoryId.value = inventoryId
+    quantity.value = 1
+    actualQuantity.value = props.inventory?.currentStock || 0
+    reason.value = ''
+    remark.value = ''
+  }
+
+  const filterOption = (input: string, option: { children?: string }) => {
+    return String(option.children || '')
+      .toLowerCase()
+      .includes(input.toLowerCase())
+  }
+
+  const handleCancel = () => {
+    emit('cancel')
+  }
+
+  const handleOk = () => {
+    if (!props.mode) {
+      return
+    }
+
+    const inventory = activeInventory.value
+    if (!inventory) {
+      message.warning('请先选择商品')
+      return
+    }
+
+    const trimmedReason = reason.value.trim()
+    const productId = getInventoryIdentifier(inventory)
+
+    if (props.mode === 'in') {
+      if (!quantity.value || quantity.value <= 0) {
+        message.warning('请输入正确的入库数量')
+        return
+      }
+
+      emit('submit', {
+        mode: 'in',
+        productId,
+        data: {
+          productId,
+          quantity: quantity.value,
+          reason: trimmedReason,
+          remark: remark.value || undefined,
+        },
+      })
+      return
+    }
+
+    if (props.mode === 'out') {
+      if (!quantity.value || quantity.value <= 0) {
+        message.warning('请输入正确的出库数量')
+        return
+      }
+      if (quantity.value > inventory.currentStock) {
+        message.warning('出库数量不能大于当前库存')
+        return
+      }
+
+      emit('submit', {
+        mode: 'out',
+        productId,
+        data: {
+          productId,
+          quantity: quantity.value,
+          reason: trimmedReason,
+          remark: remark.value || undefined,
+        },
+      })
+      return
+    }
+
+    if (actualQuantity.value < 0) {
+      message.warning('盘点后库存不能小于 0')
+      return
+    }
+    if (!trimmedReason) {
+      message.warning('请输入调整原因')
+      return
+    }
+
+    emit('submit', {
+      mode: 'adjust',
+      productId,
+      data: {
+        actualQuantity: actualQuantity.value,
+        reason: trimmedReason,
+        remark: remark.value || undefined,
+      },
+    })
+  }
+
+  watch(
+    () => [props.open, props.mode, props.inventory],
+    () => {
+      if (props.open) {
+        resetForm()
+      }
+    },
+    { immediate: true },
+  )
 </script>
 
 <style scoped>
-.inventory-summary-card {
-  margin-bottom: 16px;
-}
+  .inventory-summary-card {
+    margin-bottom: 16px;
+  }
 </style>

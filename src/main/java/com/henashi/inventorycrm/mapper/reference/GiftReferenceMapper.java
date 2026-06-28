@@ -15,6 +15,7 @@ public class GiftReferenceMapper {
     private final GiftRepository giftRepository;
 
     @Cacheable(value = "giftRefs", key = "#p0",
+            condition = "#p0 != null",
             unless = "#result == null",
             cacheManager = "shortCache")
     @Named("idToGift")

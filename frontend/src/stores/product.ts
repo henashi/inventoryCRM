@@ -12,52 +12,51 @@ export const useProductStore = defineStore('product', () => {
   const pagination = ref({
     page: 1,
     size: 5,
-    total: 0
+    total: 0,
   })
   const searchKeyword = ref('')
   const selectedCategory = ref<string>('')
 
   const totalProducts = computed(() => total.value)
   const lowStockProducts = computed(() =>
-    products.value.filter(p => p.currentStock < p.safeStock)
+    products.value.filter((p) => p.currentStock < p.safeStock),
   )
-  const outOfStockProducts = computed(() =>
-    products.value.filter(p => p.currentStock <= 0)
-  )
+  const outOfStockProducts = computed(() => products.value.filter((p) => p.currentStock <= 0))
   const filteredProducts = computed(() => {
     let filtered = products.value
 
     if (searchKeyword.value) {
       const keyword = searchKeyword.value.toLowerCase()
-      filtered = filtered.filter(product =>
-        product.name?.toLowerCase().includes(keyword) ||
-        product.code?.toLowerCase().includes(keyword) ||
-        product.category?.toLowerCase().includes(keyword)
+      filtered = filtered.filter(
+        (product) =>
+          product.name?.toLowerCase().includes(keyword) ||
+          product.code?.toLowerCase().includes(keyword) ||
+          product.category?.toLowerCase().includes(keyword),
       )
     }
 
     if (selectedCategory.value) {
-      filtered = filtered.filter(p => p.category === selectedCategory.value)
+      filtered = filtered.filter((p) => p.category === selectedCategory.value)
     }
 
     return filtered
   })
   const categories = computed(() => {
-    const cats = new Set(products.value.map(p => p.category).filter(Boolean))
+    const cats = new Set(products.value.map((p) => p.category).filter(Boolean))
     return Array.from(cats)
   })
   const stockValue = computed(() =>
-    products.value.reduce((total, p) => total + (p.currentStock * p.price), 0)
+    products.value.reduce((total, p) => total + p.currentStock * p.price, 0),
   )
 
   const loadProducts = async (params?: PageParams) => {
     try {
       isLoading.value = true
       const queryParams = {
-        page: params?.page ?? (pagination.value.page - 1),
+        page: params?.page ?? pagination.value.page - 1,
         size: params?.size ?? pagination.value.size,
         keyword: params?.keyword ?? (searchKeyword.value || undefined),
-        category: params?.category ?? (selectedCategory.value || undefined)
+        category: params?.category ?? (selectedCategory.value || undefined),
       }
       const response: PageResult<Product> = await productApi.getProducts(queryParams)
 
@@ -115,7 +114,7 @@ export const useProductStore = defineStore('product', () => {
       isLoading.value = true
       const updatedProduct = await productApi.updateProduct(id, data)
 
-      const index = products.value.findIndex(p => p.id === id)
+      const index = products.value.findIndex((p) => p.id === id)
       if (index !== -1) {
         products.value[index] = { ...products.value[index], ...updatedProduct }
       }
@@ -135,7 +134,7 @@ export const useProductStore = defineStore('product', () => {
       isLoading.value = true
       await productApi.deleteProduct(id)
 
-      const index = products.value.findIndex(p => p.id === id)
+      const index = products.value.findIndex((p) => p.id === id)
       if (index !== -1) {
         products.value.splice(index, 1)
         total.value -= 1
@@ -150,7 +149,7 @@ export const useProductStore = defineStore('product', () => {
       isLoading.value = true
       const updatedProduct = await productApi.updateStock(id, quantity, type)
 
-      const index = products.value.findIndex(p => p.id === id)
+      const index = products.value.findIndex((p) => p.id === id)
       if (index !== -1) {
         products.value[index] = updatedProduct
       }
@@ -185,7 +184,7 @@ export const useProductStore = defineStore('product', () => {
     pagination.value = {
       page: 1,
       size: 5,
-      total: 0
+      total: 0,
     }
   }
 
@@ -213,6 +212,6 @@ export const useProductStore = defineStore('product', () => {
     setSearchKeyword,
     setCategory,
     clearCurrentProduct,
-    reset
+    reset,
   }
 })

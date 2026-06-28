@@ -113,20 +113,22 @@ describe('contract adapters', () => {
   })
 
   it('drops unsupported frontend-only fields before calling gift and gift-log endpoints', () => {
-    expect(sanitizeGiftPayload({
-      name: '礼品',
-      code: 'G-1',
-      description: '描述',
-      limitEnabled: true,
-      limitPerPerson: 1,
-      remark: '备注',
-      productId: 1,
-      type: 'NEW',
-      status: 'ACTIVE',
-      isDeleted: 0,
-      startTime: '2026-06-01',
-      endTime: '2026-06-30',
-    } as any)).toEqual({
+    expect(
+      sanitizeGiftPayload({
+        name: '礼品',
+        code: 'G-1',
+        description: '描述',
+        limitEnabled: true,
+        limitPerPerson: 1,
+        remark: '备注',
+        productId: 1,
+        type: 'NEW',
+        status: 'ACTIVE',
+        isDeleted: 0,
+        startTime: '2026-06-01',
+        endTime: '2026-06-30',
+      } as any),
+    ).toEqual({
       name: '礼品',
       code: 'G-1',
       description: '描述',
@@ -138,22 +140,24 @@ describe('contract adapters', () => {
       status: 'ACTIVE',
     })
 
-    expect(sanitizeGiftLogPayload({
-      id: 1,
-      giftId: 2,
-      customerId: 3,
-      giftName: '礼品',
-      customerName: '客户',
-      quantity: 1,
-      issueNotes: '备注',
-      remark: '扩展备注',
-      operator: 'admin',
-      status: 'ISSUED',
-      issuedAt: '2026-06-12',
-      createdTime: '2026-06-11',
-      updatedTime: '2026-06-13',
-      limitEnabled: true,
-    } as any)).toEqual({
+    expect(
+      sanitizeGiftLogPayload({
+        id: 1,
+        giftId: 2,
+        customerId: 3,
+        giftName: '礼品',
+        customerName: '客户',
+        quantity: 1,
+        issueNotes: '备注',
+        remark: '扩展备注',
+        operator: 'admin',
+        status: 'ISSUED',
+        issuedAt: '2026-06-12',
+        createdTime: '2026-06-11',
+        updatedTime: '2026-06-13',
+        limitEnabled: true,
+      } as any),
+    ).toEqual({
       giftId: 2,
       customerId: 3,
       quantity: 1,
@@ -165,16 +169,18 @@ describe('contract adapters', () => {
   })
 
   it('drops unsupported data-dict fields before submit', () => {
-    expect(sanitizeDataDictPayload({
-      groupName: '库存',
-      groupCode: 'inventory',
-      paramName: '低库存阈值',
-      paramCode: 'low_stock_threshold',
-      paramValue: '10',
-      description: '库存预警值',
-      status: 'DICT_STATUS_ACTIVE',
-      isDeleted: 0,
-    } as any)).toEqual({
+    expect(
+      sanitizeDataDictPayload({
+        groupName: '库存',
+        groupCode: 'inventory',
+        paramName: '低库存阈值',
+        paramCode: 'low_stock_threshold',
+        paramValue: '10',
+        description: '库存预警值',
+        status: 'DICT_STATUS_ACTIVE',
+        isDeleted: 0,
+      } as any),
+    ).toEqual({
       groupName: '库存',
       groupCode: 'inventory',
       paramName: '低库存阈值',

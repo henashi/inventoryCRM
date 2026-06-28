@@ -4,7 +4,9 @@ import { ref } from 'vue'
 import { inventoryLogApi } from '@/api/inventoryLog'
 import type { InventoryLog, PageParams, PageResult } from '@/types'
 
-const formatDateValue = (value: any) => {
+type DateLike = string | Date | { format: (fmt: string) => string } | null | undefined
+
+const formatDateValue = (value: DateLike): string | undefined => {
   if (!value) return undefined
   if (typeof value === 'string') return value.slice(0, 10)
   if (typeof value?.format === 'function') return value.format('YYYY-MM-DD')
@@ -12,15 +14,15 @@ const formatDateValue = (value: any) => {
   return undefined
 }
 
-const buildInventoryLogQueryParams = (params?: any) => {
-  const queryParams: any = {
+const buildInventoryLogQueryParams = (params?: Partial<PageParams & { productId?: number; type?: string; operator?: string; dateRange?: unknown[] }>) => {
+  const queryParams: Record<string, unknown> = {
     page: params?.page,
     size: params?.size,
     productId: params?.productId,
     type: params?.type,
     operator: params?.operator,
     startTime: params?.startTime,
-    endTime: params?.endTime
+    endTime: params?.endTime,
   }
 
   if (params?.dateRange && Array.isArray(params.dateRange) && params.dateRange.length === 2) {
@@ -29,12 +31,15 @@ const buildInventoryLogQueryParams = (params?: any) => {
   }
 
   return Object.fromEntries(
-    Object.entries(queryParams).filter(([_, value]) => value !== undefined && value !== null && value !== '')
+    Object.entries(queryParams).filter(
+      ([_, value]) => value !== undefined && value !== null && value !== '',
+    ),
   )
 }
 
 const downloadBlob = (response: Blob, filename: string) => {
-  const blob = response instanceof Blob ? response : new Blob([response], { type: 'text/csv;charset=utf-8' })
+  const blob =
+    response instanceof Blob ? response : new Blob([response], { type: 'text/csv;charset=utf-8' })
   const url = window.URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
@@ -49,19 +54,21 @@ export const useInventoryLogStore = defineStore('inventoryLog', () => {
   const pagination = ref({
     page: 1,
     size: 5,
-    total: 0
+    total: 0,
   })
   const stats = ref({
     inCount: 0,
     outCount: 0,
     inQuantity: 0,
-    outQuantity: 0
+    outQuantity: 0,
   })
 
   const loadLogs = async (params?: PageParams) => {
     try {
       isLoading.value = true
-      const response: PageResult<InventoryLog> = await inventoryLogApi.getLogs(buildInventoryLogQueryParams(params))
+      const response: PageResult<InventoryLog> = await inventoryLogApi.getLogs(
+        buildInventoryLogQueryParams(params),
+      )
 
       logs.value = response.content
       pagination.value.total = response.totalElements
@@ -77,12 +84,7 @@ export const useInventoryLogStore = defineStore('inventoryLog', () => {
     }
   }
 
-  const loadStats = async () => {
-    const response = await inventoryLogApi.getStats()
-    stats.value = response
-  }
-
-  const exportLogs = async (params?: any) => {
+  const exportLogs = async (params?: Partial<PageParams & { productId?: number }>) => {
     const response = await inventoryLogApi.exportLogs(buildInventoryLogQueryParams(params))
     downloadBlob(response as Blob, `库存日志_${new Date().toISOString().slice(0, 10)}.csv`)
   }
@@ -93,6 +95,6 @@ export const useInventoryLogStore = defineStore('inventoryLog', () => {
     pagination,
     stats,
     loadLogs,
-    exportLogs
+    exportLogs,
   }
 })

@@ -2,7 +2,7 @@
 <template>
   <div class="inventory-log-page">
     <div class="page-header">
-      <div style="margin-left: auto;">
+      <div style="margin-left: auto">
         <a-space>
           <a-button @click="handleExport" :loading="exportLoading">
             <export-outlined />
@@ -29,7 +29,11 @@
                 :filter-option="filterProductOption"
                 style="width: 100%"
               >
-                <a-select-option v-for="product in productOptions" :key="product.id" :value="product.id">
+                <a-select-option
+                  v-for="product in productOptions"
+                  :key="product.id"
+                  :value="product.id"
+                >
                   {{ product.name }} ({{ product.code }})
                 </a-select-option>
               </a-select>
@@ -54,10 +58,7 @@
           </a-col>
           <a-col :xs="24" :sm="12" :md="8" :lg="5">
             <a-form-item label="操作人">
-              <a-input
-                v-model:value="searchForm.operator"
-                placeholder="操作人"
-              />
+              <a-input v-model:value="searchForm.operator" placeholder="操作人" />
             </a-form-item>
           </a-col>
           <a-col :xs="24" :sm="12" :md="10" :lg="7">
@@ -80,7 +81,6 @@
         </a-row>
       </a-form>
     </a-card>
-
 
     <!-- 库存日志表格 -->
     <a-card class="table-card">
@@ -112,7 +112,10 @@
 
           <!-- 操作类型 -->
           <template v-else-if="column.dataIndex === 'type'">
-            <a-tag :color="getOperationTypeColor(record.logType)" style="font-size: 12px; line-height: 18px; padding: 0 6px;">
+            <a-tag
+              :color="getOperationTypeColor(record.logType)"
+              style="font-size: 12px; line-height: 18px; padding: 0 6px"
+            >
               {{ getSimplifyTypeText(record.logType) }}
             </a-tag>
           </template>
@@ -120,7 +123,10 @@
           <!-- 库存变化 -->
           <template v-else-if="column.dataIndex === 'stockChange'">
             <div class="stock-change">
-              <span :class="getChangeClass(record.afterStock - record.beforeStock)" class="change-val">
+              <span
+                :class="getChangeClass(record.afterStock - record.beforeStock)"
+                class="change-val"
+              >
                 {{ formatChangeQuantity(record.afterStock - record.beforeStock) }}
               </span>
               <span class="unit">{{ record.productUnit }}</span>
@@ -139,7 +145,10 @@
 
           <!-- 操作状态 -->
           <template v-else-if="column.dataIndex === 'status'">
-            <a-tag :color="record.success ? 'green' : 'red'" style="font-size: 12px; line-height: 18px; padding: 0 6px;">
+            <a-tag
+              :color="record.success ? 'green' : 'red'"
+              style="font-size: 12px; line-height: 18px; padding: 0 6px"
+            >
               {{ record.success ? '成功' : '失败' }}
             </a-tag>
           </template>
@@ -148,7 +157,13 @@
           <template v-else-if="column.dataIndex === 'actions'">
             <a-space size="small">
               <a-button type="link" size="small" @click="handleViewDetail(record)">详情</a-button>
-              <a-button v-if="record.logType === 'CREATE'" type="link" size="small" @click="handleViewProduct(record.productId)">商品</a-button>
+              <a-button
+                v-if="record.logType === 'CREATE'"
+                type="link"
+                size="small"
+                @click="handleViewProduct(record.productId)"
+                >商品</a-button
+              >
             </a-space>
           </template>
         </template>
@@ -156,12 +171,7 @@
     </a-card>
 
     <!-- 日志详情抽屉 -->
-    <a-drawer
-      v-model:open="detailVisible"
-      title="操作日志详情"
-      width="500"
-      placement="right"
-    >
+    <a-drawer v-model:open="detailVisible" title="操作日志详情" width="500" placement="right">
       <template v-if="currentLog">
         <div class="log-detail">
           <!-- 基本信息 -->
@@ -221,8 +231,12 @@
             <a-descriptions-item label="操作原因" span="3">
               {{ currentLog.reason || '无' }}
             </a-descriptions-item>
-            <a-descriptions-item v-if="!currentLog.success && currentLog.errorMessage" label="错误信息" span="3">
-              <div style="color: #ff4d4f;">
+            <a-descriptions-item
+              v-if="!currentLog.success && currentLog.errorMessage"
+              label="错误信息"
+              span="3"
+            >
+              <div style="color: #ff4d4f">
                 {{ currentLog.errorMessage }}
               </div>
             </a-descriptions-item>
@@ -237,386 +251,382 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { message } from 'ant-design-vue'
-import {
-  ArrowLeftOutlined,
-  ExportOutlined
-} from '@ant-design/icons-vue'
-import dayjs from 'dayjs'
-import { useInventoryLogStore } from '@/stores/inventoryLog'
-import { useProductStore } from '@/stores/product'
-import type { InventoryLog, PageParams } from '@/types'
+  import { ref, reactive, computed, onMounted } from 'vue'
+  import { useRoute, useRouter } from 'vue-router'
+  import { message } from 'ant-design-vue'
+  import { ArrowLeftOutlined, ExportOutlined } from '@ant-design/icons-vue'
+  import dayjs from 'dayjs'
+  import { useInventoryLogStore } from '@/stores/inventoryLog'
+  import { useProductStore } from '@/stores/product'
+  import type { InventoryLog, PageParams } from '@/types'
 
-const router = useRouter()
-const route = useRoute()
-const inventoryLogStore = useInventoryLogStore()
-const productStore = useProductStore()
+  const router = useRouter()
+  const route = useRoute()
+  const inventoryLogStore = useInventoryLogStore()
+  const productStore = useProductStore()
 
-// 状态
-const isLoading = ref(false)
-const exportLoading = ref(false)
-const detailVisible = ref(false)
-const currentLog = ref<InventoryLog | null>(null)
+  // 状态
+  const isLoading = ref(false)
+  const exportLoading = ref(false)
+  const detailVisible = ref(false)
+  const currentLog = ref<InventoryLog | null>(null)
 
-// 搜索表单
-const searchForm = reactive({
-  productId: undefined as number | undefined,
-  type: undefined as string | undefined,
-  operator: '',
-  dateRange: [] as any[]
-})
+  // 搜索表单
+  const searchForm = reactive({
+    productId: undefined as number | undefined,
+    type: undefined as string | undefined,
+    operator: '',
+    dateRange: [] as any[],
+  })
 
-// 表格列定义
-const columns = [
-  {
-    title: '商品',
-    dataIndex: 'productInfo',
-    key: 'productInfo',
-    width: 130,
-    ellipsis: true
-  },
-  {
-    title: '类型',
-    dataIndex: 'type',
-    key: 'type',
-    width: 70
-  },
-  {
-    title: '库存变化',
-    dataIndex: 'stockChange',
-    key: 'stockChange',
-    width: 120
-  },
-  {
-    title: '操作人',
-    dataIndex: 'operator',
-    key: 'operator',
-    width: 80,
-    ellipsis: true
-  },
-  {
-    title: '原因',
-    dataIndex: 'reason',
-    key: 'reason',
-    width: 130,
-    ellipsis: true
-  },
-  {
-    title: '状态',
-    dataIndex: 'status',
-    key: 'status',
-    width: 65
-  },
-  {
-    title: '时间',
-    dataIndex: 'createdAt',
-    key: 'createdAt',
-    width: 100,
-    sorter: true
-  },
-  {
-    title: '操作',
-    dataIndex: 'actions',
-    key: 'actions',
-    width: 90,
-    fixed: 'right'
-  }
-]
+  // 表格列定义
+  const columns = [
+    {
+      title: '商品',
+      dataIndex: 'productInfo',
+      key: 'productInfo',
+      width: 130,
+      ellipsis: true,
+    },
+    {
+      title: '类型',
+      dataIndex: 'type',
+      key: 'type',
+      width: 70,
+    },
+    {
+      title: '库存变化',
+      dataIndex: 'stockChange',
+      key: 'stockChange',
+      width: 120,
+    },
+    {
+      title: '操作人',
+      dataIndex: 'operator',
+      key: 'operator',
+      width: 80,
+      ellipsis: true,
+    },
+    {
+      title: '原因',
+      dataIndex: 'reason',
+      key: 'reason',
+      width: 130,
+      ellipsis: true,
+    },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
+      width: 65,
+    },
+    {
+      title: '时间',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      width: 100,
+      sorter: true,
+    },
+    {
+      title: '操作',
+      dataIndex: 'actions',
+      key: 'actions',
+      width: 90,
+      fixed: 'right',
+    },
+  ]
 
-// 计算属性
-const inventoryLogs = computed(() => inventoryLogStore.logs)
-const productOptions = computed(() => productStore.products.map(p => ({
-  id: p.id,
-  name: p.name,
-  code: p.code
-})))
-
-const pagination = computed(() => ({
-  current: inventoryLogStore.pagination.page,
-  pageSize: inventoryLogStore.pagination.size,
-  total: inventoryLogStore.pagination.total,
-  pageSizeOptions: ['5', '10', '20', '50', '100'],
-  showSizeChanger: true,
-  showQuickJumper: true,
-  showTotal: (total: number) => `共 ${total} 条`
-}))
-
-// 方法
-const filterProductOption = (input: string, option: any) => {
-  return (
-    option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+  // 计算属性
+  const inventoryLogs = computed(() => inventoryLogStore.logs)
+  const productOptions = computed(() =>
+    productStore.products.map((p) => ({
+      id: p.id,
+      name: p.name,
+      code: p.code,
+    })),
   )
-}
 
-const formatDate = (dateStr: string, format = 'YYYY-MM-dd') => {
-  if (!dateStr) return ''
-  return dayjs(dateStr).format(format)
-}
+  const pagination = computed(() => ({
+    current: inventoryLogStore.pagination.page,
+    pageSize: inventoryLogStore.pagination.size,
+    total: inventoryLogStore.pagination.total,
+    pageSizeOptions: ['5', '10', '20', '50', '100'],
+    showSizeChanger: true,
+    showQuickJumper: true,
+    showTotal: (total: number) => `共 ${total} 条`,
+  }))
 
-const formatDateTime = (dateStr: string) => {
-  return formatDate(dateStr, 'YYYY-MM-DD HH:mm:ss')
-}
-
-const getFirstChar = (str: string) => {
-  if (!str) return '?'
-  return str.charAt(0).toUpperCase()
-}
-
-const changeTypeColors: Record<string, string> = {
-  CREATE: '#58a6ff',
-  IN: '#2ea043',
-  OUT: '#a371f7',
-  ADJUST: '#d29922',
-  TRANSFER: '#db61a2',
-  CHECK: '#3b8fc2',
-}
-
-const getOperationTypeColor = (type: string) => {
-  return changeTypeColors[type] || 'default'
-}
-
-const getSimplifyTypeText = (type: string) => {
-  const texts: Record<string, string> = {
-    CREATE: '新建',
-    IN: '入库',
-    OUT: '出库',
-    ADJUST: '调整',
-    TRANSFER: '调拨',
-    CHECK: '盘点'
+  // 方法
+  const filterProductOption = (input: string, option: any) => {
+    return option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
   }
-  return texts[type] || type
-}
 
-const getOperationTypeText = (type: string) => {
-  const texts: Record<string, string> = {
-    CREATE: '新建商品',
-    IN: '商品入库',
-    OUT: '商品出库',
-    ADJUST: '商品调整',
-    TRANSFER: '商品调拨',
-    CHECK: '商品盘点'
+  const formatDate = (dateStr: string, format = 'YYYY-MM-dd') => {
+    if (!dateStr) return ''
+    return dayjs(dateStr).format(format)
   }
-  return texts[type] || type
-}
 
-// 只在详情页用长文本，列表用简写
+  const formatDateTime = (dateStr: string) => {
+    return formatDate(dateStr, 'YYYY-MM-DD HH:mm:ss')
+  }
 
-const getChangeClass = (change: number) => {
-  if (change > 0) return 'change-positive'
-  if (change < 0) return 'change-negative'
-  return 'change-zero'
-}
+  const getFirstChar = (str: string) => {
+    if (!str) return '?'
+    return str.charAt(0).toUpperCase()
+  }
 
-const formatChangeQuantity = (change: number) => {
-  if (change > 0) return `+${change}`
-  if (change < 0) return `${change}`
-  return '0'
-}
+  const changeTypeColors: Record<string, string> = {
+    CREATE: '#58a6ff',
+    IN: '#2ea043',
+    OUT: '#a371f7',
+    ADJUST: '#d29922',
+    TRANSFER: '#db61a2',
+    CHECK: '#3b8fc2',
+  }
 
-// 加载数据
-const loadLogs = async (params?: PageParams) => {
-  try {
-    isLoading.value = true
+  const getOperationTypeColor = (type: string) => {
+    return changeTypeColors[type] || 'default'
+  }
 
-    const queryParams: any = {
-      page: params?.page || 0,
-      size: params?.size || 5
+  const getSimplifyTypeText = (type: string) => {
+    const texts: Record<string, string> = {
+      CREATE: '新建',
+      IN: '入库',
+      OUT: '出库',
+      ADJUST: '调整',
+      TRANSFER: '调拨',
+      CHECK: '盘点',
+    }
+    return texts[type] || type
+  }
+
+  const getOperationTypeText = (type: string) => {
+    const texts: Record<string, string> = {
+      CREATE: '新建商品',
+      IN: '商品入库',
+      OUT: '商品出库',
+      ADJUST: '商品调整',
+      TRANSFER: '商品调拨',
+      CHECK: '商品盘点',
+    }
+    return texts[type] || type
+  }
+
+  // 只在详情页用长文本，列表用简写
+
+  const getChangeClass = (change: number) => {
+    if (change > 0) return 'change-positive'
+    if (change < 0) return 'change-negative'
+    return 'change-zero'
+  }
+
+  const formatChangeQuantity = (change: number) => {
+    if (change > 0) return `+${change}`
+    if (change < 0) return `${change}`
+    return '0'
+  }
+
+  // 加载数据
+  const loadLogs = async (params?: PageParams) => {
+    try {
+      isLoading.value = true
+
+      const queryParams: any = {
+        page: params?.page || 0,
+        size: params?.size || 5,
+      }
+
+      // 构建查询参数
+      if (searchForm.productId) {
+        queryParams.productId = searchForm.productId
+      }
+      if (searchForm.type) {
+        queryParams.type = searchForm.type
+      }
+      if (searchForm.operator) {
+        queryParams.operator = searchForm.operator
+      }
+      if (searchForm.dateRange?.length === 2) {
+        queryParams.startTime = formatDate(searchForm.dateRange[0], 'YYYY-MM-DD')
+        queryParams.endTime = formatDate(searchForm.dateRange[1], 'YYYY-MM-DD')
+      }
+
+      await inventoryLogStore.loadLogs(queryParams)
+    } catch (error) {
+      message.error('加载日志失败')
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  // 搜索
+  const handleSearch = () => {
+    loadLogs({ page: 0 })
+  }
+
+  // 重置
+  const handleReset = () => {
+    searchForm.productId = undefined
+    searchForm.type = undefined
+    searchForm.operator = ''
+    searchForm.dateRange = []
+    loadLogs({ page: 0 })
+  }
+
+  // 刷新
+  const handleRefresh = () => {
+    loadLogs()
+    message.success('刷新成功')
+  }
+
+  // 导出
+  const handleExport = async () => {
+    try {
+      exportLoading.value = true
+      await inventoryLogStore.exportLogs(searchForm)
+      message.success('导出成功')
+    } catch (error) {
+      message.error('导出失败')
+    } finally {
+      exportLoading.value = false
+    }
+  }
+
+  // 表格变化
+  const handleTableChange = (pag: any, filters: any, sorter: any) => {
+    const params: any = {
+      page: pag.current - 1,
+      size: pag.pageSize,
     }
 
-    // 构建查询参数
-    if (searchForm.productId) {
-      queryParams.productId = searchForm.productId
-    }
-    if (searchForm.type) {
-      queryParams.type = searchForm.type
-    }
-    if (searchForm.operator) {
-      queryParams.operator = searchForm.operator
-    }
-    if (searchForm.dateRange?.length === 2) {
-      queryParams.startTime = formatDate(searchForm.dateRange[0], 'YYYY-MM-DD')
-      queryParams.endTime = formatDate(searchForm.dateRange[1], 'YYYY-MM-DD')
+    if (sorter && sorter.field) {
+      params.sort = sorter.field
+      params.direction = sorter.order === 'ascend' ? 'asc' : 'desc'
     }
 
-    await inventoryLogStore.loadLogs(queryParams)
-
-  } catch (error) {
-    message.error('加载日志失败')
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// 搜索
-const handleSearch = () => {
-  loadLogs({ page: 0 })
-}
-
-// 重置
-const handleReset = () => {
-  searchForm.productId = undefined
-  searchForm.type = undefined
-  searchForm.operator = ''
-  searchForm.dateRange = []
-  loadLogs({ page: 0 })
-}
-
-// 刷新
-const handleRefresh = () => {
-  loadLogs()
-  message.success('刷新成功')
-}
-
-// 导出
-const handleExport = async () => {
-  try {
-    exportLoading.value = true
-    await inventoryLogStore.exportLogs(searchForm)
-    message.success('导出成功')
-  } catch (error) {
-    message.error('导出失败')
-  } finally {
-    exportLoading.value = false
-  }
-}
-
-// 表格变化
-const handleTableChange = (pag: any, filters: any, sorter: any) => {
-  const params: any = {
-    page: pag.current - 1,
-    size: pag.pageSize
+    loadLogs(params)
   }
 
-  if (sorter && sorter.field) {
-    params.sort = sorter.field
-    params.direction = sorter.order === 'ascend' ? 'asc' : 'desc'
+  // 查看详情
+  const handleViewDetail = (record: InventoryLog) => {
+    currentLog.value = record
+    detailVisible.value = true
   }
 
-  loadLogs(params)
-}
-
-// 查看详情
-const handleViewDetail = (record: InventoryLog) => {
-  currentLog.value = record
-  detailVisible.value = true
-}
-
-// 查看商品
-const handleViewProduct = (productId: number) => {
-  router.push(`/inventory/${productId}`)
-}
-
-onMounted(() => {
-  const productId = Number(route.query.productId)
-  if (productId) {
-    searchForm.productId = productId
+  // 查看商品
+  const handleViewProduct = (productId: number) => {
+    router.push(`/inventory/${productId}`)
   }
 
-  loadLogs()
-  productStore.loadProducts({ page: 0, size: 100 })
-})
+  onMounted(() => {
+    const productId = Number(route.query.productId)
+    if (productId) {
+      searchForm.productId = productId
+    }
+
+    loadLogs()
+    productStore.loadProducts({ page: 0, size: 100 })
+  })
 </script>
 
 <style scoped>
-.inventory-log-page {
-  padding: 16px 20px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.search-card,
-.table-card {
-  margin-bottom: 16px;
-}
-.search-card :deep(.ant-card-body) {
-  padding: 16px 20px;
-}
-.search-card :deep(.ant-form-item-label > label) {
-  color: #6b7280;
-  font-size: 13px;
-}
-.search-card :deep(.ant-input),
-.search-card :deep(.ant-picker),
-.search-card :deep(.ant-select-selector),
-.search-card :deep(.ant-btn) {
-  min-height: 34px;
-  font-size: 13px;
-}
-
-.table-card :deep(.ant-table-thead > tr > th) {
-  padding: 8px 10px;
-}
-.table-card :deep(.ant-table-tbody > tr > td) {
-  padding: 8px 10px;
-}
-
-.time-cell {
-  white-space: nowrap;
-}
-
-.product-info {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.3;
-}
-.product-name {
-  font-weight: 500;
-}
-.product-code {
-  font-size: 11px;
-  color: #9ca3af;
-}
-
-.stock-change {
-  white-space: nowrap;
-}
-.change-val {
-  font-weight: 600;
-  font-size: 13px;
-}
-.stock-change .unit {
-  font-size: 11px;
-  color: #9ca3af;
-  margin-left: 2px;
-}
-
-.change-positive {
-  color: #52c41a;
-}
-
-.change-negative {
-  color: #f5222d;
-}
-
-.change-zero {
-  color: #9ca3af;
-}
-
-.operator-name {
-  color: var(--text-primary, #111827);
-}
-
-.reason-cell {
-  max-width: 130px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.log-detail {
-  padding: 8px;
-}
-
-@media (max-width: 768px) {
-  .search-card :deep(.ant-form) {
-    flex-wrap: wrap;
+  .inventory-log-page {
+    padding: 16px 20px;
   }
-}
+
+  .page-header {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .search-card,
+  .table-card {
+    margin-bottom: 16px;
+  }
+  .search-card :deep(.ant-card-body) {
+    padding: 16px 20px;
+  }
+  .search-card :deep(.ant-form-item-label > label) {
+    color: #6b7280;
+    font-size: 13px;
+  }
+  .search-card :deep(.ant-input),
+  .search-card :deep(.ant-picker),
+  .search-card :deep(.ant-select-selector),
+  .search-card :deep(.ant-btn) {
+    min-height: 34px;
+    font-size: 13px;
+  }
+
+  .table-card :deep(.ant-table-thead > tr > th) {
+    padding: 8px 10px;
+  }
+  .table-card :deep(.ant-table-tbody > tr > td) {
+    padding: 8px 10px;
+  }
+
+  .time-cell {
+    white-space: nowrap;
+  }
+
+  .product-info {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+  }
+  .product-name {
+    font-weight: 500;
+  }
+  .product-code {
+    font-size: 11px;
+    color: #9ca3af;
+  }
+
+  .stock-change {
+    white-space: nowrap;
+  }
+  .change-val {
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .stock-change .unit {
+    font-size: 11px;
+    color: #9ca3af;
+    margin-left: 2px;
+  }
+
+  .change-positive {
+    color: #52c41a;
+  }
+
+  .change-negative {
+    color: #f5222d;
+  }
+
+  .change-zero {
+    color: #9ca3af;
+  }
+
+  .operator-name {
+    color: var(--text-primary, #111827);
+  }
+
+  .reason-cell {
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .log-detail {
+    padding: 8px;
+  }
+
+  @media (max-width: 768px) {
+    .search-card :deep(.ant-form) {
+      flex-wrap: wrap;
+    }
+  }
 </style>

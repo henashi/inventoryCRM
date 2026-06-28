@@ -8,15 +8,17 @@ export const dataDictApi = {
     return mapPageContent(page, normalizeDataDict)
   },
 
-  getDataDict: async (id: number) => normalizeDataDict(
-    await request.get<DataDict>(`/data-dict/${id}`),
-  ),
+  getDataDict: async (id: number) =>
+    normalizeDataDict(await request.get<DataDict>(`/data-dict/${id}`)),
 
-  createDataDict: (data: DataDictCreateDTO) => request.post('/data-dict', sanitizeDataDictPayload(data)),
+  createDataDict: (data: DataDictCreateDTO) =>
+    request.post('/data-dict', sanitizeDataDictPayload(data)),
 
-  updateDataDict: (id: number, data: DataDictUpdateDTO) => request.patch(`/data-dict/${id}`, sanitizeDataDictPayload(data)),
+  updateDataDict: (id: number, data: DataDictUpdateDTO) =>
+    request.patch(`/data-dict/${id}`, sanitizeDataDictPayload(data)),
 
-  updateDataDictStatus: (id: number, enable: boolean) => request.patch(`/data-dict/status/${id}/${enable}`),
+  updateDataDictStatus: (id: number, enable: boolean) =>
+    request.patch(`/data-dict/status/${id}/${enable}`),
 
   deleteDataDict: (id: number) => request.delete(`/data-dict/${id}`),
 }

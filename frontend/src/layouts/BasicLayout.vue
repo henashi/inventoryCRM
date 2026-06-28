@@ -1,6 +1,14 @@
 <template>
   <a-layout class="app-layout">
-    <a-layout-sider v-model:collapsed="collapsed" collapsible width="220" collapsed-width="64" :trigger="null" class="app-sider" :theme="themeStore.isDark ? 'dark' : 'light'">
+    <a-layout-sider
+      v-model:collapsed="collapsed"
+      collapsible
+      width="220"
+      collapsed-width="64"
+      :trigger="null"
+      class="app-sider"
+      :theme="themeStore.isDark ? 'dark' : 'light'"
+    >
       <div class="sider-header">
         <span class="sider-logo">📦</span>
         <span class="sider-title" v-show="!collapsed">Inventory CRM</span>
@@ -58,7 +66,6 @@
           <a-menu-item key="/operation-logs">系统日志</a-menu-item>
         </a-sub-menu>
       </a-menu>
-
     </a-layout-sider>
 
     <a-layout>
@@ -80,7 +87,11 @@
           </a-button>
           <a-dropdown>
             <div class="user-info">
-              <a-avatar :style="{ backgroundColor: avatarColor, verticalAlign: 'middle', fontWeight: 600 }" size="small">{{ userInitial }}</a-avatar>
+              <a-avatar
+                :style="{ backgroundColor: avatarColor, verticalAlign: 'middle', fontWeight: 600 }"
+                size="small"
+                >{{ userInitial }}</a-avatar
+              >
               <span class="user-name">{{ userName }}</span>
               <a-tag v-if="roleLabel" :color="avatarColor" class="role-tag">{{ roleLabel }}</a-tag>
             </div>
@@ -103,119 +114,196 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { useThemeStore } from '@/stores/theme'
-import {
-  DashboardOutlined, ShopOutlined, TeamOutlined,
-  SettingOutlined, GiftOutlined,
-  MenuFoldOutlined, MenuUnfoldOutlined,
-} from '@ant-design/icons-vue'
+  import { ref, computed, onMounted } from 'vue'
+  import { useRouter, useRoute } from 'vue-router'
+  import { useAuthStore } from '@/stores/auth'
+  import { useThemeStore } from '@/stores/theme'
+  import {
+    DashboardOutlined,
+    ShopOutlined,
+    TeamOutlined,
+    SettingOutlined,
+    GiftOutlined,
+    MenuFoldOutlined,
+    MenuUnfoldOutlined,
+  } from '@ant-design/icons-vue'
 
-const router = useRouter()
-const route = useRoute()
-const authStore = useAuthStore()
-const themeStore = useThemeStore()
-const collapsed = ref(false)
+  const router = useRouter()
+  const route = useRoute()
+  const authStore = useAuthStore()
+  const themeStore = useThemeStore()
+  const collapsed = ref(false)
 
-const userName = computed(() => authStore.user?.name || authStore.user?.username || '用户')
-const userInitial = computed(() => {
-  const name = userName.value
-  return name.charAt(0).toUpperCase()
-})
-const roleLabel = computed(() => {
-  const role = authStore.user?.role
-  switch (role) {
-    case 'ADMIN': return '管理员'
-    case 'MANAGER': return '经理'
-    default: return '用户'
+  const userName = computed(() => authStore.user?.name || authStore.user?.username || '用户')
+  const userInitial = computed(() => {
+    const name = userName.value
+    return name.charAt(0).toUpperCase()
+  })
+  const roleLabel = computed(() => {
+    const role = authStore.user?.role
+    switch (role) {
+      case 'ADMIN':
+        return '管理员'
+      case 'MANAGER':
+        return '经理'
+      default:
+        return '用户'
+    }
+  })
+  const avatarColor = computed(() => {
+    const role = authStore.user?.role
+    switch (role) {
+      case 'ADMIN':
+        return '#1890ff'
+      case 'MANAGER':
+        return '#52c41a'
+      default:
+        return '#722ed1'
+    }
+  })
+
+  const selectedKeys = ref<string[]>(['/dashboard'])
+  const openKeys = ref<string[]>([])
+
+  onMounted(() => {
+    const path = route.path
+    selectedKeys.value = [path]
+    if (path.startsWith('/inventory') || path.startsWith('/products'))
+      openKeys.value.push('inventory')
+    if (
+      path.startsWith('/customer') ||
+      path.startsWith('/ai/customers') ||
+      path.startsWith('/orders')
+    )
+      openKeys.value.push('customer')
+    if (path.startsWith('/gift')) openKeys.value.push('gift')
+    if (path.startsWith('/data-dicts') || path.startsWith('/operation-logs'))
+      openKeys.value.push('system')
+  })
+
+  function handleMenuClick({ key }: { key: string }) {
+    router.push(key)
   }
-})
-const avatarColor = computed(() => {
-  const role = authStore.user?.role
-  switch (role) {
-    case 'ADMIN': return '#1890ff'
-    case 'MANAGER': return '#52c41a'
-    default: return '#722ed1'
+
+  async function handleAccountMenu({ key }: { key: string }) {
+    if (key === 'profile') {
+      router.push('/account')
+    } else if (key === 'logout') {
+      await authStore.logout()
+      router.push('/login')
+    }
   }
-})
-
-const selectedKeys = ref<string[]>(['/dashboard'])
-const openKeys = ref<string[]>([])
-
-onMounted(() => {
-  const path = route.path
-  selectedKeys.value = [path]
-  if (path.startsWith('/inventory') || path.startsWith('/products')) openKeys.value.push('inventory')
-  if (path.startsWith('/customer') || path.startsWith('/ai/customers') || path.startsWith('/orders')) openKeys.value.push('customer')
-  if (path.startsWith('/gift')) openKeys.value.push('gift')
-  if (path.startsWith('/data-dicts') || path.startsWith('/operation-logs')) openKeys.value.push('system')
-})
-
-function handleMenuClick({ key }: { key: string }) {
-  router.push(key)
-}
-
-async function handleAccountMenu({ key }: { key: string }) {
-  if (key === 'profile') {
-    router.push('/account')
-  } else if (key === 'logout') {
-    await authStore.logout()
-    router.push('/login')
-  }
-}
 </script>
 
 <style scoped>
-.app-layout { min-height: 100vh; }
-.app-sider { overflow: auto; height: 100vh; position: sticky; top: 0; left: 0; }
-.app-sider :deep(.ant-layout-sider-children) { display: flex; flex-direction: column; }
-.sider-header { height: 64px; display: flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; background: var(--bg-header); }
-.sider-logo { font-size: 24px; }
-.sider-title { font-size: 16px; font-weight: 600; color: var(--text-primary); white-space: nowrap; }
-.sider-trigger { height: 48px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.65); cursor: pointer; border-top: 1px solid rgba(255,255,255,0.1); }
-.sider-trigger:hover { color: #fff; }
+  .app-layout {
+    min-height: 100vh;
+  }
+  .app-sider {
+    overflow: auto;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    left: 0;
+  }
+  .app-sider :deep(.ant-layout-sider-children) {
+    display: flex;
+    flex-direction: column;
+  }
+  .sider-header {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-shrink: 0;
+    background: var(--bg-header);
+  }
+  .sider-logo {
+    font-size: 24px;
+  }
+  .sider-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+  }
+  .sider-trigger {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.65);
+    cursor: pointer;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .sider-trigger:hover {
+    color: #fff;
+  }
 
-.app-header {
-  background: var(--bg-header);
-  padding: 0 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: var(--shadow-header);
-  height: 64px;
-  flex-shrink: 0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  transition: background 0.3s ease, box-shadow 0.3s ease;
-}
-.header-left { display: flex; align-items: center; }
-.trigger { font-size: 18px; cursor: pointer; color: var(--text-primary); }
-.header-title {
-  flex: 1;
-  margin-left: 16px;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-  transition: color 0.3s ease;
-}
-.header-right { display: flex; align-items: center; gap: 16px; }
-.theme-toggle-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-}
-.theme-icon { font-size: 18px; line-height: 1; }
-.user-info { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-.user-name { font-size: 14px; color: var(--text-primary); }
+  .app-header {
+    background: var(--bg-header);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--shadow-header);
+    height: 64px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    transition:
+      background 0.3s ease,
+      box-shadow 0.3s ease;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+  }
+  .trigger {
+    font-size: 18px;
+    cursor: pointer;
+    color: var(--text-primary);
+  }
+  .header-title {
+    flex: 1;
+    margin-left: 16px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    transition: color 0.3s ease;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .theme-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+  }
+  .theme-icon {
+    font-size: 18px;
+    line-height: 1;
+  }
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+  .user-name {
+    font-size: 14px;
+    color: var(--text-primary);
+  }
 
-.app-content {
-  margin: 16px;
-  min-height: calc(100vh - 64px - 32px);
-  background: var(--bg-page);
-  transition: background 0.3s ease;
-}
+  .app-content {
+    margin: 16px;
+    min-height: calc(100vh - 64px - 32px);
+    background: var(--bg-page);
+    transition: background 0.3s ease;
+  }
 </style>

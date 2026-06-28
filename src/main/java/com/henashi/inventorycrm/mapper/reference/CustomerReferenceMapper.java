@@ -4,7 +4,6 @@ import com.henashi.inventorycrm.pojo.Customer;
 import com.henashi.inventorycrm.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
 import org.mapstruct.Named;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -19,9 +18,6 @@ public class CustomerReferenceMapper {
 
     private final CustomerRepository customerRepository;
 
-    @Cacheable(value = "customerRefs", key = "#p0",
-            unless = "#result == null",
-            cacheManager = "shortCache")
     @Named("idToCustomer")
     public Customer idToCustomer(Long customerId) {
         if (customerId == null) {

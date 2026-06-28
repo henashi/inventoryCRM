@@ -8,12 +8,19 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import jakarta.validation.ConstraintViolationException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -130,17 +137,26 @@ public class GlobalExceptionHandler {
 
         log.error("数据库完整性异常", e);
 
-        String message = e.getMessage();
+        String message = e.getMessage() != null ? e.getMessage() : "";
         String userMessage = "数据保存失败，请检查数据唯一性";
 
         if (message.contains("uk_group_param_code")) {
             userMessage = "数据字典项已存在：相同的分组编码和参数编码组合不能重复";
+        } else if (message.contains("UK51bvuyvihefoh4kp5syh2jpi4") || message.contains("uk_username")) {
+            userMessage = "用户名已存在";
         } else if (message.contains("Duplicate entry")) {
+            // MySQL 格式: Duplicate entry 'X' for key 'uk_xxx'
             Pattern pattern = Pattern.compile("Duplicate entry '([^']+)'");
             Matcher matcher = pattern.matcher(message);
             if (matcher.find()) {
-                String duplicateValue = matcher.group(1);
-                userMessage = String.format("数据重复：'%s' 已存在", duplicateValue);
+                userMessage = String.format("数据重复：'%s' 已存在", matcher.group(1));
+            }
+        } else if (message.contains("unique constraint") || message.contains("UNIQUE constraint")) {
+            // H2 格式: Unique index or primary key violation: "UK_XXX ON PUBLIC.XXX(COLUMN) VALUES ( 'VALUE' )"
+            Pattern h2Pattern = Pattern.compile("VALUES \\\\( '([^']+)' \\\\)");
+            Matcher h2Matcher = h2Pattern.matcher(message);
+            if (h2Matcher.find()) {
+                userMessage = String.format("数据重复：'%s' 已存在", h2Matcher.group(1));
             }
         }
 
@@ -151,6 +167,101 @@ public class GlobalExceptionHandler {
                 .timestamp(LocalDateTime.now())
                 .build();
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(HttpMessageNotReadableException e) {
+        log.warn("请求体格式错误: {}", e.getMessage());
+
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message("请求体格式错误，请检查 JSON 语法")
+                .error("格式错误")
+                .path(getCurrentRequestPath())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingParam(MissingServletRequestParameterException e) {
+        log.warn("缺少必需参数: {}", e.getMessage());
+
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message("缺少必需参数: " + e.getParameterName())
+                .error("参数缺失")
+                .path(getCurrentRequestPath())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException e) {
+        log.warn("参数校验失败: {}", e.getMessage());
+
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message("参数校验失败: " + e.getMessage())
+                .error("参数无效")
+                .path(getCurrentRequestPath())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ErrorResponse> handleHandlerMethodValidation(HandlerMethodValidationException e) {
+        log.warn("路径/参数校验失败");
+        // Spring Boot 4.x 使用 HandlerMethodValidationException 替代部分 ConstraintViolationException
+        String detail = e.getAllErrors().stream()
+                .findFirst()
+                .map(err -> err.getCodes() != null ? String.join(", ", err.getCodes()) : err.getDefaultMessage())
+                .orElse("参数校验失败");
+
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message(detail)
+                .error("参数无效")
+                .path(getCurrentRequestPath())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException e) {
+        log.warn("权限不足: {}", e.getMessage());
+
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.FORBIDDEN.value())
+                .message("权限不足")
+                .error("禁止访问")
+                .path(getCurrentRequestPath())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMethodNotSupported(HttpRequestMethodNotSupportedException e) {
+        log.warn("请求方法不支持: {}", e.getMessage());
+
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.METHOD_NOT_ALLOWED.value())
+                .message(e.getMessage())
+                .error("方法不允许")
+                .path(getCurrentRequestPath())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(error);
     }
 
     @ExceptionHandler(Exception.class)
