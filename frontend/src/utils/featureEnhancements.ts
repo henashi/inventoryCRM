@@ -151,10 +151,10 @@ const toCurrency = (value: number) => `¥${value.toFixed(2)}`
 
 const extractImportMeta = (result?: Partial<ImportResult>): ImportMeta | null => {
   if (
-    !result?.templateFields?.length
-    || !result.requiredFields?.length
-    || !result.duplicateStrategy
-    || !result.notes?.length
+    !result?.templateFields?.length ||
+    !result.requiredFields?.length ||
+    !result.duplicateStrategy ||
+    !result.notes?.length
   ) {
     return null
   }
@@ -247,7 +247,12 @@ const isConfigActive = (status?: string | number) => {
   }
 
   const normalizedStatus = status.toUpperCase()
-  return normalizedStatus !== 'PAUSED' && normalizedStatus !== 'DISABLED' && normalizedStatus !== 'INACTIVE' && normalizedStatus !== '0'
+  return (
+    normalizedStatus !== 'PAUSED' &&
+    normalizedStatus !== 'DISABLED' &&
+    normalizedStatus !== 'INACTIVE' &&
+    normalizedStatus !== '0'
+  )
 }
 
 const buildWeekTrendChart = (
@@ -255,21 +260,31 @@ const buildWeekTrendChart = (
   giftLogs: GiftLogTrendPointSource[],
   now: dayjs.Dayjs,
 ): LineChartData => {
-  const buckets = Array.from({ length: 7 }, (_, index) => now.subtract(6 - index, 'day').startOf('day'))
+  const buckets = Array.from({ length: 7 }, (_, index) =>
+    now.subtract(6 - index, 'day').startOf('day'),
+  )
 
   return {
     labels: buckets.map((bucket) => bucket.format('MM-DD')),
     datasets: [
       {
         label: '新增客户',
-        data: countByBucket(customers.map((item) => item.registeredAt || item.createdAt), buckets, 'day'),
+        data: countByBucket(
+          customers.map((item) => item.registeredAt || item.createdAt),
+          buckets,
+          'day',
+        ),
         borderColor: '#1890ff',
         backgroundColor: 'rgba(24, 144, 255, 0.1)',
         tension: 0.35,
       },
       {
         label: '礼品发放',
-        data: countByBucket(giftLogs.map((item) => item.issuedAt || item.createdTime), buckets, 'day'),
+        data: countByBucket(
+          giftLogs.map((item) => item.issuedAt || item.createdTime),
+          buckets,
+          'day',
+        ),
         borderColor: '#52c41a',
         backgroundColor: 'rgba(82, 196, 26, 0.1)',
         tension: 0.35,
@@ -284,21 +299,31 @@ const buildMonthTrendChart = (
   now: dayjs.Dayjs,
 ): LineChartData => {
   const totalDays = now.date()
-  const buckets = Array.from({ length: totalDays }, (_, index) => now.startOf('month').add(index, 'day'))
+  const buckets = Array.from({ length: totalDays }, (_, index) =>
+    now.startOf('month').add(index, 'day'),
+  )
 
   return {
     labels: buckets.map((bucket) => bucket.format('MM-DD')),
     datasets: [
       {
         label: '新增客户',
-        data: countByBucket(customers.map((item) => item.registeredAt || item.createdAt), buckets, 'day'),
+        data: countByBucket(
+          customers.map((item) => item.registeredAt || item.createdAt),
+          buckets,
+          'day',
+        ),
         borderColor: '#1890ff',
         backgroundColor: 'rgba(24, 144, 255, 0.1)',
         tension: 0.35,
       },
       {
         label: '礼品发放',
-        data: countByBucket(giftLogs.map((item) => item.issuedAt || item.createdTime), buckets, 'day'),
+        data: countByBucket(
+          giftLogs.map((item) => item.issuedAt || item.createdTime),
+          buckets,
+          'day',
+        ),
         borderColor: '#52c41a',
         backgroundColor: 'rgba(82, 196, 26, 0.1)',
         tension: 0.35,
@@ -312,21 +337,31 @@ const buildQuarterTrendChart = (
   giftLogs: GiftLogTrendPointSource[],
   now: dayjs.Dayjs,
 ): LineChartData => {
-  const buckets = Array.from({ length: 3 }, (_, index) => now.startOf('month').subtract(2 - index, 'month'))
+  const buckets = Array.from({ length: 3 }, (_, index) =>
+    now.startOf('month').subtract(2 - index, 'month'),
+  )
 
   return {
     labels: buckets.map((bucket) => bucket.format('M月')),
     datasets: [
       {
         label: '新增客户',
-        data: countByBucket(customers.map((item) => item.registeredAt || item.createdAt), buckets, 'month'),
+        data: countByBucket(
+          customers.map((item) => item.registeredAt || item.createdAt),
+          buckets,
+          'month',
+        ),
         borderColor: '#1890ff',
         backgroundColor: 'rgba(24, 144, 255, 0.1)',
         tension: 0.35,
       },
       {
         label: '礼品发放',
-        data: countByBucket(giftLogs.map((item) => item.issuedAt || item.createdTime), buckets, 'month'),
+        data: countByBucket(
+          giftLogs.map((item) => item.issuedAt || item.createdTime),
+          buckets,
+          'month',
+        ),
         borderColor: '#52c41a',
         backgroundColor: 'rgba(82, 196, 26, 0.1)',
         tension: 0.35,
@@ -356,7 +391,7 @@ export const buildCategoryFilterState = (categories: string[]): CategoryFilterSt
 export const buildDashboardStats = (
   customerStats: CustomerStatistics,
   productStats: ProductStockStatistics,
-): DashboardStat[] => ([
+): DashboardStat[] => [
   {
     title: '总客户数',
     value: String(customerStats.totalCustomers),
@@ -372,7 +407,7 @@ export const buildDashboardStats = (
     value: String(productStats.totalStockQuantity),
     change: `${productStats.outOfStockProducts} 缺货 / ${toCurrency(productStats.totalStockValue)}`,
   },
-])
+]
 
 export const buildGiftDistribution = (customerStats: CustomerStatistics) => ({
   labels: ['普通客户', '等级1', '等级2', '等级3'],
@@ -386,7 +421,7 @@ export const buildGiftDistribution = (customerStats: CustomerStatistics) => ({
 
 export const buildProductListSummary = (
   productStats: ProductStockStatistics,
-): ProductSummaryCard[] => ([
+): ProductSummaryCard[] => [
   {
     key: 'totalProducts',
     title: productSummaryLabels.totalProducts,
@@ -405,7 +440,7 @@ export const buildProductListSummary = (
     value: toCurrency(productStats.totalStockValue),
     helper: `库存总量 ${productStats.totalStockQuantity}`,
   },
-])
+]
 
 export const resolveProductListParams = (
   filters: ProductListFilters,
@@ -491,7 +526,9 @@ export const buildOperationLogSummary = (
 
   const successCount = logs.filter((item) => Number(item.status) === 1).length
   const totalExecutionTime = logs.reduce((sum, item) => sum + Number(item.executionTime || 0), 0)
-  const latestLog = [...logs].sort((left, right) => resolveTimestamp(right.operationTime) - resolveTimestamp(left.operationTime))[0]
+  const latestLog = [...logs].sort(
+    (left, right) => resolveTimestamp(right.operationTime) - resolveTimestamp(left.operationTime),
+  )[0]
 
   return {
     total,
@@ -535,11 +572,12 @@ export const buildConfigCategoryStats = (
   })
 
   return Array.from(groups.values())
-    .sort((left, right) => (
-      right.count - left.count
-      || resolveTimestamp(right.latestUpdatedAt) - resolveTimestamp(left.latestUpdatedAt)
-      || left.label.localeCompare(right.label, 'zh-CN')
-    ))
+    .sort(
+      (left, right) =>
+        right.count - left.count ||
+        resolveTimestamp(right.latestUpdatedAt) - resolveTimestamp(left.latestUpdatedAt) ||
+        left.label.localeCompare(right.label, 'zh-CN'),
+    )
     .slice(0, limit)
 }
 

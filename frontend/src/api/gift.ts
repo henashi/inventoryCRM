@@ -8,17 +8,13 @@ export const giftApi = {
     return mapPageContent(page, normalizeGift)
   },
 
-  getGift: async (id: number) => normalizeGift(
-    await request.get<Gift>(`/gifts/${id}`),
-  ),
+  getGift: async (id: number) => normalizeGift(await request.get<Gift>(`/gifts/${id}`)),
 
-  createGift: async (data: GiftCreateDTO) => normalizeGift(
-    await request.post<Gift>('/gifts', sanitizeGiftPayload(data)),
-  ),
+  createGift: async (data: GiftCreateDTO) =>
+    normalizeGift(await request.post<Gift>('/gifts', sanitizeGiftPayload(data))),
 
-  updateGift: async (id: number, data: GiftUpdateDTO) => normalizeGift(
-    await request.put<Gift>(`/gifts/${id}`, sanitizeGiftPayload(data)),
-  ),
+  updateGift: async (id: number, data: GiftUpdateDTO) =>
+    normalizeGift(await request.put<Gift>(`/gifts/${id}`, sanitizeGiftPayload(data))),
 
   deleteGift: (id: number) => request.delete(`/gifts/${id}`),
 }

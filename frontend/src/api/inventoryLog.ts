@@ -17,7 +17,6 @@ export const inventoryLogApi = {
       responseType: 'blob',
     }),
 
-  getLogDetail: async (id: number) => normalizeInventoryLog(
-    await request.get<InventoryLog>(`/inventory-logs/${id}`),
-  ),
+  getLogDetail: async (id: number) =>
+    normalizeInventoryLog(await request.get<InventoryLog>(`/inventory-logs/${id}`)),
 }

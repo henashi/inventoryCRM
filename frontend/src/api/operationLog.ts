@@ -47,14 +47,5 @@ export const operationLogApi = {
     request.get<OperationLogPage>('/operation-logs/search', { params }),
 
   /** 根据ID查询详情 */
-  getById: (id: number) =>
-    request.get<OperationLogRecord>(`/operation-logs/${id}`),
-
-  /** 按模块查询日志 */
-  getByModule: (module: string, params?: { page?: number; size?: number }) =>
-    request.get<OperationLogPage>(`/operation-logs/module/${module}`, { params }),
-
-  /** 按操作人查询日志 */
-  getByOperator: (operator: string, params?: { page?: number; size?: number }) =>
-    request.get<OperationLogPage>(`/operation-logs/operator/${operator}`, { params }),
+  getById: (id: number) => request.get<OperationLogRecord>(`/operation-logs/${id}`),
 }

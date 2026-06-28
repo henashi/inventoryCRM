@@ -37,3 +37,7 @@ AI_Requirement.md
 .reasonix/
 每日汇报.md
 Answer.md
+test-output.txt
+run-test.bat
+Test.md
+$_.FullName

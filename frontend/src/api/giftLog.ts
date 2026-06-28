@@ -9,21 +9,22 @@ export const giftLogApi = {
   },
 
   getLogsByCustomerId: async (customerId: number, params?: Record<string, unknown>) => {
-    const page = await request.get<PageResult<GiftLogDTO>>(`/gift-logs/customer/${customerId}`, { params })
+    const page = await request.get<PageResult<GiftLogDTO>>(`/gift-logs/customer/${customerId}`, {
+      params,
+    })
     return mapPageContent(page, normalizeGiftLog)
   },
 
-  getGiftLogDetail: async (id: number) => normalizeGiftLog(
-    await request.get<GiftLogDTO>(`/gift-logs/${id}`),
-  ),
+  getGiftLogDetail: async (id: number) =>
+    normalizeGiftLog(await request.get<GiftLogDTO>(`/gift-logs/${id}`)),
 
   deleteGiftLog: (id: number) => request.delete(`/gift-logs/${id}`),
 
-  addGiftLog: async (data: GiftLogDTO & { limitEnabled?: boolean }) => normalizeGiftLog(
-    await request.post<GiftLogDTO>('/gift-logs', sanitizeGiftLogPayload(data)),
-  ),
+  addGiftLog: async (data: GiftLogDTO & { limitEnabled?: boolean }) =>
+    normalizeGiftLog(await request.post<GiftLogDTO>('/gift-logs', sanitizeGiftLogPayload(data))),
 
-  updateGiftLog: async (id: number, data: GiftLogDTO & { limitEnabled?: boolean }) => normalizeGiftLog(
-    await request.patch<GiftLogDTO>(`/gift-logs/${id}`, sanitizeGiftLogPayload(data)),
-  ),
+  updateGiftLog: async (id: number, data: GiftLogDTO & { limitEnabled?: boolean }) =>
+    normalizeGiftLog(
+      await request.patch<GiftLogDTO>(`/gift-logs/${id}`, sanitizeGiftLogPayload(data)),
+    ),
 }

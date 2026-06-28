@@ -1,7 +1,7 @@
-import {defineStore} from 'pinia'
-import {ref} from 'vue'
-import {dataDictApi} from '@/api/dataDict'
-import type {DataDict, DataDictCreateDTO, DataDictUpdateDTO, PageParams} from '@/types'
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import { dataDictApi } from '@/api/dataDict'
+import type { DataDict, DataDictCreateDTO, DataDictUpdateDTO, PageParams } from '@/types'
 
 export const useDataDictStore = defineStore('data-dict', () => {
   const dataDicts = ref<DataDict[]>([])
@@ -9,7 +9,7 @@ export const useDataDictStore = defineStore('data-dict', () => {
   const pagination = ref({
     page: 0,
     size: 10,
-    total: 0
+    total: 0,
   })
 
   const loadDataDicts = async (params: PageParams) => {
@@ -18,7 +18,7 @@ export const useDataDictStore = defineStore('data-dict', () => {
     pagination.value = {
       page: res.number,
       size: res.size,
-      total: res.totalElements
+      total: res.totalElements,
     }
   }
 
@@ -50,6 +50,6 @@ export const useDataDictStore = defineStore('data-dict', () => {
     updateDataDict,
     updateDataDictStatus,
     deleteDataDict,
-    getDataDict
+    getDataDict,
   }
 })

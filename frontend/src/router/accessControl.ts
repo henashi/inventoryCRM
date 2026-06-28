@@ -73,11 +73,17 @@ export const resolveHomePath = (role?: string | null) => {
 
 export const getFeatureRoles = (feature: FeatureKey) => featureRoles[feature]
 
-export const canManageGiftCatalog = (role?: string | null) => giftCatalogManagers.includes(normalizeRole(role))
-export const canDeleteGift = (role?: string | null) => destructiveAdmins.includes(normalizeRole(role))
-export const canDeleteGiftLog = (role?: string | null) => destructiveAdmins.includes(normalizeRole(role))
+export const canManageGiftCatalog = (role?: string | null) =>
+  giftCatalogManagers.includes(normalizeRole(role))
+export const canDeleteGift = (role?: string | null) =>
+  destructiveAdmins.includes(normalizeRole(role))
+export const canDeleteGiftLog = (role?: string | null) =>
+  destructiveAdmins.includes(normalizeRole(role))
 
-export const filterQuickActions = <T extends { action: keyof typeof quickActionFeatures }>(items: readonly T[], role?: string | null) => {
+export const filterQuickActions = <T extends { action: keyof typeof quickActionFeatures }>(
+  items: readonly T[],
+  role?: string | null,
+) => {
   return items.filter((item) => {
     const feature = quickActionFeatures[item.action]
 
@@ -89,9 +95,14 @@ export const filterQuickActions = <T extends { action: keyof typeof quickActionF
   })
 }
 
-export const filterDashboardStats = <T extends { type: keyof typeof statFeatureMap }>(items: readonly T[], role?: string | null) => {
+export const filterDashboardStats = <T extends { type: keyof typeof statFeatureMap }>(
+  items: readonly T[],
+  role?: string | null,
+) => {
   return items.filter((item) => canAccessFeature(role, statFeatureMap[item.type]))
 }
 
-export const shouldShowCustomerSection = (role?: string | null) => canAccessFeature(role, 'customers')
-export const shouldShowInventorySection = (role?: string | null) => canAccessFeature(role, 'inventory')
+export const shouldShowCustomerSection = (role?: string | null) =>
+  canAccessFeature(role, 'customers')
+export const shouldShowInventorySection = (role?: string | null) =>
+  canAccessFeature(role, 'inventory')

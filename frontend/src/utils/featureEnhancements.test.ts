@@ -19,9 +19,7 @@ describe('featureEnhancements', () => {
     const meta = buildCustomerImportMeta({
       successCount: 2,
       failureCount: 1,
-      failureDetails: [
-        { rowNumber: 3, identifier: '13800000000', reason: '手机号重复' },
-      ],
+      failureDetails: [{ rowNumber: 3, identifier: '13800000000', reason: '手机号重复' }],
       templateFields: ['name', 'phone'],
       requiredFields: ['name'],
       duplicateStrategy: '按手机号判重',
@@ -99,7 +97,11 @@ describe('featureEnhancements', () => {
     expect(summary).toEqual([
       expect.objectContaining({ key: 'totalProducts', value: '18', helper: '16 个在售' }),
       expect.objectContaining({ key: 'lowStockProducts', value: '5', helper: '2 个缺货' }),
-      expect.objectContaining({ key: 'totalStockValue', value: '¥8600.00', helper: '库存总量 300' }),
+      expect.objectContaining({
+        key: 'totalStockValue',
+        value: '¥8600.00',
+        helper: '库存总量 300',
+      }),
     ])
   })
 
@@ -122,12 +124,16 @@ describe('featureEnhancements', () => {
 
   it('resolves customer detail back target from source hints', () => {
     expect(buildCustomerDetailBackTarget({ from: 'dashboard' })).toBe('/dashboard')
-    expect(buildCustomerDetailBackTarget({ from: 'customer-detail', customerId: '12' })).toBe('/customers/12')
+    expect(buildCustomerDetailBackTarget({ from: 'customer-detail', customerId: '12' })).toBe(
+      '/customers/12',
+    )
     expect(buildCustomerDetailBackTarget({})).toBe('/customers')
   })
 
   it('turns route query into explicit gift log customer context state', () => {
-    expect(resolveGiftLogFilterState({ customerId: '7', customerName: '张三', from: 'customer-detail' })).toEqual({
+    expect(
+      resolveGiftLogFilterState({ customerId: '7', customerName: '张三', from: 'customer-detail' }),
+    ).toEqual({
       customerId: 7,
       customerName: '张三',
       hasCustomerContext: true,
@@ -153,10 +159,7 @@ describe('featureEnhancements', () => {
         { registeredAt: '2026-06-21T10:00:00' },
         { registeredAt: '2026-06-21T11:00:00' },
       ],
-      giftLogs: [
-        { createdTime: '2026-06-22T13:00:00' },
-        { createdTime: '2026-06-20T13:00:00' },
-      ],
+      giftLogs: [{ createdTime: '2026-06-22T13:00:00' }, { createdTime: '2026-06-20T13:00:00' }],
     })
 
     expect(chart.labels).toHaveLength(7)
@@ -170,9 +173,27 @@ describe('featureEnhancements', () => {
 
   it('summarizes recent operation logs for admin overview', () => {
     const summary = buildOperationLogSummary([
-      { module: '客户管理', status: 1, operator: 'Alice', executionTime: 120, operationTime: '2026-06-22T09:00:00' },
-      { module: '库存管理', status: 0, operator: 'Bob', executionTime: 240, operationTime: '2026-06-22T10:00:00' },
-      { module: '库存管理', status: 1, operator: 'Carol', executionTime: 60, operationTime: '2026-06-22T08:00:00' },
+      {
+        module: '客户管理',
+        status: 1,
+        operator: 'Alice',
+        executionTime: 120,
+        operationTime: '2026-06-22T09:00:00',
+      },
+      {
+        module: '库存管理',
+        status: 0,
+        operator: 'Bob',
+        executionTime: 240,
+        operationTime: '2026-06-22T10:00:00',
+      },
+      {
+        module: '库存管理',
+        status: 1,
+        operator: 'Carol',
+        executionTime: 60,
+        operationTime: '2026-06-22T08:00:00',
+      },
     ])
 
     expect(summary).toEqual({
@@ -188,16 +209,38 @@ describe('featureEnhancements', () => {
 
   it('builds config category stats from current configuration records', () => {
     const stats = buildConfigCategoryStats([
-      { groupCode: 'gift', groupName: '礼品规则', status: 'ACTIVE', updatedTime: '2026-06-20T09:00:00' },
-      { groupCode: 'gift', groupName: '礼品规则', status: 'PAUSED', updatedTime: '2026-06-21T09:00:00' },
+      {
+        groupCode: 'gift',
+        groupName: '礼品规则',
+        status: 'ACTIVE',
+        updatedTime: '2026-06-20T09:00:00',
+      },
+      {
+        groupCode: 'gift',
+        groupName: '礼品规则',
+        status: 'PAUSED',
+        updatedTime: '2026-06-21T09:00:00',
+      },
       { configGroup: 'security', configKey: 'jwt.expire', updatedAt: '2026-06-22T09:00:00' },
       { configGroup: 'security', configKey: 'refresh.expire', updatedAt: '2026-06-18T09:00:00' },
       { configGroup: 'security', configKey: 'password.rule', updatedAt: '2026-06-19T09:00:00' },
     ])
 
     expect(stats).toEqual([
-      expect.objectContaining({ key: 'security', label: 'security', count: 3, activeCount: 3, latestUpdatedAt: '2026-06-22T09:00:00' }),
-      expect.objectContaining({ key: 'gift', label: '礼品规则', count: 2, activeCount: 1, latestUpdatedAt: '2026-06-21T09:00:00' }),
+      expect.objectContaining({
+        key: 'security',
+        label: 'security',
+        count: 3,
+        activeCount: 3,
+        latestUpdatedAt: '2026-06-22T09:00:00',
+      }),
+      expect.objectContaining({
+        key: 'gift',
+        label: '礼品规则',
+        count: 2,
+        activeCount: 1,
+        latestUpdatedAt: '2026-06-21T09:00:00',
+      }),
     ])
   })
 })

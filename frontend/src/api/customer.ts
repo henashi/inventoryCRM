@@ -14,20 +14,16 @@ export const customerApi = {
     return mapPageContent(page, normalizeCustomer)
   },
 
-  getCustomer: async (id: number) => normalizeCustomer(
-    await request.get<Customer>(`/customers/${id}`),
-  ),
+  getCustomer: async (id: number) =>
+    normalizeCustomer(await request.get<Customer>(`/customers/${id}`)),
 
-  createCustomer: async (data: CustomerCreateDTO) => normalizeCustomer(
-    await request.post<Customer>('/customers', data),
-  ),
+  createCustomer: async (data: CustomerCreateDTO) =>
+    normalizeCustomer(await request.post<Customer>('/customers', data)),
 
-  updateCustomer: async (id: number, data: Partial<CustomerUpdateDTO>) => normalizeCustomer(
-    await request.patch<Customer>(`/customers/${id}`, data),
-  ),
+  updateCustomer: async (id: number, data: Partial<CustomerUpdateDTO>) =>
+    normalizeCustomer(await request.patch<Customer>(`/customers/${id}`, data)),
 
-  deleteCustomer: (id: number) =>
-    request.delete(`/customers/${id}`),
+  deleteCustomer: (id: number) => request.delete(`/customers/${id}`),
 
   searchCustomers: (keyword: string) =>
     request.get<Customer[]>('/customers/search', {
@@ -40,8 +36,7 @@ export const customerApi = {
       responseType: 'blob',
     }),
 
-  getImportTemplate: () =>
-    request.get('/customers/import/template'),
+  getImportTemplate: () => request.get('/customers/import/template'),
 
   importCustomers: (file: File) => {
     const formData = new FormData()
@@ -53,8 +48,7 @@ export const customerApi = {
     })
   },
 
-  getStatistics: () =>
-    request.get('/customers/statistics'),
+  getStatistics: () => request.get('/customers/statistics'),
 
   batchUpdateStatus: (ids: number[], status: 0 | 1) =>
     request.put('/customers/batch/status', { ids, status }),

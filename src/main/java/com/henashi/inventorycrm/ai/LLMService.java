@@ -2,6 +2,8 @@ package com.henashi.inventorycrm.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -11,10 +13,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.BufferedReader;
+import java.time.Duration;
+import java.net.http.HttpTimeoutException;
+import java.time.Duration;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * LLM API 调用服务
@@ -75,13 +87,18 @@ public class LLMService {
     private final ObjectMapper objectMapper;
 
     public LLMService() {
-        this.restTemplate = new RestTemplate();
+        var factory = new org.springframework.http.client.SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout((int) Duration.ofSeconds(5).toMillis());
+        factory.setReadTimeout((int) Duration.ofSeconds(30).toMillis());
+        this.restTemplate = new RestTemplate(factory);
         this.objectMapper = new ObjectMapper();
     }
 
     /**
      * 调用 LLM 解析意图
      */
+    @CircuitBreaker(name = "llmService", fallbackMethod = "analyzeIntentFallback")
+    @RateLimiter(name = "llmService")
     public String analyzeIntent(String userMessage) {
         if (!isConfigured()) {
             log.info("AI API 未配置（缺 api-key/url/model），使用降级关键词匹配");
@@ -91,13 +108,127 @@ public class LLMService {
     }
 
     /**
+     * CircuitBreaker 降级 — 意图解析
+     */
+    private String analyzeIntentFallback(String userMessage, Throwable t) {
+        log.warn("CircuitBreaker 触发 analyzeIntent 降级: {}", t.getMessage());
+        return fallbackIntentAnalysis(userMessage);
+    }
+
+    /**
      * 调用 LLM 生成自然语言回答
      */
+    @CircuitBreaker(name = "llmService", fallbackMethod = "generateAnswerFallback")
+    @RateLimiter(name = "llmService")
     public String generateAnswer(String systemPrompt, String data, String userQuery) {
         if (!isConfigured()) {
             return data;
         }
         return callLLMWithPrompt(systemPrompt, data, userQuery);
+    }
+
+    /**
+     * CircuitBreaker 降级 — 回答生成
+     */
+    private String generateAnswerFallback(String systemPrompt, String data, String userQuery, Throwable t) {
+        log.warn("CircuitBreaker 触发 generateAnswer 降级: {}", t.getMessage());
+        return data;
+    }
+
+    /**
+     * 调用 LLM 生成回答 — SSE 流式版本
+     * <p>
+     * 逐 token 通过 onToken 回调推送。降级模式直接推送全部内容。
+     */
+    @RateLimiter(name = "llmService")
+    public void streamAnswer(String systemPrompt, String data, String userQuery,
+                             Consumer<String> onToken, Runnable onDone) {
+        if (!isConfigured()) {
+            // 降级模式：全文作为单个 token 发送
+            onToken.accept(data != null ? data : "没有找到相关信息。");
+            onDone.run();
+            return;
+        }
+
+        try {
+            Map<String, Object> requestBody = new LinkedHashMap<>();
+            requestBody.put("model", model);
+            requestBody.put("stream", true);
+            requestBody.put("temperature", 0.5);
+            requestBody.put("max_tokens", 2000);
+
+            List<Map<String, String>> messages = new ArrayList<>();
+            messages.add(Map.of("role", "system", "content", systemPrompt));
+            messages.add(Map.of("role", "user", "content",
+                    "问题：" + userQuery + "\n数据：" + (data != null ? data : "")));
+            requestBody.put("messages", messages);
+
+            byte[] bodyBytes = objectMapper.writeValueAsBytes(requestBody);
+
+            HttpURLConnection conn = (HttpURLConnection) URI.create(apiUrl).toURL().openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setRequestProperty("Authorization", "Bearer " + apiKey);
+            conn.setDoOutput(true);
+            conn.setConnectTimeout(15000);
+            conn.setReadTimeout(60000);
+
+            try (OutputStream os = conn.getOutputStream()) {
+                os.write(bodyBytes);
+                os.flush();
+            }
+
+            int status = conn.getResponseCode();
+            if (status != 200) {
+                log.warn("LLM API 流式调用返回 {}，降级到同步模式", status);
+                // 降级到已有的同步方法
+                String fullReply = callLLMWithPrompt(systemPrompt, data, userQuery);
+                onToken.accept(fullReply);
+                onDone.run();
+                return;
+            }
+
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+                String line;
+                int tokenCount = 0;
+                while ((line = reader.readLine()) != null) {
+                    if (line.startsWith("data: ")) {
+                        String payload = line.substring(6).trim();
+                        if ("[DONE]".equals(payload)) break;
+                        if (payload.isEmpty()) continue;
+                        try {
+                            JsonNode json = objectMapper.readTree(payload);
+                            JsonNode delta = json.path("choices").get(0).path("delta").path("content");
+                            if (!delta.isMissingNode()) {
+                                String token = delta.asText();
+                                if (!token.isEmpty()) {
+                                    onToken.accept(token);
+                                    tokenCount++;
+                                }
+                            }
+                        } catch (Exception e) {
+                            log.debug("SSE 行解析跳过: {}", e.getMessage());
+                        }
+                    }
+                }
+                if (tokenCount == 0) {
+                    log.warn("LLM 流式返回无有效 token，使用备用同步调用");
+                    String fullReply = callLLMWithPrompt(systemPrompt, data, userQuery);
+                    onToken.accept(fullReply);
+                }
+            }
+            onDone.run();
+        } catch (Exception e) {
+            log.warn("LLM API 流式调用异常: {}, 降级到同步模式", e.getMessage());
+            try {
+                String fullReply = callLLMWithPrompt(systemPrompt, data, userQuery);
+                onToken.accept(fullReply);
+            } catch (Exception ex) {
+                onToken.accept(data != null ? data : "查询完成，但生成回答时出错。");
+            }
+            onDone.run();
+        }
     }
 
     private boolean isConfigured() {
@@ -150,6 +281,7 @@ public class LLMService {
     }
 
     private String doPost(Map<String, Object> requestBody) {
+        long start = System.currentTimeMillis();
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -159,8 +291,17 @@ public class LLMService {
             ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, request, String.class);
 
             JsonNode root = objectMapper.readTree(response.getBody());
+            log.debug("LLM API 同步调用完成，耗时 {}ms", System.currentTimeMillis() - start);
             return root.path("choices").get(0).path("message").path("content").asText();
+        } catch (org.springframework.web.client.ResourceAccessException e) {
+            if (e.getCause() instanceof java.net.SocketTimeoutException) {
+                log.error("LLM API 请求超时（已等待 {}ms）: {}", System.currentTimeMillis() - start, apiUrl);
+                throw new RuntimeException("LLM API 请求超时，请检查网络或 API 服务状态", e);
+            }
+            log.error("LLM API 网络异常（耗时 {}ms）: {}", System.currentTimeMillis() - start, e.getMessage());
+            throw new RuntimeException("LLM API 网络异常: " + e.getMessage(), e);
         } catch (Exception e) {
+            log.error("LLM API 调用失败（耗时 {}ms）: {}", System.currentTimeMillis() - start, e.getMessage());
             throw new RuntimeException("LLM API 调用失败: " + e.getMessage(), e);
         }
     }

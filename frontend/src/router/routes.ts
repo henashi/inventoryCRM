@@ -33,7 +33,12 @@ export const appRoutes: RouteRecordRaw[] = [
         path: 'products',
         name: 'ProductList',
         component: () => import('../views/product/ProductList.vue'),
-        meta: { requiresAuth: true, title: '商品管理', roles: getFeatureRoles('products'), mode: 'list-or-detail' },
+        meta: {
+          requiresAuth: true,
+          title: '商品管理',
+          roles: getFeatureRoles('products'),
+          mode: 'list-or-detail',
+        },
       },
       {
         path: 'orders',
@@ -117,7 +122,6 @@ export const appRoutes: RouteRecordRaw[] = [
         component: () => import('../views/operationLog/OperationLogList.vue'),
         meta: { requiresAuth: true, title: '系统日志', roles: getFeatureRoles('operation-logs') },
       },
-
     ],
   },
   {

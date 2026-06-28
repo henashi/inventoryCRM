@@ -9,7 +9,11 @@ describe('inventory routes', () => {
   })
 
   it('exposes detail and logs routes under the inventory module', () => {
-    expect(inventoryModuleRoutes.find((item) => item.path === '/inventory/:id')?.name).toBe('InventoryDetail')
-    expect(inventoryModuleRoutes.find((item) => item.path === '/inventory/logs')?.name).toBe('InventoryLogs')
+    expect(inventoryModuleRoutes.find((item) => item.path === '/inventory/:id')?.name).toBe(
+      'InventoryDetail',
+    )
+    expect(inventoryModuleRoutes.find((item) => item.path === '/inventory/logs')?.name).toBe(
+      'InventoryLogs',
+    )
   })
 })

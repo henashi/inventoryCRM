@@ -25,8 +25,8 @@ authStore.initFromStorage()
 
 // register icons globally
 Object.keys(AntdIcons).forEach((key) => {
-	// @ts-ignore
-	app.component(key, (AntdIcons as any)[key])
+    // @ts-expect-error — Ant Design icon components are compatible
+  app.component(key, (AntdIcons as any)[key])
 })
 
 app.mount('#app')

@@ -114,6 +114,29 @@ public class WebSecurityConfig {
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(new JwtAuthenticationEntryPoint(objectMapper))
                         .accessDeniedHandler(new JwtAccessDeniedHandler())
+                )
+                // ===== 安全响应头 =====
+                .headers(headers -> headers
+                        .contentTypeOptions(c -> {})   // X-Content-Type-Options: nosniff
+                        .frameOptions(frame -> frame.deny())  // X-Frame-Options: DENY
+                        .xssProtection(xss -> xss
+                                .headerValue(org.springframework.security.web.header.writers
+                                        .XXssProtectionHeaderWriter.HeaderValue.DISABLED))
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .maxAgeInSeconds(31536000)
+                                .includeSubDomains(true))
+                        .cacheControl(c -> {})          // Cache-Control: no-cache (默认已启用)
+                        .addHeaderWriter(new org.springframework.security.web.header.writers
+                                .StaticHeadersWriter(
+                                "Content-Security-Policy",
+                                "default-src 'self'; " +
+                                "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+                                "style-src 'self' 'unsafe-inline'; " +
+                                "img-src 'self' data:; " +
+                                "font-src 'self' data:; " +
+                                "connect-src 'self' http://localhost:* ws://localhost:*; " +
+                                "frame-ancestors 'none'"
+                        ))
                 );
 
         return http.build();

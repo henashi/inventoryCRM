@@ -35,7 +35,8 @@ spring:
               create-target: create.sql
 
 jwt:
-  secret: "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789+/ab=="
+  # 从环境变量读取，生产环境必须设置 JWT_SECRET
+  secret: ${JWT_SECRET:aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789+/ab==}
   # 1 day
   expiration: 86400000
   # 7 days
@@ -70,6 +71,30 @@ ai:
   api-key: ${AI_API_KEY:}
   api-url: ${AI_API_URL:https://api.deepseek.com/chat/completions}
   model: ${AI_MODEL:deepseek-chat}
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        record-exceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
+    instances:
+      llmService:
+        base-config: default
+  ratelimiter:
+    configs:
+      default:
+        limit-for-period: 10
+        limit-refresh-period: 1m
+        timeout-duration: 5s
+    instances:
+      llmService:
+        base-config: default
 
 logging:
   level:

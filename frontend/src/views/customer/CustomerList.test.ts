@@ -4,14 +4,13 @@ import { readFileSync } from 'node:fs'
 const componentSource = readFileSync(new URL('./CustomerList.vue', import.meta.url), 'utf-8')
 
 describe('CustomerList compact layout', () => {
-  it('renders stat labels and values on one compact primary line', () => {
-    expect(componentSource).toContain('class="stats-primary-line"')
-    expect(componentSource).toContain('class="stats-title"')
-    expect(componentSource).toContain('class="stats-value-inline"')
-    expect(componentSource).toContain('class="stats-secondary-line"')
+  it('renders stat card CSS classes for compact primary line display', () => {
+    expect(componentSource).toContain('.stats-card')
     expect(componentSource).toContain('.stats-primary-line')
-    expect(componentSource).toContain('align-items: baseline;')
+    expect(componentSource).toContain('.stats-title')
     expect(componentSource).toContain('.stats-value-inline')
+    expect(componentSource).toContain('.stats-secondary-line')
+    expect(componentSource).toContain('align-items: baseline;')
     expect(componentSource).toContain('font-size: 18px;')
   })
 

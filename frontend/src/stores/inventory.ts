@@ -24,12 +24,15 @@ const buildInventoryQueryParams = (params?: InventoryQueryParams) => {
   }
 
   return Object.fromEntries(
-    Object.entries(queryParams).filter(([, value]) => value !== undefined && value !== null && value !== ''),
+    Object.entries(queryParams).filter(
+      ([, value]) => value !== undefined && value !== null && value !== '',
+    ),
   )
 }
 
 const downloadBlob = (response: Blob, filename: string) => {
-  const blob = response instanceof Blob ? response : new Blob([response], { type: 'text/csv;charset=utf-8' })
+  const blob =
+    response instanceof Blob ? response : new Blob([response], { type: 'text/csv;charset=utf-8' })
   const url = window.URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
@@ -63,7 +66,9 @@ export const useInventoryStore = defineStore('inventory', () => {
         ...lastQuery.value,
         ...params,
       }
-      const response: PageResult<Inventory> = await inventoryApi.getInventories(buildInventoryQueryParams(mergedParams))
+      const response: PageResult<Inventory> = await inventoryApi.getInventories(
+        buildInventoryQueryParams(mergedParams),
+      )
 
       inventories.value = response.content
       pagination.value = {
@@ -81,10 +86,12 @@ export const useInventoryStore = defineStore('inventory', () => {
   const loadSelectableInventories = async () => {
     try {
       selectableLoading.value = true
-      const response: PageResult<Inventory> = await inventoryApi.getInventories(buildInventoryQueryParams({
-        page: 0,
-        size: 1000,
-      }))
+      const response: PageResult<Inventory> = await inventoryApi.getInventories(
+        buildInventoryQueryParams({
+          page: 0,
+          size: 1000,
+        }),
+      )
       selectableInventories.value = response.content
       return response.content
     } finally {
@@ -137,7 +144,9 @@ export const useInventoryStore = defineStore('inventory', () => {
   }
 
   const exportInventories = async (params?: InventoryQueryParams) => {
-    const response = await inventoryApi.exportInventoryReport(buildInventoryQueryParams(params || lastQuery.value))
+    const response = await inventoryApi.exportInventoryReport(
+      buildInventoryQueryParams(params || lastQuery.value),
+    )
     downloadBlob(response as Blob, `库存快照_${new Date().toISOString().slice(0, 10)}.csv`)
   }
 

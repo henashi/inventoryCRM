@@ -1,7 +1,7 @@
-import {defineStore} from 'pinia'
-import {ref} from 'vue'
-import {giftApi} from '@/api/gift'
-import type {Gift, GiftCreateDTO, GiftUpdateDTO, PageParams} from '@/types'
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import { giftApi } from '@/api/gift'
+import type { Gift, GiftCreateDTO, GiftUpdateDTO, PageParams } from '@/types'
 import { toServerPage, toUiPage } from '@/utils/pagination'
 
 export const useGiftStore = defineStore('gift', () => {
@@ -10,7 +10,7 @@ export const useGiftStore = defineStore('gift', () => {
   const pagination = ref({
     page: 1,
     size: 10,
-    total: 0
+    total: 0,
   })
 
   const loadGifts = async (params: PageParams) => {
@@ -19,7 +19,7 @@ export const useGiftStore = defineStore('gift', () => {
     pagination.value = {
       page: toUiPage(res.number),
       size: res.size,
-      total: res.totalElements
+      total: res.totalElements,
     }
   }
 
@@ -49,6 +49,6 @@ export const useGiftStore = defineStore('gift', () => {
     createGift,
     updateGift,
     deleteGift,
-    getGift
+    getGift,
   }
 })

@@ -25,8 +25,8 @@ const request = axios.create({
   baseURL,
   timeout: 30000,
   headers: {
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+  },
 })
 
 const resolveAccessToken = (responseData: LoginResponse) => {
@@ -45,9 +45,10 @@ const redirectToLogin = async (errorMessage?: string) => {
   if (currentRoute.path !== '/login') {
     await router.replace({
       path: '/login',
-      query: currentRoute.fullPath && currentRoute.fullPath !== '/login'
-        ? { redirect: currentRoute.fullPath }
-        : undefined,
+      query:
+        currentRoute.fullPath && currentRoute.fullPath !== '/login'
+          ? { redirect: currentRoute.fullPath }
+          : undefined,
     })
   }
 }
@@ -61,24 +62,31 @@ const refreshAccessToken = async () => {
   }
 
   if (!refreshPromise) {
-    refreshPromise = axios.post<LoginResponse>(`${baseURL}/auth/refresh-token`, {
-      refreshToken: currentRefreshToken,
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    }).then((response) => {
-      const nextAccessToken = resolveAccessToken(response.data)
+    refreshPromise = axios
+      .post<LoginResponse>(
+        `${baseURL}/auth/refresh-token`,
+        {
+          refreshToken: currentRefreshToken,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      )
+      .then((response) => {
+        const nextAccessToken = resolveAccessToken(response.data)
 
-      if (!nextAccessToken) {
-        throw new Error('missing access token')
-      }
+        if (!nextAccessToken) {
+          throw new Error('missing access token')
+        }
 
-      authStore.setSession(response.data)
-      return nextAccessToken
-    }).finally(() => {
-      refreshPromise = null
-    })
+        authStore.setSession(response.data)
+        return nextAccessToken
+      })
+      .finally(() => {
+        refreshPromise = null
+      })
   }
 
   return refreshPromise
@@ -98,7 +106,7 @@ request.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error)
-  }
+  },
 )
 
 request.interceptors.response.use(
@@ -120,7 +128,10 @@ request.interceptors.response.use(
             break
           }
 
-          const canRetryWithRefresh = hasRefreshToken && !requestUrl.includes('/auth/refresh-token') && !originalRequest._retry
+          const canRetryWithRefresh =
+            hasRefreshToken &&
+            !requestUrl.includes('/auth/refresh-token') &&
+            !originalRequest._retry
 
           if (canRetryWithRefresh) {
             try {
@@ -161,7 +172,7 @@ request.interceptors.response.use(
     }
 
     return Promise.reject(error)
-  }
+  },
 )
 
 export default request as unknown as TypedRequest

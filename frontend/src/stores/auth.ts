@@ -69,8 +69,14 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const setSession = (responseData: Pick<LoginResponse, 'token' | 'access_token' | 'accessToken' | 'refreshToken' | 'refresh_token' | 'user' | 'data'>) => {
-    const nextAccessToken = responseData.token || responseData.access_token || responseData.accessToken || null
+  const setSession = (
+    responseData: Pick<
+      LoginResponse,
+      'token' | 'access_token' | 'accessToken' | 'refreshToken' | 'refresh_token' | 'user' | 'data'
+    >,
+  ) => {
+    const nextAccessToken =
+      responseData.token || responseData.access_token || responseData.accessToken || null
     const nextRefreshToken = responseData.refreshToken || responseData.refresh_token || null
 
     setAccessToken(nextAccessToken)
@@ -111,8 +117,8 @@ export const useAuthStore = defineStore('auth', () => {
 
       message.success('登录成功')
       return { success: true, data: responseData }
-    } catch (error: any) {
-      const errorMsg = error.response?.data?.message || '登录失败'
+    } catch (err) {
+      const errorMsg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || '登录失败'
       return { success: false, error: errorMsg }
     } finally {
       loading.value = false
@@ -151,10 +157,10 @@ export const useAuthStore = defineStore('auth', () => {
       clearAuthState(false)
       message.success('密码已修改，请重新登录')
       return { success: true as const }
-    } catch (error: any) {
+    } catch (err) {
       return {
         success: false as const,
-        error: error.response?.data?.message || '修改密码失败',
+        error: (err as { response?: { data?: { message?: string } } })?.response?.data?.message || '修改密码失败',
       }
     }
   }
@@ -165,10 +171,10 @@ export const useAuthStore = defineStore('auth', () => {
       persistUser(nextUser)
       message.success('个人资料已更新')
       return { success: true as const, data: nextUser }
-    } catch (error: any) {
+    } catch (err) {
       return {
         success: false as const,
-        error: error.response?.data?.message || '更新个人资料失败',
+        error: (err as { response?: { data?: { message?: string } } })?.response?.data?.message || '更新个人资料失败',
       }
     }
   }
