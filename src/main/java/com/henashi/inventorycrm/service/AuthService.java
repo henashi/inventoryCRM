@@ -85,15 +85,15 @@ public class AuthService {
             throw new UserAlreadyExistsException("用户名已存在");
         }
 
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (request.getEmail() != null && userRepository.existsByEmail(request.getEmail())) {
             throw new UserAlreadyExistsException("邮箱已存在");
         }
 
         User user = User.builder()
                 .username(request.getUsername().trim())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .realName(request.getRealName().trim())
-                .email(request.getEmail().trim())
+                .realName(request.getRealName() != null ? request.getRealName().trim() : null)
+                .email(request.getEmail() != null ? request.getEmail().trim() : null)
                 .role("USER")
                 .status("1")
                 .remark(request.getRemark())

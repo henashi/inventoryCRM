@@ -37,7 +37,6 @@ public class RegisterRequest {
     @Schema(description = "真实姓名", example = "张三")
     private String realName;
 
-    @NotBlank(message = "邮箱不能为空")
     @Email(message = "邮箱格式不正确")
     @Schema(description = "邮箱", example = "user@example.com", requiredMode = Schema.RequiredMode.REQUIRED)
     private String email;

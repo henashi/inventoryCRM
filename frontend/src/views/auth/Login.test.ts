@@ -16,10 +16,10 @@ describe('Login layout', () => {
     expect(componentSource).toContain('<inbox-outlined />')
   })
 
-  it('renders toggleable login/register forms', () => {
-    expect(componentSource).toContain('isRegisterMode')
+  it('renders registration entry below form', () => {
+    expect(componentSource).toContain('class="register-entry"')
     expect(componentSource).toContain('立即注册')
-    expect(componentSource).toContain('已有账号？')
+    expect(componentSource).toContain('没有账号？')
   })
 
   it('renders login form with username and password fields', () => {
@@ -36,6 +36,8 @@ describe('Login layout', () => {
   it('renders validation rules for username and password', () => {
     expect(componentSource).toContain('请输入用户名')
     expect(componentSource).toContain('请输入密码')
+    expect(componentSource).toContain('用户名长度为3-20个字符')
+    expect(componentSource).toContain('密码长度为6-20个字符')
   })
 
   it('renders login button and error message display', () => {
@@ -45,32 +47,27 @@ describe('Login layout', () => {
     expect(componentSource).toContain(':loading="loading"')
   })
 
-  it('renders register form fields', () => {
-    expect(componentSource).toContain('确认密码')
-    expect(componentSource).toContain('真实姓名（可选）')
-    expect(componentSource).toContain('<mail-outlined />')
-  })
-
   it('renders footer with copyright and support info', () => {
     expect(componentSource).toContain('class="login-footer"')
     expect(componentSource).toContain('© 2026 库存CRM系统')
     expect(componentSource).toContain('技术支持')
   })
 
-  it('uses modern flat design', () => {
-    expect(componentSource).toContain('border-radius: 8px')
-    expect(componentSource).toContain('box-shadow: 0 2px 12px')
+  it('uses gradient background for login page', () => {
+    expect(componentSource).toContain(
+      'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    )
+    expect(componentSource).toContain('box-shadow: 0 20px 40px')
   })
 
-  it('uses CSS variables for theme support', () => {
-    expect(componentSource).toContain('var(--bg-color')
-    expect(componentSource).toContain('var(--card-bg')
-    expect(componentSource).toContain('var(--text-color')
-    expect(componentSource).toContain('var(--text-secondary')
+  it('applies dark theme overrides', () => {
+    expect(componentSource).toContain("[data-theme='dark'] .login-card")
+    expect(componentSource).toContain("[data-theme='dark'] .login-title")
+    expect(componentSource).toContain("[data-theme='dark'] .login-footer")
+    expect(componentSource).toContain("[data-theme='dark'] .error-message")
   })
 
-  it('uses card width 400px for desktop', () => {
-    expect(componentSource).toContain('width: 400px')
-    expect(componentSource).toContain('min-height: 100vh')
+  it('renders responsive mobile breakpoint', () => {
+    expect(componentSource).toContain('@media (max-width: 480px)')
   })
 })
