@@ -93,9 +93,6 @@
         <a-form-item label="确认密码" name="confirmPassword">
           <a-input-password v-model:value="registerForm.confirmPassword" placeholder="再次输入密码" />
         </a-form-item>
-        <a-form-item label="真实姓名" name="realName">
-          <a-input v-model:value="registerForm.realName" placeholder="2-20字符" />
-        </a-form-item>
         <a-form-item label="邮箱" name="email">
           <a-input v-model:value="registerForm.email" placeholder="you@example.com" />
         </a-form-item>
@@ -132,7 +129,6 @@
     username: '',
     password: '',
     confirmPassword: '',
-    realName: '',
     email: '',
   })
   const registerRules: Record<string, Rule[]> = {
@@ -156,10 +152,6 @@
         },
         trigger: 'blur',
       },
-    ],
-    realName: [
-      { required: true, message: '请输入真实姓名', trigger: 'blur' },
-      { min: 2, max: 20, message: '长度 2-20', trigger: 'blur' },
     ],
     email: [
       { required: true, message: '请输入邮箱', trigger: 'blur' },
@@ -189,7 +181,6 @@
     registerForm.username = ''
     registerForm.password = ''
     registerForm.confirmPassword = ''
-    registerForm.realName = ''
     registerForm.email = ''
   }
   const authStore = useAuthStore()
