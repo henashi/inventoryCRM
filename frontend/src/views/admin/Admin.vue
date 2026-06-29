@@ -5,6 +5,7 @@
         <p class="page-subtitle">聚合系统概览、模块入口与运行提醒，便于演示和日常巡检。</p>
       </div>
       <a-space wrap>
+        <a-button @click="router.push('/admin/users')">用户管理</a-button>
         <a-button @click="goDataDicts">配置管理</a-button>
       </a-space>
     </div>

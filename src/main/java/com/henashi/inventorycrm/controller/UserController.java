@@ -12,6 +12,10 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +24,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -32,6 +37,14 @@ import java.net.URI;
 public class UserController {
 
     private final UserService userService;
+
+    @GetMapping
+    @Operation(summary = "分页查询用户列表")
+    public Page<UserDTO> listUsers(
+            @RequestParam(required = false) String keyword,
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+        return userService.listUsers(keyword, pageable);
+    }
 
     @GetMapping("/{id}")
     @Operation(summary = "根据 ID 查询用户")
@@ -84,6 +97,22 @@ public class UserController {
             @PathVariable @NotNull @Min(1) Long id) {
         userService.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/reset-password")
+    @Operation(summary = "重置用户密码为 123456")
+    public ResponseEntity<Void> resetPassword(
+            @PathVariable @NotNull @Min(1) Long id) {
+        userService.resetPassword(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/status")
+    @Operation(summary = "切换用户启用/禁用状态")
+    public ResponseEntity<Void> toggleStatus(
+            @PathVariable @NotNull @Min(1) Long id) {
+        userService.toggleStatus(id);
+        return ResponseEntity.ok().build();
     }
 
 }

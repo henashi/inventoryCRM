@@ -731,6 +731,18 @@ export function getInventoryLogTypeColor(logType: InventoryLogType): string {
   return colorMap[logType] || 'default'
 }
 
+// 用户相关类型
+export interface UserDTO {
+  id: number
+  username: string
+  realName?: string
+  email?: string
+  role: 'ADMIN' | 'MANAGER' | 'USER'
+  status: number
+  lastLoginAt?: string
+  remark?: string
+}
+
 // 获取操作来源显示文本
 export function getInventoryLogSourceText(source?: InventoryLogSource): string {
   if (!source) return '未知'

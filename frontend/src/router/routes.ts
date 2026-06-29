@@ -93,6 +93,12 @@ export const appRoutes: RouteRecordRaw[] = [
         redirect: '/data-dicts',
       },
       {
+        path: 'users',
+        name: 'UserManagement',
+        component: () => import('../views/admin/UserManagement.vue'),
+        meta: { requiresAuth: true, title: '用户管理', roles: getFeatureRoles('admin') },
+      },
+      {
         path: 'data-dicts',
         name: 'DataDict',
         component: () => import('../views/dataDict/DataDict.vue'),

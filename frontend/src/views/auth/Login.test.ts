@@ -16,10 +16,8 @@ describe('Login layout', () => {
     expect(componentSource).toContain('<inbox-outlined />')
   })
 
-  it('renders info alert about internal account only', () => {
-    expect(componentSource).toContain('class="login-alert"')
-    expect(componentSource).toContain('当前仅开放内部账号登录')
-    expect(componentSource).toContain('系统不提供自助注册与找回密码入口')
+  it('renders registration link', () => {
+    expect(componentSource).toContain('立即注册')
   })
 
   it('renders login form with username and password fields', () => {

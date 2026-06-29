@@ -8,13 +8,9 @@
         <h1 class="login-title" id="login-title">库存CRM系统</h1>
       </div>
 
-      <a-alert
-        class="login-alert"
-        type="info"
-        show-icon
-        message="当前仅开放内部账号登录"
-        description="系统不提供自助注册与找回密码入口，如需开通账号或重置密码，请联系管理员。"
-      />
+      <div class="login-actions">
+        <a-button type="link" @click="showRegister = true">没有账号？立即注册</a-button>
+      </div>
 
       <a-form
         ref="formRef"
@@ -78,6 +74,33 @@
         <p class="support-info">技术支持: 400-xxx-xxxx</p>
       </div>
     </div>
+
+    <!-- 注册弹窗 -->
+    <a-modal
+      v-model:open="showRegister"
+      title="注册新账号"
+      :confirm-loading="registerLoading"
+      @ok="handleRegister"
+      @cancel="handleRegisterCancel"
+    >
+      <a-form ref="registerFormRef" :model="registerForm" layout="vertical" :rules="registerRules">
+        <a-form-item label="用户名" name="username">
+          <a-input v-model:value="registerForm.username" placeholder="3-20字符，字母数字下划线" />
+        </a-form-item>
+        <a-form-item label="密码" name="password">
+          <a-input-password v-model:value="registerForm.password" placeholder="6-20字符" />
+        </a-form-item>
+        <a-form-item label="确认密码" name="confirmPassword">
+          <a-input-password v-model:value="registerForm.confirmPassword" placeholder="再次输入密码" />
+        </a-form-item>
+        <a-form-item label="真实姓名" name="realName">
+          <a-input v-model:value="registerForm.realName" placeholder="2-20字符" />
+        </a-form-item>
+        <a-form-item label="邮箱" name="email">
+          <a-input v-model:value="registerForm.email" placeholder="you@example.com" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
@@ -98,6 +121,77 @@
 
   const router = useRouter()
   const route = useRoute()
+  import { authApi } from '@/api/auth'
+  import { message } from 'ant-design-vue'
+
+  // 注册
+  const showRegister = ref(false)
+  const registerLoading = ref(false)
+  const registerFormRef = ref()
+  const registerForm = reactive({
+    username: '',
+    password: '',
+    confirmPassword: '',
+    realName: '',
+    email: '',
+  })
+  const registerRules: Record<string, Rule[]> = {
+    username: [
+      { required: true, message: '请输入用户名', trigger: 'blur' },
+      { min: 3, max: 20, message: '长度 3-20', trigger: 'blur' },
+      { pattern: /^[a-zA-Z0-9_]+$/, message: '字母数字下划线', trigger: 'blur' },
+    ],
+    password: [
+      { required: true, message: '请输入密码', trigger: 'blur' },
+      { min: 6, max: 20, message: '长度 6-20', trigger: 'blur' },
+    ],
+    confirmPassword: [
+      { required: true, message: '请确认密码', trigger: 'blur' },
+      {
+        validator: (_rule: any, value: string) => {
+          if (value !== registerForm.password) {
+            return Promise.reject(new Error('两次密码不一致'))
+          }
+          return Promise.resolve()
+        },
+        trigger: 'blur',
+      },
+    ],
+    realName: [
+      { required: true, message: '请输入真实姓名', trigger: 'blur' },
+      { min: 2, max: 20, message: '长度 2-20', trigger: 'blur' },
+    ],
+    email: [
+      { required: true, message: '请输入邮箱', trigger: 'blur' },
+      { type: 'email', message: '邮箱格式不正确', trigger: 'blur' },
+    ],
+  }
+
+  const handleRegister = async () => {
+    try {
+      await registerFormRef.value?.validate()
+    } catch {
+      return
+    }
+    registerLoading.value = true
+    try {
+      await authApi.register(registerForm as any)
+      message.success('注册成功，请登录')
+      showRegister.value = false
+    } catch (err: any) {
+      message.error(err.response?.data?.message || '注册失败')
+    } finally {
+      registerLoading.value = false
+    }
+  }
+
+  const handleRegisterCancel = () => {
+    registerForm.username = ''
+    registerForm.password = ''
+    registerForm.confirmPassword = ''
+    registerForm.realName = ''
+    registerForm.email = ''
+  }
   const authStore = useAuthStore()
   const formRef = ref()
 
@@ -198,8 +292,12 @@
     color: #262626;
     margin: 0;
   }
-  .login-alert {
-    margin-bottom: 20px;
+  .login-actions {
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .login-actions a {
+    font-size: 13px;
   }
   .login-form {
     margin-bottom: 24px;
