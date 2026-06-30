@@ -93,6 +93,24 @@ export const appRoutes: RouteRecordRaw[] = [
         redirect: '/data-dicts',
       },
       {
+        path: 'roles',
+        name: 'RoleList',
+        component: () => import('../views/admin/RoleList.vue'),
+        meta: { requiresAuth: true, title: '角色管理', roles: getFeatureRoles('admin') },
+      },
+      {
+        path: 'permission-defs',
+        name: 'PermissionDefList',
+        component: () => import('../views/admin/PermissionDefList.vue'),
+        meta: { requiresAuth: true, title: '权限管理', roles: getFeatureRoles('admin') },
+      },
+      {
+        path: 'roles/:roleId/permissions/:roleName',
+        name: 'RolePermission',
+        component: () => import('../views/admin/RolePermission.vue'),
+        meta: { requiresAuth: true, title: '角色权限配置', roles: getFeatureRoles('admin') },
+      },
+      {
         path: 'users',
         name: 'UserManagement',
         component: () => import('../views/admin/UserManagement.vue'),

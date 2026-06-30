@@ -2,9 +2,11 @@ package com.henashi.inventorycrm;
 
 import com.henashi.inventorycrm.pojo.InventoryLog;
 import com.henashi.inventorycrm.pojo.Product;
+import com.henashi.inventorycrm.pojo.Role;
 import com.henashi.inventorycrm.pojo.User;
 import com.henashi.inventorycrm.repository.InventoryLogRepository;
 import com.henashi.inventorycrm.repository.ProductRepository;
+import com.henashi.inventorycrm.repository.RoleRepository;
 import com.henashi.inventorycrm.repository.UserRepository;
 import com.henashi.inventorycrm.service.JwtService;
 import org.junit.jupiter.api.Test;
@@ -38,6 +40,9 @@ class InventoryOperationRegressionTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
 
     @Autowired
     private JwtService jwtService;
@@ -87,7 +92,13 @@ class InventoryOperationRegressionTest {
         assertThat(latestLog.getRemark()).isEqualTo("618备货");
     }
 
-    private User createUser(String prefix, String role) {
+    private User createUser(String prefix, String roleName) {
+        Role role = roleRepository.findByName(roleName)
+                .orElseGet(() -> roleRepository.save(Role.builder()
+                        .name(roleName)
+                        .displayName(roleName)
+                        .status("1")
+                        .build()));
         return userRepository.save(User.builder()
                 .username(uniqueValue(prefix))
                 .password("secret")

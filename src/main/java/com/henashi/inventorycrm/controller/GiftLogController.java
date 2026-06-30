@@ -1,5 +1,7 @@
 package com.henashi.inventorycrm.controller;
 
+import com.henashi.inventorycrm.annotation.RequirePermission;
+import static com.henashi.inventorycrm.constants.Permissions.*;
 import com.henashi.inventorycrm.dto.GiftLogCreateDTO;
 import com.henashi.inventorycrm.dto.GiftLogDTO;
 import com.henashi.inventorycrm.dto.GiftLogUpdateDTO;
@@ -77,6 +79,7 @@ public class GiftLogController {
     }
 
     @DeleteMapping("/{id}")
+    @RequirePermission(GIFT_LOGS_DELETE)
     @Operation(summary = "删除礼品日志", description = "根据礼品日志ID软删除对应记录")
     public ResponseEntity<Void> deleteGiftLog(@PathVariable("id") @NotNull @Min(1) Long id) {
         giftLogService.deleteGiftLog(id);

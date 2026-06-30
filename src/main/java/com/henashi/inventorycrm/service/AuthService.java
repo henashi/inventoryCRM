@@ -11,7 +11,9 @@ import com.henashi.inventorycrm.exception.BusinessException;
 import com.henashi.inventorycrm.exception.SecurityAuthenticationException;
 import com.henashi.inventorycrm.exception.UserAlreadyExistsException;
 import com.henashi.inventorycrm.mapper.UserMapper;
+import com.henashi.inventorycrm.pojo.Role;
 import com.henashi.inventorycrm.pojo.User;
+import com.henashi.inventorycrm.repository.RoleRepository;
 import com.henashi.inventorycrm.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -32,6 +34,7 @@ import java.time.LocalDateTime;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
@@ -89,12 +92,15 @@ public class AuthService {
             throw new UserAlreadyExistsException("邮箱已存在");
         }
 
+        Role defaultRole = roleRepository.findByName("USER")
+                .orElseThrow(() -> new RuntimeException("默认角色 USER 不存在"));
+
         User user = User.builder()
                 .username(request.getUsername().trim())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .realName(request.getRealName() != null ? request.getRealName().trim() : null)
                 .email(request.getEmail() != null ? request.getEmail().trim() : null)
-                .role("USER")
+                .role(defaultRole)
                 .status("1")
                 .remark(request.getRemark())
                 .tokenVersion(0)

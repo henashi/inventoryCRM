@@ -85,4 +85,63 @@ public class DataDictService {
         List<DataDict> dictList = dataDictRepository.findByGroupCodeAndParamCode(groupCode, paramCode);
         return dictList.isEmpty() ? Optional.empty() : Optional.of(dictList.get(0));
     }
+
+    @Transactional
+    public void initPermissionDefaults() {
+        String[][] defaults = {
+            {"dashboard:view", "查看仪表盘", "[\"ADMIN\",\"MANAGER\",\"USER\"]"},
+            {"customers:view", "查看客户列表", "[\"ADMIN\",\"MANAGER\",\"USER\"]"},
+            {"customers:create", "新增客户", "[\"ADMIN\",\"MANAGER\",\"USER\"]"},
+            {"customers:edit", "编辑客户", "[\"ADMIN\",\"MANAGER\",\"USER\"]"},
+            {"customers:delete", "删除客户", "[\"ADMIN\"]"},
+            {"customers:import", "导入客户", "[\"ADMIN\",\"MANAGER\",\"USER\"]"},
+            {"customers:export", "导出客户", "[\"ADMIN\",\"MANAGER\",\"USER\"]"},
+            {"products:view", "查看商品列表", "[\"ADMIN\",\"MANAGER\",\"USER\"]"},
+            {"products:create", "新增商品", "[\"ADMIN\",\"MANAGER\"]"},
+            {"products:edit", "编辑商品", "[\"ADMIN\",\"MANAGER\"]"},
+            {"products:delete", "删除商品", "[\"ADMIN\",\"MANAGER\"]"},
+            {"products:import", "导入商品", "[\"ADMIN\",\"MANAGER\"]"},
+            {"products:export", "导出商品", "[\"ADMIN\",\"MANAGER\",\"USER\"]"},
+            {"products:enable", "停用/启用商品", "[\"ADMIN\",\"MANAGER\"]"},
+            {"inventory:view", "查看库存", "[\"ADMIN\",\"MANAGER\",\"USER\"]"},
+            {"inventory:stockIn", "入库", "[\"ADMIN\",\"MANAGER\"]"},
+            {"inventory:stockOut", "出库", "[\"ADMIN\",\"MANAGER\",\"USER\"]"},
+            {"inventory:adjust", "调整库存", "[\"ADMIN\",\"MANAGER\"]"},
+            {"inventory:export", "导出快照", "[\"ADMIN\",\"MANAGER\",\"USER\"]"},
+            {"orders:view", "查看订单", "[\"ADMIN\",\"MANAGER\",\"USER\"]"},
+            {"orders:create", "新增订单", "[\"ADMIN\",\"MANAGER\",\"USER\"]"},
+            {"orders:delete", "删除订单", "[\"ADMIN\"]"},
+            {"gifts:view", "查看礼品", "[\"ADMIN\",\"MANAGER\",\"USER\"]"},
+            {"gifts:create", "新增礼品", "[\"ADMIN\",\"MANAGER\"]"},
+            {"gifts:edit", "编辑礼品", "[\"ADMIN\",\"MANAGER\"]"},
+            {"gifts:delete", "删除礼品", "[\"ADMIN\"]"},
+            {"giftLogs:view", "查看发放日志", "[\"ADMIN\",\"MANAGER\",\"USER\"]"},
+            {"giftLogs:delete", "删除发放日志", "[\"ADMIN\"]"},
+            {"dataDicts:view", "查看配置", "[\"ADMIN\"]"},
+            {"dataDicts:manage", "管理配置", "[\"ADMIN\"]"},
+            {"users:view", "查看用户", "[\"ADMIN\"]"},
+            {"users:manage", "管理用户", "[\"ADMIN\"]"},
+            {"operationLogs:view", "查看系统日志", "[\"ADMIN\",\"MANAGER\",\"USER\"]"},
+            {"ai:scoring", "AI 客户评分", "[\"ADMIN\",\"MANAGER\"]"},
+            {"ai:recommendation", "AI 礼品推荐", "[\"ADMIN\",\"MANAGER\"]"},
+            {"ai:assistant", "AI 运营助手", "[\"ADMIN\",\"MANAGER\"]"},
+            {"ai:prediction", "AI 库存预测", "[\"ADMIN\",\"MANAGER\"]"}
+        };
+
+        for (String[] def : defaults) {
+            List<DataDict> existing = dataDictRepository
+                    .findByGroupCodeAndParamCode("PERMISSION", def[0]);
+            if (existing.isEmpty()) {
+                DataDict dict = DataDict.builder()
+                        .groupCode("PERMISSION")
+                        .groupName("权限配置")
+                        .paramCode(def[0])
+                        .paramName(def[1])
+                        .paramValue(def[2])
+                        .description("权限默认值，格式为角色 JSON 数组")
+                        .build();
+                dataDictRepository.save(dict);
+            }
+        }
+    }
 }

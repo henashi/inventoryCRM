@@ -2,6 +2,8 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { message } from 'ant-design-vue'
 import { authApi } from '@/api/auth'
+import { adminApi } from '@/api/admin'
+import type { RolePermissionsMap, UserPermissionItem } from '@/types'
 import type {
   ChangePasswordRequest,
   LoginRequest,
@@ -23,6 +25,8 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem(ACCESS_TOKEN_KEY))
   const refreshToken = ref<string | null>(localStorage.getItem(REFRESH_TOKEN_KEY))
   const user = ref<User | null>(null)
+  const permissions = ref<RolePermissionsMap>({})
+  const permissionList = ref<UserPermissionItem[]>([])
   const loading = ref(false)
 
   const isAuthenticated = computed(() => !!token.value)
@@ -144,11 +148,37 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const res = await authApi.getCurrentUser()
       persistUser(res || null)
+      // 登录成功后加载权限
+      await loadPermissions()
       return true
     } catch {
       await logout({ notify: false, remote: false })
       return false
     }
+  }
+
+  const loadPermissions = async () => {
+    try {
+      const list = await authApi.getMyPermissions()
+      permissionList.value = list
+      // 同步更新 permissions map（向后兼容已有页面）
+      const map: Record<string, boolean> = {}
+      for (const item of list) {
+        map[item.key] = item.enabled
+      }
+      permissions.value = map
+    } catch {
+      permissionList.value = []
+      permissions.value = {}
+    }
+  }
+
+  const hasPermission = (key: string): boolean => {
+    // API 权限映射优先，不在映射表中则默认拒绝（default-deny）
+    if (key in permissions.value) {
+      return permissions.value[key] ?? false
+    }
+    return false
   }
 
   const changePassword = async (request: ChangePasswordRequest) => {
@@ -214,6 +244,10 @@ export const useAuthStore = defineStore('auth', () => {
     updateProfile,
     updateUserInfo,
     initFromStorage,
+    permissions,
+    permissionList,
+    hasPermission,
+    loadPermissions,
     setAccessToken,
     setRefreshToken,
     setSession,

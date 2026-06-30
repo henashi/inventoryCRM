@@ -2,17 +2,21 @@
   <div class="product-list-page">
     <div class="page-header">
       <div class="page-actions">
-        <a-button type="primary" @click="showAddModal">
-          <plus-outlined />
-          新增商品
-        </a-button>
-        <a-button @click="showImportModal">
+        <a-button v-if="authStore.hasPermission('products:import')" @click="showImportModal">
           <import-outlined />
           导入商品
         </a-button>
         <a-button @click="handleExport" :loading="exportLoading">
           <export-outlined />
           导出商品
+        </a-button>
+        <a-button
+          v-if="authStore.hasPermission('products:create')"
+          type="primary"
+          @click="showAddModal"
+        >
+          <plus-outlined />
+          新增商品
         </a-button>
       </div>
     </div>
@@ -133,12 +137,24 @@
 
           <template v-else-if="column.dataIndex === 'actions'">
             <a-space size="small">
-              <a-button type="link" size="small" @click="handleEdit(record)"> 编辑 </a-button>
-              <template v-if="canManageInventory">
+              <a-button
+                v-if="authStore.hasPermission('products:edit')"
+                type="link"
+                size="small"
+                @click="handleEdit(record)"
+              >
+                编辑
+              </a-button>
+              <template v-if="authStore.hasPermission('inventory:view')">
                 <a-button type="link" size="small" @click="goToInventoryDetail(record)">
                   库存详情
                 </a-button>
-                <a-button type="link" size="small" @click="goToInventoryAction(record, 'in')">
+                <a-button
+                  v-if="authStore.hasPermission('inventory:stockIn')"
+                  type="link"
+                  size="small"
+                  @click="goToInventoryAction(record, 'in')"
+                >
                   入库
                 </a-button>
                 <a-button type="link" size="small" @click="goToInventoryAction(record, 'out')">
@@ -146,7 +162,7 @@
                 </a-button>
               </template>
               <a-button
-                v-if="record.status === 1"
+                v-if="authStore.hasPermission('products:enable') && record.status === 1"
                 type="link"
                 size="small"
                 danger
@@ -155,11 +171,22 @@
                 <stop-outlined />
                 停用
               </a-button>
-              <a-button v-else type="link" size="small" @click="handleEnable(record)">
+              <a-button
+                v-else-if="authStore.hasPermission('products:enable') && record.status !== 1"
+                type="link"
+                size="small"
+                @click="handleEnable(record)"
+              >
                 <check-outlined />
                 启用
               </a-button>
-              <a-button type="link" size="small" danger @click="handleDelete(record)">
+              <a-button
+                v-if="authStore.hasPermission('products:delete')"
+                type="link"
+                size="small"
+                danger
+                @click="handleDelete(record)"
+              >
                 删除
               </a-button>
             </a-space>
@@ -364,7 +391,6 @@
     ImportOutlined,
     ExportOutlined,
   } from '@ant-design/icons-vue'
-  import { canAccessFeature } from '@/router/accessControl'
   import { useAuthStore } from '@/stores/auth'
   import { useProductStore } from '@/stores/product'
   import { productApi } from '@/api/product'
@@ -485,7 +511,7 @@
     },
   ]
 
-  const canManageInventory = computed(() => canAccessFeature(authStore.userRole, 'inventory'))
+  // 权限判断统一通过 authStore.hasPermission()
   const categoryFilterState = computed(() => buildCategoryFilterState(categories.value))
   const tableProducts = computed(() =>
     quickFilter.value === 'all' ? productStore.products : lowStockProducts.value,
@@ -1154,18 +1180,6 @@
 
   .search-card :deep(.ant-btn) {
     padding-inline: 16px;
-  }
-
-  .search-card :deep(.ant-btn-primary),
-  .page-actions :deep(.ant-btn-primary) {
-    border: none;
-    color: #fff;
-    background-image: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
-  }
-
-  .search-card :deep(.ant-btn-primary:hover),
-  .page-actions :deep(.ant-btn-primary:hover) {
-    background-color: #1d4ed8;
   }
 
   .search-card :deep(.ant-btn-default),

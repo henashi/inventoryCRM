@@ -8,10 +8,12 @@ import com.henashi.inventorycrm.exception.BusinessException;
 import com.henashi.inventorycrm.pojo.Customer;
 import com.henashi.inventorycrm.pojo.Gift;
 import com.henashi.inventorycrm.pojo.GiftLog;
+import com.henashi.inventorycrm.pojo.Role;
 import com.henashi.inventorycrm.pojo.User;
 import com.henashi.inventorycrm.repository.CustomerRepository;
 import com.henashi.inventorycrm.repository.GiftLogRepository;
 import com.henashi.inventorycrm.repository.GiftRepository;
+import com.henashi.inventorycrm.repository.RoleRepository;
 import com.henashi.inventorycrm.repository.UserRepository;
 import com.henashi.inventorycrm.service.AuthService;
 import com.henashi.inventorycrm.service.CustomerService;
@@ -57,6 +59,9 @@ class RegressionFixesTest {
     private UserRepository userRepository;
 
     @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
     private CustomerRepository customerRepository;
 
     @Autowired
@@ -85,12 +90,14 @@ class RegressionFixesTest {
 
     @Test
     void updateProfileRejectsUsernameChangeButStillKeepsCurrentUsernameForSuccessfulProfileUpdates() {
+        Role defaultRole = roleRepository.findByName("USER")
+                .orElseGet(() -> roleRepository.save(Role.builder().name("USER").displayName("普通用户").status("1").build()));
         User user = userRepository.save(User.builder()
                 .username(uniqueValue("profile-user"))
                 .password("secret")
                 .realName("原姓名")
                 .email(uniqueValue("profile") + "@example.com")
-                .role("USER")
+                .role(defaultRole)
                 .status("1")
                 .tokenVersion(0)
                 .build());
@@ -129,7 +136,7 @@ class RegressionFixesTest {
         String userToken = jwtService.generateToken(createUser("inventory-user", "USER"));
         String managerToken = jwtService.generateToken(createUser("inventory-manager", "MANAGER"));
 
-        assertThat(getInventoriesStatusCode(userToken)).isEqualTo(403);
+        assertThat(getInventoriesStatusCode(userToken)).isEqualTo(200);
         assertThat(getInventoriesStatusCode(managerToken)).isEqualTo(200);
     }
 
@@ -243,7 +250,9 @@ class RegressionFixesTest {
         return httpClient.send(request, HttpResponse.BodyHandlers.discarding()).statusCode();
     }
 
-    private User createUser(String prefix, String role) {
+    private User createUser(String prefix, String roleName) {
+        Role role = roleRepository.findByName(roleName)
+                .orElseGet(() -> roleRepository.save(Role.builder().name(roleName).displayName(roleName).status("1").build()));
         return userRepository.save(User.builder()
                 .username(uniqueValue(prefix))
                 .password("secret")

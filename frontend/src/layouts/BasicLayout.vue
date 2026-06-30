@@ -25,28 +25,36 @@
           <span>仪表盘</span>
         </a-menu-item>
 
-        <a-sub-menu key="inventory">
+        <a-menu-item v-if="canShow('products') && !canShow('inventory')" key="/products">
+          <shop-outlined />
+          <span>商品管理</span>
+        </a-menu-item>
+
+        <a-menu-item v-if="canShow('products') && !canShow('customers')" key="/orders">
+          <shopping-cart-outlined />
+          <span>订单管理</span>
+        </a-menu-item>
+
+        <a-sub-menu v-if="canShow('inventory')" key="inventory">
           <template #title>
             <shop-outlined />
             <span>库存管理</span>
           </template>
           <a-menu-item key="/inventory">库存概览</a-menu-item>
           <a-menu-item key="/products">商品管理</a-menu-item>
-          <a-menu-item key="/inventory/predictions">AI 预测</a-menu-item>
+          <a-menu-item v-if="canShow('ai')" key="/inventory/predictions">AI 预测</a-menu-item>
         </a-sub-menu>
 
-        <a-sub-menu key="customer">
+        <a-sub-menu v-if="canShow('customers')" key="customer">
           <template #title>
             <team-outlined />
             <span>客户管理</span>
           </template>
           <a-menu-item key="/customers">客户列表</a-menu-item>
-          <a-menu-item key="/ai/customers/scores">AI 评分</a-menu-item>
-          <a-menu-item key="/ai/customers/gift-recommendations">礼品推荐</a-menu-item>
+          <a-menu-item v-if="canShow('ai')" key="/ai/customers/scores">AI 评分</a-menu-item>
+          <a-menu-item v-if="canShow('ai')" key="/ai/customers/gift-recommendations">礼品推荐</a-menu-item>
           <a-menu-item key="/orders">订单管理</a-menu-item>
         </a-sub-menu>
-
-        <!-- AI 助手菜单已隐藏，使用悬浮球按钮 -->
 
         <a-sub-menu key="gift">
           <template #title>
@@ -57,12 +65,15 @@
           <a-menu-item key="/gift-logs">礼品发放</a-menu-item>
         </a-sub-menu>
 
-        <a-sub-menu key="system">
+        <a-sub-menu v-if="canShow('data-dicts')" key="system">
           <template #title>
             <setting-outlined />
             <span>系统管理</span>
           </template>
           <a-menu-item key="/data-dicts">配置管理</a-menu-item>
+          <a-menu-item key="/users">用户管理</a-menu-item>
+          <a-menu-item key="/roles">角色管理</a-menu-item>
+          <a-menu-item key="/permission-defs">权限管理</a-menu-item>
           <a-menu-item key="/operation-logs">系统日志</a-menu-item>
         </a-sub-menu>
       </a-menu>
@@ -118,9 +129,11 @@
   import { useRouter, useRoute } from 'vue-router'
   import { useAuthStore } from '@/stores/auth'
   import { useThemeStore } from '@/stores/theme'
+  import { canAccessFeature } from '@/router/accessControl'
   import {
     DashboardOutlined,
     ShopOutlined,
+    ShoppingCartOutlined,
     TeamOutlined,
     SettingOutlined,
     GiftOutlined,
@@ -162,6 +175,10 @@
     }
   })
 
+  const userRole = computed(() => authStore.userRole)
+
+  const canShow = (feature: string) => canAccessFeature(userRole.value, feature as any)
+
   const selectedKeys = ref<string[]>(['/dashboard'])
   const openKeys = ref<string[]>([])
 
@@ -177,7 +194,7 @@
     )
       openKeys.value.push('customer')
     if (path.startsWith('/gift')) openKeys.value.push('gift')
-    if (path.startsWith('/data-dicts') || path.startsWith('/operation-logs'))
+    if (path.startsWith('/data-dicts') || path.startsWith('/operation-logs') || path.startsWith('/users'))
       openKeys.value.push('system')
   })
 

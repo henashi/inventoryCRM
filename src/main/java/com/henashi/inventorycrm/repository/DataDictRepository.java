@@ -15,4 +15,6 @@ public interface DataDictRepository extends JpaRepository<DataDict, Long> {
     int customDeleteById(@Param("id") Long id);
 
     List<DataDict> findByGroupCodeAndParamCode(String groupCode, String paramCode);
+
+    List<DataDict> findByGroupCode(String groupCode);
 }

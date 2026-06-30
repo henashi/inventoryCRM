@@ -8,6 +8,7 @@ import type {
   UpdateProfileRequest,
   User,
 } from '@/types/auth'
+import type { UserPermissionItem } from '@/types'
 
 export const authApi = {
   login: (data: LoginRequest) => request.post<LoginResponse>('/auth/login', data),
@@ -25,4 +26,6 @@ export const authApi = {
     request.post<void>('/auth/change-password', data),
 
   updateProfile: (data: UpdateProfileRequest) => request.put<User>('/auth/profile', data),
+
+  getMyPermissions: () => request.get<UserPermissionItem[]>('/auth/permissions'),
 }

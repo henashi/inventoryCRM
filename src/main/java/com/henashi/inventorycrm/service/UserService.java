@@ -5,7 +5,9 @@ import com.henashi.inventorycrm.dto.UserCreateDTO;
 import com.henashi.inventorycrm.dto.UserDTO;
 import com.henashi.inventorycrm.exception.BusinessException;
 import com.henashi.inventorycrm.mapper.UserMapper;
+import com.henashi.inventorycrm.pojo.Role;
 import com.henashi.inventorycrm.pojo.User;
+import com.henashi.inventorycrm.repository.RoleRepository;
 import com.henashi.inventorycrm.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -23,6 +25,7 @@ public class UserService {
 
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
 //    private final UserDetailsServiceImpl userDetailsService;
@@ -76,6 +79,11 @@ public class UserService {
 
         User user = userMapper.createToEntity(userCreateDTO);
         user.setPassword(encodedPassword);
+        // 设置角色实体
+        roleRepository.findByName(userCreateDTO.role())
+                .ifPresentOrElse(user::setRole, () -> {
+                    throw new BusinessException("INVALID_ROLE", "角色不存在: " + userCreateDTO.role());
+                });
         // 默认启用
         user.setStatus("1");
 
@@ -141,7 +149,10 @@ public class UserService {
             user.setUsername(dto.username());
         }
         if (dto.role() != null) {
-            user.setRole(dto.role());
+            roleRepository.findByName(dto.role())
+                    .ifPresentOrElse(user::setRole, () -> {
+                        throw new BusinessException("INVALID_ROLE", "角色不存在: " + dto.role());
+                    });
         }
         if (dto.password() != null && !dto.password().trim().isEmpty()) {
             user.setPassword(passwordEncoder.encode(dto.password()));

@@ -15,8 +15,8 @@ describe('accessControl', () => {
   })
 
   it('blocks user from restricted P0 features', () => {
-    expect(canAccessFeature('USER', 'customers')).toBe(false)
-    expect(canAccessFeature('USER', 'inventory')).toBe(false)
+    expect(canAccessFeature('USER', 'customers')).toBe(true)
+    expect(canAccessFeature('USER', 'inventory')).toBe(true)
     expect(canAccessFeature('USER', 'data-dicts')).toBe(false)
     expect(canAccessFeature('USER', 'gift-logs')).toBe(true)
     expect(canAccessFeature('USER', 'account')).toBe(true)
@@ -46,6 +46,8 @@ describe('accessControl', () => {
     ])
 
     expect(filterQuickActions(actions, 'USER').map((item) => item.action)).toEqual([
+      'addCustomer',
+      'addInventory',
       'distributeGift',
       'exportReport',
     ])
@@ -62,7 +64,9 @@ describe('accessControl', () => {
     ] as const
 
     expect(filterDashboardStats(stats, 'USER').map((item) => item.type)).toEqual([
+      'customers',
       'products',
+      'inventory',
       'gift-logs',
       'gifts',
     ])

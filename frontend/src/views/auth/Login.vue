@@ -159,8 +159,8 @@
       await formRef.value?.validate()
       const result = await authStore.login({ username: formState.username, password: formState.password, rememberMe: formState.rememberMe })
       if (result.success) {
-        const redirect = route.query.redirect as string | undefined
-        router.push(redirect || resolveHomePath(authStore.userRole))
+        const redirect = (route.query.redirect as string) || '/dashboard'
+        window.location.href = redirect
       } else {
         errorMessage.value = result.error || '登录失败'
       }

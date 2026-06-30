@@ -2,6 +2,9 @@ package com.henashi.inventorycrm.pojo;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Builder;
 import lombok.Getter;
@@ -42,9 +45,9 @@ public class User extends BaseEntity implements UserDetails {
     @Column(name = "email", length = 50)
     private String email;
 
-    @Builder.Default
-    @Column(name = "role", length = 20)
-    private String role = "USER";
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id")
+    private Role role;
 
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
@@ -58,7 +61,8 @@ public class User extends BaseEntity implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role));
+        String roleName = role != null ? role.getName() : "USER";
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + roleName));
     }
 
     @Override

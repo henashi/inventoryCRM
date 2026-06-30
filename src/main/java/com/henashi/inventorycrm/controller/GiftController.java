@@ -1,5 +1,7 @@
 package com.henashi.inventorycrm.controller;
 
+import com.henashi.inventorycrm.annotation.RequirePermission;
+import static com.henashi.inventorycrm.constants.Permissions.*;
 import com.henashi.inventorycrm.dto.GiftCreateDTO;
 import com.henashi.inventorycrm.dto.GiftDTO;
 import com.henashi.inventorycrm.dto.GiftUpdateDTO;
@@ -54,6 +56,7 @@ public class GiftController {
     }
 
     @DeleteMapping("/{id}")
+    @RequirePermission(GIFTS_DELETE)
     @Operation(summary = "根据ID删除礼品", description = "通过礼品ID删除对应的礼品信息")
     public ResponseEntity<Void> deleteGift(@PathVariable @NotNull @Min(value = 1, message = "ID必须大于0") Long id) {
         giftService.deleteGiftById(id);
@@ -61,6 +64,7 @@ public class GiftController {
     }
 
     @PostMapping
+    @RequirePermission(GIFTS_CREATE)
     @Operation(summary = "创建新礼品", description = "根据提供的礼品信息创建一个新的礼品")
     public ResponseEntity<GiftDTO> createGift(@RequestBody @Valid GiftCreateDTO giftCreateDTO) {
         GiftDTO createdGift = giftService.saveGift(giftCreateDTO);
@@ -73,6 +77,7 @@ public class GiftController {
     }
 
     @PutMapping("/{id}")
+    @RequirePermission(GIFTS_EDIT)
     @Operation(summary = "更新礼品信息", description = "根据提供的礼品ID和更新信息修改对应的礼品")
     public GiftDTO updateGift(@PathVariable @NotNull @Min(value = 1, message = "ID必须大于0") Long id, @RequestBody @Valid GiftUpdateDTO giftUpdateDTO) {
         return giftService.updateGift(id, giftUpdateDTO);
