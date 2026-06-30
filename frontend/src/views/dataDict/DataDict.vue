@@ -2,15 +2,15 @@
   <div class="dataDict-page">
     <div class="page-header">
       <div class="page-actions">
-        <a-button type="primary" @click="showAddModal">
-          <plus-outlined />
-          新增配置
-        </a-button>
         <a-button @click="handleBack" style="margin-left: 8px">
           <template #icon>
             <home-outlined />
           </template>
           返回
+        </a-button>
+        <a-button type="primary" @click="showAddModal">
+          <plus-outlined />
+          新增配置
         </a-button>
       </div>
     </div>
@@ -225,7 +225,9 @@
 
   const dataSource = computed(() => dataDictStore.dataDicts)
   const pagination = computed(() => ({
-    ...dataDictStore.pagination,
+    current: dataDictStore.pagination.page + 1,
+    pageSize: dataDictStore.pagination.size,
+    total: dataDictStore.pagination.total,
     showTotal: (total: number) => `共 ${total} 条数据`,
     showSizeChanger: true,
     showQuickJumper: true,
@@ -389,15 +391,16 @@
     router.push('/')
   }
 
-  const loadDataDicts = async (params?: PageParams) => {
-    console.log('加载配置数据，参数:', params)
+  const loadDataDicts = async (pagination?: any) => {
+    console.log('加载配置数据，参数:', pagination)
     try {
       isLoading.value = true
 
-      const queryParams: PageParams = {
-        page: params?.page || 0,
-        size: params?.size || 10,
-      }
+      // a-table @change 传的是 { current, pageSize }，current 从 1 开始
+      const page = pagination?.current ? pagination.current - 1 : 0
+      const size = pagination?.pageSize || 10
+
+      const queryParams: PageParams = { page, size }
 
       await dataDictStore.loadDataDicts(queryParams)
     } catch (error) {

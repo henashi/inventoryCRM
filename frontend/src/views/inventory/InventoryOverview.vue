@@ -8,7 +8,11 @@
         <a-button @click="openAlertsDrawer">低库存预警</a-button>
         <a-button :loading="exportLoading" @click="handleExport">导出快照</a-button>
         <a-button @click="goToLogs">库存日志</a-button>
-        <a-button class="header-action-primary" type="primary" @click="openAction('in')"
+        <a-button
+          v-if="authStore.hasPermission('inventory:stockIn')"
+          class="header-action-primary"
+          type="primary"
+          @click="openAction('in')"
           >商品入库</a-button
         >
       </div>
@@ -110,9 +114,19 @@
           <template v-else-if="column.dataIndex === 'actions'">
             <a-space>
               <a-button type="link" size="small" @click="goToDetail(record)">详情</a-button>
-              <a-button type="link" size="small" @click="openAction('in', record)">入库</a-button>
+              <a-button
+                v-if="authStore.hasPermission('inventory:stockIn')"
+                type="link"
+                size="small"
+                @click="openAction('in', record)"
+                >入库</a-button
+              >
               <a-button type="link" size="small" @click="openAction('out', record)">出库</a-button>
-              <a-button type="link" size="small" @click="openAction('adjust', record)"
+              <a-button
+                v-if="authStore.hasPermission('inventory:adjust')"
+                type="link"
+                size="small"
+                @click="openAction('adjust', record)"
                 >调整</a-button
               >
             </a-space>
@@ -161,7 +175,11 @@
   import dayjs from 'dayjs'
   import InventoryActionModal from '@/components/inventory/InventoryActionModal.vue'
   import { useInventoryStore } from '@/stores/inventory'
+  import { useAuthStore } from '@/stores/auth'
   import type { Inventory, InventoryAdjustDTO, InventoryInDTO, InventoryOutDTO } from '@/types'
+
+  const authStore = useAuthStore()
+  // 权限判断统一通过 authStore.hasPermission()
 
   const inventoryStore = useInventoryStore()
   const router = useRouter()
@@ -460,10 +478,9 @@
 
   .search-grid {
     display: grid;
-    grid-template-columns: minmax(240px, 2.2fr) minmax(180px, 1.2fr) minmax(260px, 1.6fr) minmax(
-        160px,
-        auto
-      ) auto;
+    grid-template-columns:
+      minmax(240px, 2.2fr) minmax(180px, 1.2fr) minmax(260px, 1.6fr) minmax(160px, auto)
+      auto;
     gap: 16px;
     align-items: end;
   }

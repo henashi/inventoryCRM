@@ -731,6 +731,59 @@ export function getInventoryLogTypeColor(logType: InventoryLogType): string {
   return colorMap[logType] || 'default'
 }
 
+// 权限定义相关类型
+export interface PermissionDefDTO {
+  id: number
+  key: string
+  name: string
+  module?: string
+  moduleName?: string
+  type: string
+  defaultRoles?: string
+  description?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+// 角色相关类型
+export interface RoleDTO {
+  id: number
+  name: string
+  displayName?: string
+  description?: string
+  sortOrder: number
+  status: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+// 用户权限条目（来自 getUserPermissions）
+export interface UserPermissionItem {
+  key: string
+  name: string
+  module: string
+  moduleName: string
+  type: 'MENU' | 'API' | 'ACTION'
+  enabled: boolean
+}
+
+// 用户相关类型
+// 角色权限映射 { permissionKey: enabled }
+export interface RolePermissionsMap {
+  [key: string]: boolean
+}
+
+export interface UserDTO {
+  id: number
+  username: string
+  realName?: string
+  email?: string
+  role: string
+  status: number
+  lastLoginAt?: string
+  remark?: string
+}
+
 // 获取操作来源显示文本
 export function getInventoryLogSourceText(source?: InventoryLogSource): string {
   if (!source) return '未知'

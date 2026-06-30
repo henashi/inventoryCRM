@@ -1,6 +1,8 @@
 package com.henashi.inventorycrm.controller;
 
 import com.henashi.inventorycrm.annotation.InventoryAudit;
+import com.henashi.inventorycrm.annotation.RequirePermission;
+import static com.henashi.inventorycrm.constants.Permissions.*;
 import com.henashi.inventorycrm.dto.ImportResultDTO;
 import com.henashi.inventorycrm.dto.ProductCreateDTO;
 import com.henashi.inventorycrm.dto.ProductDTO;
@@ -74,6 +76,7 @@ public class ProductController {
     }
 
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @RequirePermission(PRODUCTS_IMPORT)
     public ImportResultDTO importProducts(@RequestParam("file") MultipartFile file) {
         return productDataExchangeService.importProducts(file);
     }
@@ -102,6 +105,7 @@ public class ProductController {
     }
 
     @PostMapping
+    @RequirePermission(PRODUCTS_CREATE)
     @InventoryAudit(
             operationType = InventoryLog.LogType.CREATE,
             description = "创建商品",
@@ -122,6 +126,7 @@ public class ProductController {
     }
 
     @PatchMapping("/{id}")
+    @RequirePermission(PRODUCTS_EDIT)
     @Operation(summary = "更新商品信息", description = "根据提供的商品信息更新指定ID的商品")
     public ProductDTO updateProduct(
             @PathVariable @NotNull @Min(1) Long id,
@@ -130,6 +135,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
+    @RequirePermission(PRODUCTS_DELETE)
     @Operation(summary = "根据ID删除商品", description = "通过商品ID删除对应的商品信息")
     public ResponseEntity<Void> deleteProduct(
             @PathVariable @NotNull @Min(1) Long id) {

@@ -11,6 +11,8 @@ export type FeatureKey =
   | 'account'
   | 'ai'
   | 'operation-logs'
+  | 'roles'
+  | 'permission-defs'
 
 const defaultHomePath = '/dashboard'
 const giftCatalogManagers: AppRole[] = ['ADMIN', 'MANAGER']
@@ -18,9 +20,11 @@ const destructiveAdmins: AppRole[] = ['ADMIN']
 
 const featureRoles: Record<FeatureKey, AppRole[]> = {
   dashboard: ['ADMIN', 'MANAGER', 'USER'],
-  customers: ['ADMIN', 'MANAGER'],
+  'roles': ['ADMIN'],
+  'permission-defs': ['ADMIN'],
+  customers: ['ADMIN', 'MANAGER', 'USER'],
   products: ['ADMIN', 'MANAGER', 'USER'],
-  inventory: ['ADMIN', 'MANAGER'],
+  inventory: ['ADMIN', 'MANAGER', 'USER'],
   gifts: ['ADMIN', 'MANAGER', 'USER'],
   'gift-logs': ['ADMIN', 'MANAGER', 'USER'],
   'data-dicts': ['ADMIN'],

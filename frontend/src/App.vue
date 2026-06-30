@@ -222,6 +222,15 @@
   [data-theme='dark'] .category-count {
     color: #60a5fa !important;
   }
+  /* ===== 全局 primary 按钮蓝色渐变 ===== */
+  .ant-btn-primary {
+    border: none;
+    background-image: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  }
+  .ant-btn-primary:not(:disabled):hover {
+    background-image: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+  }
+
   /* 暗色模式 — 商品管理统计卡片装饰条 */
   [data-theme='dark'] .summary-row :deep(.ant-col:nth-child(1)) .summary-card::before {
     background: linear-gradient(90deg, #3b82f6 0%, #6366f1 100%) !important;

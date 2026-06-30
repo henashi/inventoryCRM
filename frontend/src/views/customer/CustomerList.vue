@@ -14,7 +14,7 @@
           </template>
           导出
         </a-button>
-        <a-button type="primary" @click="showAddModal" class="add-btn">
+        <a-button type="primary" @click="showAddModal">
           <template #icon>
             <plus-outlined />
           </template>
@@ -181,7 +181,13 @@
                 <check-outlined />
                 启用
               </a-button>
-              <a-button type="link" size="small" danger @click="handleDelete(record)">
+              <a-button
+                v-if="authStore.hasPermission('customers:delete')"
+                type="link"
+                size="small"
+                danger
+                @click="handleDelete(record)"
+              >
                 删除
               </a-button>
             </a-space>
@@ -195,7 +201,13 @@
           <a-button @click="handleBatchExport"> 导出选中 </a-button>
           <a-button @click="handleBatchEnable" v-if="hasDisabledSelected"> 批量启用 </a-button>
           <a-button @click="handleBatchDisable" danger v-else> 批量停用 </a-button>
-          <a-button @click="handleBatchDelete" danger> 批量删除 </a-button>
+          <a-button
+            v-if="authStore.hasPermission('customers:delete')"
+            @click="handleBatchDelete"
+            danger
+          >
+            批量删除
+          </a-button>
           <a-button @click="clearSelection"> 取消选择 </a-button>
         </a-space>
       </div>
@@ -501,6 +513,7 @@
     HomeOutlined,
   } from '@ant-design/icons-vue'
   import { useCustomerStore } from '@/stores/customer'
+  import { useAuthStore } from '@/stores/auth'
   import { customerApi } from '@/api/customer'
   import type { Customer, CustomerCreateDTO, PageParams } from '@/types'
   import dayjs from 'dayjs'
@@ -512,6 +525,7 @@
 
   const router = useRouter()
   const route = useRoute()
+  const authStore = useAuthStore()
   const customerStore = useCustomerStore()
   const formRef = ref<FormInstance>()
   const referrerList = ref<Customer[]>([])
@@ -519,6 +533,7 @@
   const referrerSearchKeyword = ref('')
 
   const exportLoading = ref(false)
+  const statsLoading = ref(false)
   const modalVisible = ref(false)
   const modalLoading = ref(false)
   const drawerVisible = ref(false)
@@ -780,7 +795,7 @@
         giftLevelDistribution: stats.giftLevelDistribution || {},
       }
     } catch {
-      message.error('加载客户统计失败')
+      console.warn('加载客户统计失败')
     } finally {
       statsLoading.value = false
     }
@@ -1231,11 +1246,6 @@
     flex-wrap: wrap;
     align-items: center;
     justify-content: flex-end;
-  }
-
-  .add-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
   }
 
   .search-card,

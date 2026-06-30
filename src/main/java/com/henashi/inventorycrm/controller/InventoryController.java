@@ -1,5 +1,7 @@
 package com.henashi.inventorycrm.controller;
 
+import com.henashi.inventorycrm.annotation.RequirePermission;
+import static com.henashi.inventorycrm.constants.Permissions.*;
 import com.henashi.inventorycrm.dto.InventoryAdjustDTO;
 import com.henashi.inventorycrm.dto.InventoryChangeDTO;
 import com.henashi.inventorycrm.dto.InventoryDTO;
@@ -65,18 +67,21 @@ public class InventoryController {
     }
 
     @PostMapping("/in")
+    @RequirePermission(INVENTORY_STOCK_IN)
     @Operation(summary = "库存入库", description = "按统一库存规则执行标准入库并写入库存日志")
     public InventoryDTO stockIn(@Valid @RequestBody InventoryInDTO request) {
         return inventoryService.stockIn(request);
     }
 
     @PostMapping("/out")
+    @RequirePermission(INVENTORY_STOCK_OUT)
     @Operation(summary = "库存出库", description = "按统一库存规则执行标准出库并写入库存日志")
     public InventoryDTO stockOut(@Valid @RequestBody InventoryOutDTO request) {
         return inventoryService.stockOut(request);
     }
 
     @PatchMapping("/{id}/adjust")
+    @RequirePermission(INVENTORY_ADJUST)
     @Operation(summary = "库存调整", description = "按商品ID执行库存盘点修正并写入调整日志")
     public InventoryDTO adjustStock(
             @PathVariable("id") @NotNull @Min(1) Long id,

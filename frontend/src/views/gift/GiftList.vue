@@ -5,8 +5,11 @@
         <p class="page-subtitle">支持查看礼品详情；删除仅对管理员开放。</p>
       </div>
       <div class="page-actions">
+        <a-button @click="handleViewDistributionLogs" :loading="isLoading" style="margin-left: 8px">
+          查看发放日志
+        </a-button>
         <a-button
-          v-if="canManageCatalog"
+          v-if="authStore.hasPermission('gifts:create')"
           type="primary"
           @click="showAddModal"
           style="margin-left: 8px"
@@ -14,14 +17,11 @@
           <plus-outlined />
           新增礼品
         </a-button>
-        <a-button @click="handleViewDistributionLogs" :loading="isLoading" style="margin-left: 8px">
-          查看发放日志
-        </a-button>
       </div>
     </div>
 
     <a-alert
-      v-if="!canManageCatalog"
+      v-if="!authStore.hasPermission('gifts:create')"
       class="page-alert"
       type="info"
       show-icon
@@ -66,7 +66,7 @@
           <a-space :size="4">
             <a-button type="link" size="small" @click="handleGiftDetail(record)"> 详情 </a-button>
             <a-button
-              v-if="canManageCatalog"
+              v-if="authStore.hasPermission('gifts:edit')"
               type="link"
               size="small"
               @click="handleGiftEdit(record)"
@@ -74,7 +74,7 @@
               编辑
             </a-button>
             <a-button
-              v-if="canDeleteCurrentGift"
+              v-if="authStore.hasPermission('gifts:delete')"
               type="link"
               size="small"
               danger
@@ -212,7 +212,7 @@
   import { useAuthStore } from '@/stores/auth'
   import { useGiftStore } from '@/stores/gift'
   import { useProductStore } from '@/stores/product'
-  import { canDeleteGift, canManageGiftCatalog } from '@/router/accessControl'
+  // 权限判断统一通过 authStore.hasPermission()
   import type { Gift, GiftCreateDTO, GiftUpdateDTO, PageParams } from '@/types'
   import { buildServerPageParams, toServerPage } from '@/utils/pagination'
 
@@ -337,8 +337,7 @@
     showSizeChanger: true,
     showQuickJumper: true,
   }))
-  const canManageCatalog = computed(() => canManageGiftCatalog(authStore.userRole))
-  const canDeleteCurrentGift = computed(() => canDeleteGift(authStore.userRole))
+  // 权限判断统一通过 authStore.hasPermission()
 
   const filterProductOption = (input: string, option: any) => {
     const label = typeof option?.children === 'string' ? option.children : ''

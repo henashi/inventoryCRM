@@ -1,5 +1,7 @@
 package com.henashi.inventorycrm.controller;
 
+import com.henashi.inventorycrm.annotation.RequirePermission;
+import static com.henashi.inventorycrm.constants.Permissions.*;
 import com.henashi.inventorycrm.dto.OrderCreateDTO;
 import com.henashi.inventorycrm.dto.OrderDTO;
 import com.henashi.inventorycrm.service.CustomerOrderService;
@@ -46,6 +48,7 @@ public class CustomerOrderController {
     }
 
     @DeleteMapping("/{id}")
+    @RequirePermission(ORDERS_DELETE)
     @Operation(summary = "删除订单")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         orderService.delete(id);
@@ -53,6 +56,7 @@ public class CustomerOrderController {
     }
 
     @PostMapping
+    @RequirePermission(ORDERS_CREATE)
     @Operation(summary = "创建订单（含商品明细）")
     public ResponseEntity<OrderDTO> create(@Valid @RequestBody OrderCreateDTO dto) {
         OrderDTO saved = orderService.create(dto);

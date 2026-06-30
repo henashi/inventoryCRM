@@ -20,6 +20,7 @@ app.use(Antd)
 
 // 从 localStorage 恢复用户信息（如果有），以避免 token 存在但 user 为空导致权限判断出错
 import { useAuthStore } from '@/stores/auth'
+import permissionDirective from '@/directives/permission'
 const authStore = useAuthStore()
 authStore.initFromStorage()
 
@@ -28,5 +29,7 @@ Object.keys(AntdIcons).forEach((key) => {
     // @ts-expect-error — Ant Design icon components are compatible
   app.component(key, (AntdIcons as any)[key])
 })
+
+app.directive('permission', permissionDirective)
 
 app.mount('#app')

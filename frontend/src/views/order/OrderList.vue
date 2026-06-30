@@ -39,7 +39,11 @@
             <span class="meta-cell">{{ record.items?.length || 0 }} 件商品</span>
           </template>
           <template v-if="column.key === 'action'">
-            <a-popconfirm title="确定删除此订单？" @confirm="handleDelete(record.id)">
+            <a-popconfirm
+              v-if="authStore.hasPermission('orders:delete')"
+              title="确定删除此订单？"
+              @confirm="handleDelete(record.id)"
+            >
               <a-button type="link" danger size="small">删除</a-button>
             </a-popconfirm>
           </template>
@@ -182,8 +186,9 @@
 </template>
 
 <script setup lang="ts">
-  import { onMounted, ref } from 'vue'
+  import { onMounted, ref, computed } from 'vue'
   import { message } from 'ant-design-vue'
+  import { useAuthStore } from '@/stores/auth'
   import { Form } from 'ant-design-vue'
   const useForm = Form.useForm
   import { orderApi } from '@/api/order'
@@ -191,6 +196,7 @@
   import { productApi } from '@/api/product'
   import type { OrderDTO, OrderCreateDTO } from '@/types'
 
+  const authStore = useAuthStore()
   const list = ref<OrderDTO[]>([])
   const loading = ref(false)
   const showForm = ref(false)

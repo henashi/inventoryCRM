@@ -33,12 +33,10 @@ public class RegisterRequest {
     @Schema(description = "确认密码", example = "password123", requiredMode = Schema.RequiredMode.REQUIRED)
     private String confirmPassword;
 
-    @NotBlank(message = "真实姓名不能为空")
-    @Size(min = 2, max = 20, message = "真实姓名长度2-20个字符")
-    @Schema(description = "真实姓名", example = "张三", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Size(max = 20, message = "真实姓名不能超过20个字符")
+    @Schema(description = "真实姓名", example = "张三")
     private String realName;
 
-    @NotBlank(message = "邮箱不能为空")
     @Email(message = "邮箱格式不正确")
     @Schema(description = "邮箱", example = "user@example.com", requiredMode = Schema.RequiredMode.REQUIRED)
     private String email;

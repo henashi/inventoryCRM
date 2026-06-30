@@ -7,9 +7,9 @@
       <a-space>
         <a-button @click="goBack">返回</a-button>
         <a-button @click="goToLogs">查看日志</a-button>
-        <a-button type="primary" @click="openAction('in')">入库</a-button>
         <a-button @click="openAction('out')">出库</a-button>
-        <a-button @click="openAction('adjust')">调整</a-button>
+        <a-button v-if="authStore.hasPermission('inventory:adjust')" @click="openAction('adjust')">调整</a-button>
+        <a-button v-if="authStore.hasPermission('inventory:stockIn')" type="primary" @click="openAction('in')">入库</a-button>
       </a-space>
     </div>
 
@@ -108,10 +108,14 @@
   import { computed, onMounted, ref, watch } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import { message } from 'ant-design-vue'
+  import { useAuthStore } from '@/stores/auth'
   import dayjs from 'dayjs'
   import InventoryActionModal from '@/components/inventory/InventoryActionModal.vue'
   import { useInventoryStore } from '@/stores/inventory'
   import type { InventoryAdjustDTO, InventoryInDTO, InventoryOutDTO } from '@/types'
+
+  const authStore = useAuthStore()
+  // 权限判断统一通过 authStore.hasPermission()
 
   const inventoryStore = useInventoryStore()
   const route = useRoute()

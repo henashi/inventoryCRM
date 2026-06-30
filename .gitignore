@@ -41,3 +41,12 @@ test-output.txt
 run-test.bat
 Test.md
 $_.FullName
+node_modules/
+
+### Logs and temp files ###
+*.log
+*.bak
+.vite/
+tagstemp.txt
+temp_hex.txt
+log.txt

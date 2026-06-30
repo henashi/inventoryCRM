@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,13 +44,16 @@ class CustomerRepositoryTest {
         em.clear(); // 清除一级缓存，确保从 DB 重新加载
 
         // 通过 @EntityGraph 查询 — 应在一次查询中加载 referrer
-        var result = repository.findAllWithReferrer(null, PageRequest.of(0, 10));
+        var result = repository.findAllWithReferrer(null, Pageable.unpaged());
         assertThat(result.getTotalElements()).isGreaterThanOrEqualTo(2);
 
         Customer loaded = result.getContent().stream()
                 .filter(c -> "被推荐客户".equals(c.getName()))
                 .findFirst()
-                .orElseThrow();
+                .orElseThrow(() -> new AssertionError(
+                        "未找到「被推荐客户」, 总数=" + result.getTotalElements()
+                        + ", 内容=" + result.getContent().stream().map(Customer::getName).toList()
+                ));
         // 断言 referrer 已加载（非懒加载代理）
         assertThat(loaded.getReferrer()).isNotNull();
         assertThat(loaded.getReferrer().getName()).isEqualTo("推荐人A");

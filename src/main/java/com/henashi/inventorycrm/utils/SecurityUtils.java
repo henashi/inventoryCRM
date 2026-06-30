@@ -56,11 +56,13 @@ public class SecurityUtils {
             return null;
         }
 
-        // 从认证信息中提取用户ID
-        // 这里假设你的用户信息中包含了用户ID
-        Object details = authentication.getDetails();
-        if (details instanceof CustomUserDetails) {
-            return ((CustomUserDetails) details).getUserId();
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof com.henashi.inventorycrm.security.CustomUserDetails userDetails) {
+            return userDetails.getId();
+        }
+        if (principal instanceof UserDetails) {
+            // 如果没有 CustomUserDetails，尝试从用户名反查（最少保证不抛异常）
+            return null;
         }
 
         return null;

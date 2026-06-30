@@ -2,8 +2,11 @@ package com.henashi.inventorycrm.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.henashi.inventorycrm.config.properties.AppProperties;
+import com.henashi.inventorycrm.pojo.Role;
 import com.henashi.inventorycrm.pojo.User;
+import com.henashi.inventorycrm.repository.RoleRepository;
 import com.henashi.inventorycrm.security.JwtAccessDeniedHandler;
+import com.henashi.inventorycrm.service.DataDictService;
 import com.henashi.inventorycrm.security.JwtAuthenticationEntryPoint;
 import com.henashi.inventorycrm.security.JwtAuthenticationFilter;
 import com.henashi.inventorycrm.service.UserDetailsServiceImpl;
@@ -27,6 +30,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 
 @Configuration
@@ -39,18 +43,27 @@ public class WebSecurityConfig {
 
     private final AppProperties appProperties;
 
+    private final RoleRepository roleRepository;
+
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
+    @org.springframework.core.annotation.Order(50)
+    public CommandLineRunner initPermissions(DataDictService dataDictService) {
+        return args -> dataDictService.initPermissionDefaults();
+    }
+
+    @Bean
+    @org.springframework.core.annotation.Order(200)
     public CommandLineRunner createDefaultUsers(UserService userService) {
         return args -> {
             if (appProperties.isCreateDefaultUsers()) {
-                createUserIfNotExists("admin", "admin123", "Admin", userService);
-                createUserIfNotExists("user", "user123", "User", userService);
-                createUserIfNotExists("demo", "demo123", "User", userService);
+                createUserIfNotExists("admin", "admin123", "ADMIN", userService);
+                createUserIfNotExists("user", "user123", "USER", userService);
+                createUserIfNotExists("demo", "demo123", "USER", userService);
             }
         };
     }
@@ -88,8 +101,9 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/auth/profile").hasAnyRole("USER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/auth/change-password", "/api/auth/logout").hasAnyRole("USER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/customers/**").hasAnyRole("USER", "MANAGER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/customers").hasAnyRole("MANAGER", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/customers/**").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/customers").hasAnyRole("USER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/customers/**").hasAnyRole("USER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/customers/**").hasAnyRole("USER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/customers/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/products/**").hasAnyRole("USER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/products/**").hasAnyRole("MANAGER", "ADMIN")
@@ -103,10 +117,18 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/gift-logs").hasAnyRole("USER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/gift-logs/**").hasAnyRole("USER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/gift-logs/**").hasRole("ADMIN")
-                        .requestMatchers("/api/inventory/**").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/inventory/**").hasAnyRole("USER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/inventories/**").hasAnyRole("USER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/inventories/out").hasAnyRole("USER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/inventories/in").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers("/api/inventories", "/api/inventories/**").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/orders/**").hasAnyRole("USER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/orders").hasAnyRole("USER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/orders/**").hasAnyRole("USER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/orders/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/ai/**").hasAnyRole("USER", "MANAGER", "ADMIN")
+                        .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter,
@@ -183,15 +205,26 @@ public class WebSecurityConfig {
     }
 
     private void createUserIfNotExists(String username, String plainPassword,
-                                       String role, UserService userService) {
+                                       String roleName, UserService userService) {
 
         if (userService.getUserByUsername(username).isEmpty()) {
+            Role roleEntity = roleRepository.findByName(roleName)
+                    .orElseGet(() -> roleRepository.save(Role.builder()
+                            .name(roleName)
+                            .displayName(roleName)
+                            .description(roleName + " role")
+                            .sortOrder(0)
+                            .status("1")
+                            .createdAt(LocalDateTime.now())
+                            .updatedAt(LocalDateTime.now())
+                            .build()));
+
             User user = new User();
             user.setUsername(username);
             user.setPassword(plainPassword);
             user.setRealName(username);
             user.setEmail(username + "@quizapp.com");
-            user.setRole(role);
+            user.setRole(roleEntity);
             user.setStatus("1");
             try {
                 userService.registerUser(user);
@@ -199,7 +232,7 @@ public class WebSecurityConfig {
             catch (Exception e) {
                 log.warn("Add default user fail");
             }
-            log.info("Create default User success:" + username + "(role: "+ role + ")");
+            log.info("Create default User success:" + username + "(role: "+ roleName + ")");
         }
     }
 }

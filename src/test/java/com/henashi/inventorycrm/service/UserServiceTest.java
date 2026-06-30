@@ -3,7 +3,9 @@ package com.henashi.inventorycrm.service;
 import com.henashi.inventorycrm.dto.UserCreateDTO;
 import com.henashi.inventorycrm.dto.UserDTO;
 import com.henashi.inventorycrm.exception.UserAlreadyExistsException;
+import com.henashi.inventorycrm.pojo.Role;
 import com.henashi.inventorycrm.pojo.User;
+import com.henashi.inventorycrm.repository.RoleRepository;
 import com.henashi.inventorycrm.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,6 +29,7 @@ class UserServiceTest {
 
     @Autowired private UserService userService;
     @Autowired private UserRepository userRepository;
+    @Autowired private RoleRepository roleRepository;
 
     @BeforeEach
     void setUp() {
@@ -90,12 +93,14 @@ class UserServiceTest {
 
     @Test @DisplayName("registerUser — 编码密码并保存")
     void registerUser() {
+        Role defaultRole = roleRepository.findByName("USER")
+                .orElseGet(() -> roleRepository.save(Role.builder().name("USER").displayName("普通用户").status("1").build()));
         User user = new User();
         user.setUsername("reg_" + System.currentTimeMillis());
         user.setPassword("rawPass123");
         user.setRealName("注册用户");
         user.setEmail("reg@test.com");
-        user.setRole("USER");
+        user.setRole(defaultRole);
         user.setStatus("1");
 
         userService.registerUser(user);

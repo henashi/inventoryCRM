@@ -59,7 +59,7 @@
     />
 
     <a-alert
-      v-if="!canDeleteCurrentGiftLog"
+      v-if="!authStore.hasPermission('giftLogs:delete')"
       class="page-alert"
       type="info"
       show-icon
@@ -121,7 +121,7 @@
               发放
             </a-button>
             <a-button
-              v-if="canDeleteCurrentGiftLog"
+              v-if="authStore.hasPermission('giftLogs:delete')"
               type="link"
               size="small"
               danger
@@ -246,7 +246,6 @@
   import { customerApi } from '@/api/customer'
   import { useGiftLogStore } from '@/stores/giftLog'
   import { useGiftStore } from '@/stores/gift'
-  import { canDeleteGiftLog } from '@/router/accessControl'
   import type { Customer, GiftLogDTO, PageParams } from '@/types'
   import { buildServerPageParams, toServerPage } from '@/utils/pagination'
   import { resolveGiftLogFilterState } from '@/utils/featureEnhancements'
@@ -331,8 +330,6 @@
   const activeCustomerFilterLabel = computed(() =>
     giftLogFilter.customerName ? `客户“${giftLogFilter.customerName}”` : '',
   )
-  const canDeleteCurrentGiftLog = computed(() => canDeleteGiftLog(authStore.userRole))
-
   const getStatusText = (status: GiftLogDTO['status']) => {
     switch (status) {
       case 'PENDING':

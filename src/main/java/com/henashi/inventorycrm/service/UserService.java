@@ -5,11 +5,15 @@ import com.henashi.inventorycrm.dto.UserCreateDTO;
 import com.henashi.inventorycrm.dto.UserDTO;
 import com.henashi.inventorycrm.exception.BusinessException;
 import com.henashi.inventorycrm.mapper.UserMapper;
+import com.henashi.inventorycrm.pojo.Role;
 import com.henashi.inventorycrm.pojo.User;
+import com.henashi.inventorycrm.repository.RoleRepository;
 import com.henashi.inventorycrm.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +25,7 @@ public class UserService {
 
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
 //    private final UserDetailsServiceImpl userDetailsService;
@@ -74,6 +79,11 @@ public class UserService {
 
         User user = userMapper.createToEntity(userCreateDTO);
         user.setPassword(encodedPassword);
+        // 设置角色实体
+        roleRepository.findByName(userCreateDTO.role())
+                .ifPresentOrElse(user::setRole, () -> {
+                    throw new BusinessException("INVALID_ROLE", "角色不存在: " + userCreateDTO.role());
+                });
         // 默认启用
         user.setStatus("1");
 
@@ -139,7 +149,10 @@ public class UserService {
             user.setUsername(dto.username());
         }
         if (dto.role() != null) {
-            user.setRole(dto.role());
+            roleRepository.findByName(dto.role())
+                    .ifPresentOrElse(user::setRole, () -> {
+                        throw new BusinessException("INVALID_ROLE", "角色不存在: " + dto.role());
+                    });
         }
         if (dto.password() != null && !dto.password().trim().isEmpty()) {
             user.setPassword(passwordEncoder.encode(dto.password()));
@@ -147,6 +160,40 @@ public class UserService {
         if (dto.remark() != null) {
             user.setRemark(dto.remark());
         }
+    }
+
+    public Page<UserDTO> listUsers(String keyword, Pageable pageable) {
+        log.debug("查询用户列表: keyword={}", keyword);
+        Page<User> users;
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            users = userRepository.findByUsernameContainingOrRealNameContaining(
+                    keyword.trim(), keyword.trim(), pageable);
+        } else {
+            users = userRepository.findAll(pageable);
+        }
+        return users.map(userMapper::fromEntity);
+    }
+
+    @Transactional
+    public void resetPassword(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", "用户不存在"));
+        String defaultPassword = "123456";
+        user.setPassword(passwordEncoder.encode(defaultPassword));
+        user.setTokenVersion(user.getTokenVersion() + 1);
+        userRepository.save(user);
+        log.info("用户密码已重置: {}, 新密码: {}", user.getUsername(), defaultPassword);
+    }
+
+    @Transactional
+    public void toggleStatus(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", "用户不存在"));
+        String newStatus = "1".equals(user.getStatus()) ? "0" : "1";
+        user.setStatus(newStatus);
+        user.setTokenVersion(user.getTokenVersion() + 1);
+        userRepository.save(user);
+        log.info("用户状态已变更: {}, 新状态: {}", user.getUsername(), newStatus);
     }
 
     @Transactional

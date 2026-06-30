@@ -24,7 +24,7 @@ public interface UserMapper {
         user.setUsername(userDTO.username());
         user.setRealName(userDTO.realName());
         user.setEmail(userDTO.email());
-        user.setRole(userDTO.role());
+        // role 由 Service 层通过 RoleRepository 设置
         user.setStatus(toStatusString(userDTO.status()));
         user.setLastLoginAt(userDTO.lastLoginAt());
         user.setRemark(userDTO.remark());
@@ -39,7 +39,7 @@ public interface UserMapper {
         User user = new User();
         user.setUsername(userCreateDTO.username());
         user.setPassword(userCreateDTO.password());
-        user.setRole(userCreateDTO.role());
+        // role 由 Service 层通过 RoleRepository 设置
         user.setRemark(userCreateDTO.remark());
         return user;
     }
@@ -54,7 +54,7 @@ public interface UserMapper {
                 user.getUsername(),
                 resolveRealName(user),
                 user.getEmail(),
-                user.getRole(),
+                user.getRole() != null ? user.getRole().getName() : null,
                 toStatusInteger(user.getStatus()),
                 user.getLastLoginAt(),
                 user.getCreatedTime(),
@@ -76,8 +76,8 @@ public interface UserMapper {
         if (userDTO.email() != null) {
             user.setEmail(userDTO.email());
         }
+        // role 由 Service 层通过 RoleRepository 设置
         if (userDTO.role() != null) {
-            user.setRole(userDTO.role());
         }
         if (userDTO.status() != null) {
             user.setStatus(toStatusString(userDTO.status()));

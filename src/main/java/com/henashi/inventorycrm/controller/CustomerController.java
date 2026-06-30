@@ -1,5 +1,7 @@
 package com.henashi.inventorycrm.controller;
 
+import com.henashi.inventorycrm.annotation.RequirePermission;
+import static com.henashi.inventorycrm.constants.Permissions.*;
 import com.henashi.inventorycrm.dto.CustomerBatchStatusUpdateDTO;
 import com.henashi.inventorycrm.dto.CustomerBatchStatusUpdateResultDTO;
 import com.henashi.inventorycrm.dto.CustomerCreateDTO;
@@ -131,6 +133,7 @@ public class CustomerController {
     }
 
     @DeleteMapping("/{id}")
+    @RequirePermission(CUSTOMERS_DELETE)
     @Operation(summary = "删除客户", description = "软删除客户（标记 deleted=true）")
     public ResponseEntity<Void> delete(@PathVariable("id") @NotNull @Min(1) Long id) {
         customerService.deleteById(id);
