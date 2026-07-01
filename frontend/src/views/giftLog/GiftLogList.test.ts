@@ -26,7 +26,12 @@ vi.mock('vue-router', () => ({
 
 // Mock stores and API before importing component
 vi.mock('@/stores/auth', () => ({
-  useAuthStore: () => ({ user: { username: 'admin', role: 'ADMIN' } }),
+  useAuthStore: () => ({
+    user: { username: 'admin', role: 'ADMIN' },
+    hasPermission: () => true,
+    permissions: {},
+    permissionList: [],
+  }),
 }))
 
 vi.mock('@/stores/giftLog', () => ({

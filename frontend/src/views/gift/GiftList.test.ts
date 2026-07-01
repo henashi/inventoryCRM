@@ -19,7 +19,7 @@ describe('GiftList layout', () => {
   })
 
   it('renders read-only alert for non-admin users', () => {
-    expect(componentSource).toContain('v-if="!canManageCatalog"')
+    expect(componentSource).toContain('v-if="!authStore.hasPermission')
     expect(componentSource).toContain('class="page-alert"')
     expect(componentSource).toContain('当前账号为只读视角')
   })
