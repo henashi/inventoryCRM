@@ -2,6 +2,7 @@ package com.henashi.inventorycrm.ai.controller;
 
 import com.henashi.inventorycrm.ai.LLMService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @Transactional
+@Disabled("需要真实 AI API key，CI 环境下跳过")
 class AiAgentControllerChatTest {
 
     private MockMvc mockMvc;
