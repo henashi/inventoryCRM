@@ -147,7 +147,7 @@
   const themeStore = useThemeStore()
   const collapsed = ref(false)
 
-  const userName = computed(() => authStore.user?.name || authStore.user?.username || '用户')
+  const userName = computed(() => authStore.user?.realName || authStore.user?.username || '用户')
   const userInitial = computed(() => {
     const name = userName.value
     return name.charAt(0).toUpperCase()

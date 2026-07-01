@@ -133,13 +133,13 @@
               </div>
               <a-tag
                 :color="
-                  item.status === 'ACTIVE' || item.status === 'DICT_STATUS_ACTIVE'
+                  String(item.status) === 'ACTIVE' || String(item.status) === 'DICT_STATUS_ACTIVE'
                     ? 'green'
                     : 'default'
                 "
               >
                 {{
-                  item.status === 'ACTIVE' || item.status === 'DICT_STATUS_ACTIVE'
+                  String(item.status) === 'ACTIVE' || String(item.status) === 'DICT_STATUS_ACTIVE'
                     ? '生效中'
                     : '已停用'
                 }}
