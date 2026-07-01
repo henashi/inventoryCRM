@@ -178,6 +178,7 @@ public class PermissionMigrationRunner implements CommandLineRunner {
             user.setEmail(username + "@quizapp.com");
             user.setRole(role);
             user.setStatus("1");
+            user.setTokenVersion(0);
             userService.registerUser(user);
             log.info("默认用户创建成功: {} (role: {})", username, role.getName());
         } catch (Exception e) {

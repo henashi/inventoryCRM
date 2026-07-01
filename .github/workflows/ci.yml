@@ -161,10 +161,18 @@ jobs:
 
       - name: Login + save token
         run: |
-          TOKEN=$(curl -sf -X POST http://localhost:8080/api/auth/login \
+          echo "=== Dumping backend logs (last 50 lines) ==="
+          docker logs inventory-crm-backend --tail 50 2>&1 || true
+          echo ""
+          echo "=== Attempting login ==="
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST http://localhost:8080/api/auth/login \
             -H "Content-Type: application/json" \
-            -d '{"username":"admin","password":"admin123"}' \
-            | jq -r '.token // .accessToken // .access_token')
+            -d '{"username":"admin","password":"admin123"}')
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+          echo "HTTP Status: $HTTP_CODE"
+          echo "Response body: $BODY"
+          TOKEN=$(echo "$BODY" | jq -r '.access_token // .token // .accessToken' 2>/dev/null)
           echo "TOKEN=$TOKEN" >> $GITHUB_ENV
           test -n "$TOKEN" && echo "✅ Login OK" || { echo "❌ Login failed"; exit 1; }
 
