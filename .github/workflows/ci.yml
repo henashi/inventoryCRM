@@ -241,8 +241,9 @@ jobs:
         run: |
           REPO="${{ github.repository }}"
           SHA="${{ github.sha }}"
-          echo "BACKEND_TAGS=ghcr.io/${REPO}/backend:latest,ghcr.io/${REPO}/backend:${SHA}" >> $GITHUB_OUTPUT
-          echo "FRONTEND_TAGS=ghcr.io/${REPO}/frontend:latest,ghcr.io/${REPO}/frontend:${SHA}" >> $GITHUB_OUTPUT
+          REPO_LC=$(echo "${REPO}" | tr '[:upper:]' '[:lower:]')
+          echo "BACKEND_TAGS=ghcr.io/${REPO_LC}/backend:latest,ghcr.io/${REPO_LC}/backend:${SHA}" >> $GITHUB_OUTPUT
+          echo "FRONTEND_TAGS=ghcr.io/${REPO_LC}/frontend:latest,ghcr.io/${REPO_LC}/frontend:${SHA}" >> $GITHUB_OUTPUT
 
       - name: Build & push backend image
         uses: docker/build-push-action@v6
