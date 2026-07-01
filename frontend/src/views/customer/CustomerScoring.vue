@@ -158,7 +158,7 @@
 </template>
 
 <script setup lang="ts">
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 // @ts-nocheck
   import { onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
   import { useRouter } from 'vue-router'
