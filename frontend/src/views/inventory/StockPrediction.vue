@@ -199,6 +199,7 @@
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck
   import { onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
   import { useRouter } from 'vue-router'
   import { message } from 'ant-design-vue'

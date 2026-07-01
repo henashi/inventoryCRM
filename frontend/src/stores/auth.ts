@@ -2,7 +2,6 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { message } from 'ant-design-vue'
 import { authApi } from '@/api/auth'
-import { adminApi } from '@/api/admin'
 import type { RolePermissionsMap, UserPermissionItem } from '@/types'
 import type {
   ChangePasswordRequest,

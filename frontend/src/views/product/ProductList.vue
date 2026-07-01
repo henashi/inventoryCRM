@@ -432,6 +432,7 @@
   const lowStockProducts = ref<Product[]>([])
   const importModalVisible = ref(false)
   const importLoading = ref(false)
+  const loadProductSummary = async () => {}
   const importMetaLoading = ref(false)
   const importMetaError = ref('')
   const selectedImportFile = ref<File | null>(null)

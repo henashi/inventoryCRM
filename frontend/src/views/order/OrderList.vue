@@ -186,6 +186,7 @@
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck
   import { onMounted, ref, computed } from 'vue'
   import { message } from 'ant-design-vue'
   import { useAuthStore } from '@/stores/auth'

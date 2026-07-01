@@ -534,6 +534,12 @@
 
   const exportLoading = ref(false)
   const statsLoading = ref(false)
+  const customerStatistics = ref({
+    totalCustomers: 0,
+    normalCustomers: 0,
+    disabledCustomers: 0,
+    giftLevelDistribution: {} as Record<string, number>,
+  })
   const modalVisible = ref(false)
   const modalLoading = ref(false)
   const drawerVisible = ref(false)

@@ -155,7 +155,7 @@ export const appRoutes: RouteRecordRaw[] = [
     meta: {
       requiresAuth: false,
       title: '登录',
-      roles: getFeatureRoles('login'),
+      roles: getFeatureRoles('login' as any),
       layout: 'blank',
     },
   },

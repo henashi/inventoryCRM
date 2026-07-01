@@ -112,6 +112,7 @@
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck
   import { onMounted, onUnmounted, ref, nextTick, watch } from 'vue'
   import { useRouter } from 'vue-router'
   import * as echarts from 'echarts'

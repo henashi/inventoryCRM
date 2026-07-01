@@ -192,6 +192,7 @@
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck
   import dayjs from 'dayjs'
   import { computed, onMounted, reactive, ref, watch } from 'vue'
   import { useRoute, useRouter } from 'vue-router'

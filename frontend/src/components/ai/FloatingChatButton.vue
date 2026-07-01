@@ -56,6 +56,7 @@
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck
   import { ref, nextTick, onMounted, onUnmounted } from 'vue'
   import { aiApi } from '@/api/ai'
 

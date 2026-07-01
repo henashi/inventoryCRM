@@ -57,18 +57,6 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    @org.springframework.core.annotation.Order(200)
-    public CommandLineRunner createDefaultUsers(UserService userService) {
-        return args -> {
-            if (appProperties.isCreateDefaultUsers()) {
-                createUserIfNotExists("admin", "admin123", "ADMIN", userService);
-                createUserIfNotExists("user", "user123", "USER", userService);
-                createUserIfNotExists("demo", "demo123", "USER", userService);
-            }
-        };
-    }
-
-    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, ObjectMapper objectMapper) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)

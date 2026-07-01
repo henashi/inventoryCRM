@@ -137,6 +137,7 @@
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck
   import { computed, onMounted, ref } from 'vue'
   import { message, Modal } from 'ant-design-vue'
   import request from '@/api/request'

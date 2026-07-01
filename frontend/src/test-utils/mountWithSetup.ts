@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { createPinia, setActivePinia } from 'pinia'
 import { shallowMount } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'

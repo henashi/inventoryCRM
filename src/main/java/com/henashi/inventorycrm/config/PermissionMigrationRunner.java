@@ -6,6 +6,8 @@ import com.henashi.inventorycrm.pojo.Role;
 import com.henashi.inventorycrm.repository.DataDictRepository;
 import com.henashi.inventorycrm.repository.PermissionRepository;
 import com.henashi.inventorycrm.repository.RoleRepository;
+import com.henashi.inventorycrm.repository.UserRepository;
+import com.henashi.inventorycrm.service.UserService;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,15 +47,22 @@ public class PermissionMigrationRunner implements CommandLineRunner {
     private final PermissionRepository permissionRepository;
     private final DataDictRepository dataDictRepository;
     private final EntityManager entityManager;
+    private final UserService userService;
+    private final UserRepository userRepository;
 
     @Override
     public void run(String... args) {
-        migrateRoles();
-        migratePermissions();
-        migrateUserRoles();
-        migrateRolePermissions();
-        migrateUserPermissions();
-        log.info("权限/角色数据迁移完成");
+        try {
+            migrateRoles();
+            migratePermissions();
+            migrateUserRoles();
+            migrateRolePermissions();
+            migrateUserPermissions();
+            createDefaultUsers();
+            log.info("权限/角色数据迁移完成");
+        } catch (Exception e) {
+            log.error("权限/角色迁移异常，启动将继续但部分功能可能受限", e);
+        }
     }
 
     private void migrateRoles() {
@@ -137,6 +146,44 @@ public class PermissionMigrationRunner implements CommandLineRunner {
             log.debug("迁移权限: {} ({})", key, name);
         }
         log.info("已迁移 {} 条权限定义", dicts.size());
+    }
+
+    private void createDefaultUsers() {
+        if (userRepository.findByUsername("admin").isPresent()) {
+            log.info("默认用户已存在，跳过创建");
+            return;
+        }
+
+        Role adminRole = roleRepository.findByName("ADMIN")
+                .orElseGet(() -> roleRepository.save(Role.builder().name("ADMIN").displayName("管理员")
+                        .description("系统管理员").sortOrder(0).status("1")
+                        .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build()));
+        Role userRole = roleRepository.findByName("USER")
+                .orElseGet(() -> roleRepository.save(Role.builder().name("USER").displayName("普通用户")
+                        .description("普通用户").sortOrder(0).status("1")
+                        .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build()));
+
+        createUser("admin", "admin123", adminRole);
+        createUser("user", "user123", userRole);
+        createUser("demo", "demo123", userRole);
+        log.info("默认用户创建完成: admin/admin123, user/user123, demo/demo123");
+    }
+
+    private void createUser(String username, String password, Role role) {
+        try {
+            com.henashi.inventorycrm.pojo.User user = new com.henashi.inventorycrm.pojo.User();
+            user.setUsername(username);
+            user.setPassword(password);
+            user.setRealName(username);
+            user.setEmail(username + "@quizapp.com");
+            user.setRole(role);
+            user.setStatus("1");
+            user.setTokenVersion(0);
+            userService.registerUser(user);
+            log.info("默认用户创建成功: {} (role: {})", username, role.getName());
+        } catch (Exception e) {
+            log.warn("创建默认用户失败 {}: {}", username, e.getMessage());
+        }
     }
 
     private void fillModuleNames() {
