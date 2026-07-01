@@ -148,7 +148,7 @@ jobs:
             -e SPRING_DATASOURCE_URL="jdbc:mysql://localhost:3306/inventory_crm?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai" \
             -e SPRING_DATASOURCE_USERNAME=root \
             -e SPRING_DATASOURCE_PASSWORD=password \
-            -e JWT_SECRET=ci-test-secret-key-2024 \
+            -e JWT_SECRET=aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789+/ab== \
             -e NACOS_ENABLED=false \
             inventory-crm-backend:ci
 
